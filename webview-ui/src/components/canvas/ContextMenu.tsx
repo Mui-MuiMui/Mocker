@@ -142,20 +142,27 @@ export function ContextMenu() {
       // Capture the tree BEFORE any mutations
       const nodeTree = queryRef.current.node(clipboardNodeId).toNodeTree();
       const freshTree = cloneTreeWithFreshIds(nodeTree);
+      const isCut = clipboardAction === "cut";
+      const nodeToDelete = isCut ? clipboardNodeId : null;
 
-      // For cut: delete original first (tree already captured above)
-      if (clipboardAction === "cut") {
-        try {
-          actionsRef.current.delete(clipboardNodeId);
-        } catch {
-          // Cut source may have already been removed
-        }
+      if (isCut) {
         clipboardNodeId = null;
         clipboardAction = null;
       }
 
-      // Then add the clone
+      // Add clone first
       actionsRef.current.addNodeTree(freshTree, parentId);
+
+      // For cut: delete original in next frame so Craft.js state settles
+      if (nodeToDelete) {
+        requestAnimationFrame(() => {
+          try {
+            actionsRef.current.delete(nodeToDelete);
+          } catch {
+            // Cut source may have already been removed
+          }
+        });
+      }
     } catch {
       // Clipboard node no longer exists or target can't accept children
     }
