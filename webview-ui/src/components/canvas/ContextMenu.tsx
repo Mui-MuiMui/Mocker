@@ -132,22 +132,32 @@ export function ContextMenu() {
   const pasteClipboard = useCallback(() => {
     if (!clipboardNodeId || !selectedRef.current) return;
     try {
-      const parentId = selectedRef.current;
+      const sel = selectedRef.current;
+      const selNode = queryRef.current.node(sel).get();
+
+      // Paste as sibling: add to the selected node's parent
+      // (same behavior as duplicate, so non-canvas nodes work)
+      const parentId = selNode?.data?.parent;
+      if (!parentId) return;
+
       const nodeTree = queryRef.current.node(clipboardNodeId).toNodeTree();
-      // Always clone with fresh IDs to avoid overwriting existing nodes
       const freshTree = cloneTreeWithFreshIds(nodeTree);
       actionsRef.current.addNodeTree(freshTree, parentId);
 
       if (clipboardAction === "cut") {
-        const cutNode = queryRef.current.node(clipboardNodeId).get();
-        if (cutNode?.data.parent) {
-          actionsRef.current.delete(clipboardNodeId);
+        try {
+          const cutNode = queryRef.current.node(clipboardNodeId).get();
+          if (cutNode?.data.parent) {
+            actionsRef.current.delete(clipboardNodeId);
+          }
+        } catch {
+          // Cut source may have already been removed
         }
         clipboardNodeId = null;
         clipboardAction = null;
       }
     } catch {
-      // Target may not accept children
+      // Target may not accept children or clipboard node no longer exists
     }
     setMenuPos(null);
   }, []);
