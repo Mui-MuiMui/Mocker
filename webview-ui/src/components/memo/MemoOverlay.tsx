@@ -159,7 +159,7 @@ function MemoSticker({
 
   return (
     <div
-      className={`absolute z-40 rounded shadow-lg ${colors.bg} ${memo.collapsed ? "w-52" : "w-56"}`}
+      className={`absolute z-40 w-56 rounded shadow-lg ${colors.bg}`}
       style={{ left: position.x, top: position.y }}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

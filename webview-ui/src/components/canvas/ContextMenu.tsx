@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useEditor } from "@craftjs/core";
+import { useEditor, type NodeTree, type Node } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { Trash2, Copy, Scissors, ClipboardPaste, CopyPlus } from "lucide-react";
@@ -12,6 +12,65 @@ interface MenuPosition {
 // Clipboard store (module-level since we can't use system clipboard for Craft nodes)
 let clipboardNodeId: string | null = null;
 let clipboardAction: "copy" | "cut" | null = null;
+
+/** Generate a short random ID similar to Craft.js's internal getRandomId */
+function freshId(): string {
+  return Math.random().toString(36).slice(2, 12);
+}
+
+/**
+ * Clone a NodeTree with fresh IDs so that addNodeTree doesn't overwrite
+ * existing nodes. Craft.js's addNodeTree reuses the original IDs if present.
+ */
+function cloneTreeWithFreshIds(tree: NodeTree): NodeTree {
+  const idMap = new Map<string, string>();
+
+  // Generate a new ID for every node in the tree
+  for (const oldId of Object.keys(tree.nodes)) {
+    idMap.set(oldId, freshId());
+  }
+
+  const newNodes: Record<string, Node> = {};
+
+  for (const [oldId, node] of Object.entries(tree.nodes)) {
+    const newId = idMap.get(oldId)!;
+    // Deep clone the node
+    const cloned: Node = JSON.parse(JSON.stringify(node));
+    cloned.id = newId;
+
+    // Remap parent
+    if (cloned.data.parent && idMap.has(cloned.data.parent)) {
+      cloned.data.parent = idMap.get(cloned.data.parent)!;
+    }
+
+    // Remap child node references
+    if (cloned.data.nodes) {
+      cloned.data.nodes = cloned.data.nodes.map(
+        (childId: string) => idMap.get(childId) || childId,
+      );
+    }
+
+    // Remap linked nodes
+    if (cloned.data.linkedNodes) {
+      const newLinked: Record<string, string> = {};
+      for (const [key, linkedId] of Object.entries(cloned.data.linkedNodes)) {
+        newLinked[key] = idMap.get(linkedId as string) || (linkedId as string);
+      }
+      cloned.data.linkedNodes = newLinked;
+    }
+
+    // Reset events and internal timestamps
+    cloned.events = { selected: false, dragged: false, hovered: false } as Node["events"];
+    cloned._hydrationTimestamp = Date.now();
+
+    newNodes[newId] = cloned;
+  }
+
+  return {
+    rootNodeId: idMap.get(tree.rootNodeId)!,
+    nodes: newNodes,
+  };
+}
 
 export function ContextMenu() {
   const { t } = useTranslation();
@@ -33,8 +92,7 @@ export function ContextMenu() {
     setSelectedNodeId(selected);
   }, [selected, setSelectedNodeId]);
 
-  // Use refs to always access latest values in event handlers,
-  // avoiding stale closure issues with useCallback
+  // Use refs to always access latest values in event handlers
   const selectedRef = useRef(selected);
   const queryRef = useRef(query);
   const actionsRef = useRef(actions);
@@ -47,10 +105,8 @@ export function ContextMenu() {
     if (!sel) return;
     try {
       const nodeHelper = queryRef.current.node(sel);
-      // Check node still exists
       const node = nodeHelper.get();
       if (!node) return;
-      // Don't delete root or top-level canvas node
       if (nodeHelper.isRoot() || nodeHelper.isTopLevelNode()) return;
       if (!nodeHelper.isDeletable()) return;
       actionsRef.current.delete(sel);
@@ -81,7 +137,9 @@ export function ContextMenu() {
     try {
       const parentId = selectedRef.current;
       const nodeTree = queryRef.current.node(clipboardNodeId).toNodeTree();
-      actionsRef.current.addNodeTree(nodeTree, parentId);
+      // Always clone with fresh IDs to avoid overwriting existing nodes
+      const freshTree = cloneTreeWithFreshIds(nodeTree);
+      actionsRef.current.addNodeTree(freshTree, parentId);
 
       if (clipboardAction === "cut") {
         const cutNode = queryRef.current.node(clipboardNodeId).get();
@@ -105,7 +163,9 @@ export function ContextMenu() {
       const parentId = node?.data.parent;
       if (!parentId) return;
       const nodeTree = queryRef.current.node(sel).toNodeTree();
-      actionsRef.current.addNodeTree(nodeTree, parentId);
+      // Clone with fresh IDs to avoid ID collision with original
+      const freshTree = cloneTreeWithFreshIds(nodeTree);
+      actionsRef.current.addNodeTree(freshTree, parentId);
     } catch {
       // ignore
     }
