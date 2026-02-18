@@ -14,10 +14,15 @@ interface EditorLoaderProps {
 export function EditorLoader({ loadingRef, lastSavedRef }: EditorLoaderProps) {
   const { actions } = useEditor();
   const { documentContent } = useEditorStore();
-  const hasLoadedRef = useRef(false);
+  const lastDeserializedRef = useRef<string>("");
+  const actionsRef = useRef(actions);
+  actionsRef.current = actions;
 
   useEffect(() => {
     if (!documentContent) return;
+
+    // Skip if we already deserialized this exact content
+    if (documentContent === lastDeserializedRef.current) return;
 
     // Try to deserialize the content as Craft.js JSON
     try {
@@ -25,9 +30,9 @@ export function EditorLoader({ loadingRef, lastSavedRef }: EditorLoaderProps) {
       if (parsed && typeof parsed === "object" && parsed.ROOT) {
         // Suppress onNodesChange saves during deserialize
         loadingRef.current = true;
-        actions.deserialize(documentContent);
+        actionsRef.current.deserialize(documentContent);
         lastSavedRef.current = documentContent;
-        hasLoadedRef.current = true;
+        lastDeserializedRef.current = documentContent;
 
         // Allow saves again after a tick (deserialize triggers sync events)
         requestAnimationFrame(() => {
@@ -36,12 +41,11 @@ export function EditorLoader({ loadingRef, lastSavedRef }: EditorLoaderProps) {
       }
     } catch {
       // Not valid JSON - new or empty file, use default editor state
-      if (!hasLoadedRef.current) {
-        hasLoadedRef.current = true;
-        loadingRef.current = false;
-      }
+      loadingRef.current = false;
     }
-  }, [documentContent, actions, loadingRef, lastSavedRef]);
+    // Only re-run when documentContent changes (actions is accessed via ref)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentContent, loadingRef, lastSavedRef]);
 
   return null;
 }
