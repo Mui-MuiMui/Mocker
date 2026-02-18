@@ -1,0 +1,12 @@
+{
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "serena",
+    "sequential-thinking"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)"
+    ]
+  }
+}

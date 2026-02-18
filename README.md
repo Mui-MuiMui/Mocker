@@ -1,2 +1,2 @@
 # Mocker
-Visual Frontend Web UI Builder
+Visual Frontend Web UI Builder for VSCode
