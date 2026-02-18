@@ -137,6 +137,11 @@ export default function App() {
 
   useVscodeMessage(handleMessage);
 
+  // Notify extension that the webview React app is mounted and ready
+  useEffect(() => {
+    getVsCodeApi().postMessage({ type: "editor:ready" });
+  }, []);
+
   return (
     <Editor
       resolver={resolvers}

@@ -64,26 +64,30 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
       if (message.type === "doc:save") {
         suppressExternalChange = true;
       }
+
+      // When the webview React app is ready, send initial data
+      if (message.type === "editor:ready") {
+        webviewPanel.webview.postMessage({
+          type: "doc:load",
+          payload: {
+            content: document.getText(),
+            fileName: document.fileName,
+          },
+        });
+
+        const locale = vscode.env.language;
+        webviewPanel.webview.postMessage({
+          type: "i18n:locale",
+          payload: { locale, messages: {} },
+        });
+        return;
+      }
+
       await this.handleWebviewMessage(message, document, webviewPanel);
     });
 
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
-    });
-
-    webviewPanel.webview.postMessage({
-      type: "doc:load",
-      payload: {
-        content: document.getText(),
-        fileName: document.fileName,
-      },
-    });
-
-    // Send locale info
-    const locale = vscode.env.language;
-    webviewPanel.webview.postMessage({
-      type: "i18n:locale",
-      payload: { locale, messages: {} },
     });
   }
 
