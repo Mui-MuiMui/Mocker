@@ -7,6 +7,7 @@ import { EditorCanvas } from "./components/canvas/EditorCanvas";
 import { PropertiesPanel } from "./components/properties/PropertiesPanel";
 import { ContextMenu } from "./components/canvas/ContextMenu";
 import { RenderNode } from "./components/canvas/RenderNode";
+import { EditorLoader } from "./components/EditorLoader";
 import { useVscodeMessage } from "./hooks/useVscodeMessage";
 import { useEditorStore } from "./stores/editorStore";
 import { getVsCodeApi } from "./utils/vscodeApi";
@@ -22,7 +23,7 @@ export default function App() {
   // --- Save system using Craft.js onNodesChange callback ---
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<string>("");
-  const initializedRef = useRef(false);
+  const loadingRef = useRef(false); // true while deserializing (suppress saves)
 
   const doSave = useCallback(
     (serialized: string) => {
@@ -40,11 +41,13 @@ export default function App() {
   const handleNodesChange = useCallback(
     (query: { serialize: () => string }) => {
       try {
+        // Suppress saves while loading/deserializing
+        if (loadingRef.current) return;
+
         const serialized = query.serialize();
 
-        // First change after mount - just record initial state
-        if (!initializedRef.current) {
-          initializedRef.current = true;
+        // Record state but don't save if it matches what's already on disk
+        if (!lastSavedRef.current) {
           lastSavedRef.current = serialized;
           return;
         }
@@ -140,6 +143,7 @@ export default function App() {
       onRender={RenderNode}
       onNodesChange={handleNodesChange}
     >
+      <EditorLoader loadingRef={loadingRef} lastSavedRef={lastSavedRef} />
       <div className="flex h-screen flex-col overflow-hidden bg-[var(--vscode-editor-background,#1e1e1e)] text-[var(--vscode-foreground,#ccc)]">
         <Toolbar />
         <div className="flex flex-1 overflow-hidden">
