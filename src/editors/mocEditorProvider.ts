@@ -15,8 +15,15 @@ import { DEFAULT_METADATA, MOC_VERSION } from "../shared/constants.js";
 export class MocEditorProvider implements vscode.CustomTextEditorProvider {
   public static readonly viewType = "mocker.mocEditor";
 
+  /** Singleton instance for command access */
+  private static instance: MocEditorProvider;
+
+  /** Active webview panel (most recently focused) */
+  private activeWebviewPanel: vscode.WebviewPanel | undefined;
+
   public static register(context: vscode.ExtensionContext): vscode.Disposable {
     const provider = new MocEditorProvider(context);
+    MocEditorProvider.instance = provider;
     return vscode.window.registerCustomEditorProvider(
       MocEditorProvider.viewType,
       provider,
@@ -27,6 +34,16 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
         supportsMultipleEditorsPerDocument: false,
       },
     );
+  }
+
+  /** Send a message to the active webview panel */
+  public static postToWebview(message: { type: string; payload?: unknown }): boolean {
+    const panel = MocEditorProvider.instance?.activeWebviewPanel;
+    if (panel) {
+      panel.webview.postMessage(message);
+      return true;
+    }
+    return false;
   }
 
   /** Cached metadata from the last parsed .moc file, preserved across saves */
@@ -47,6 +64,14 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
     };
 
     webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview);
+
+    // Track active webview panel
+    this.activeWebviewPanel = webviewPanel;
+    webviewPanel.onDidChangeViewState(() => {
+      if (webviewPanel.active) {
+        this.activeWebviewPanel = webviewPanel;
+      }
+    });
 
     // Track edits we applied ourselves to avoid echoing them back
     let suppressExternalChange = false;
@@ -99,6 +124,9 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
       this.documentMetadata.delete(document.uri.toString());
+      if (this.activeWebviewPanel === webviewPanel) {
+        this.activeWebviewPanel = undefined;
+      }
     });
   }
 

@@ -17,7 +17,7 @@ const SAVE_DEBOUNCE_MS = 800;
 
 export default function App() {
   const { i18n } = useTranslation();
-  const { setDocumentContent, setFileName, setThemeMode, setIsDirty } =
+  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode } =
     useEditorStore();
 
   // --- Save system ---
@@ -161,9 +161,19 @@ export default function App() {
           i18n.changeLanguage(lang);
           break;
         }
+        case "command:toggleTheme": {
+          const newTheme = useEditorStore.getState().themeMode === "light" ? "dark" : "light";
+          setThemeMode(newTheme);
+          break;
+        }
+        case "command:switchLayoutMode": {
+          const newLayout = useEditorStore.getState().layoutMode === "flow" ? "absolute" : "flow";
+          setLayoutMode(newLayout);
+          break;
+        }
       }
     },
-    [setDocumentContent, setFileName, setThemeMode, i18n],
+    [setDocumentContent, setFileName, setThemeMode, setLayoutMode, i18n],
   );
 
   useVscodeMessage(handleMessage);
