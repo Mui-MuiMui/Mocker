@@ -26,11 +26,21 @@ export default function App() {
   const loadingRef = useRef(false);
   const lastCraftStateRef = useRef<string>("");
 
-  /** Build combined save payload (craftState + memos) */
+  /** Build combined save payload (craftState + memos + viewport settings) */
   const buildSaveContent = useCallback((craftStateStr: string) => {
-    const memos = useEditorStore.getState().memos;
+    const s = useEditorStore.getState();
     const craftState = JSON.parse(craftStateStr);
-    return JSON.stringify({ version: 1, craftState, memos });
+    return JSON.stringify({
+      version: 1,
+      craftState,
+      memos: s.memos,
+      viewport: {
+        mode: s.viewportMode,
+        width: s.customViewportWidth,
+        height: s.customViewportHeight,
+        zoom: s.zoom,
+      },
+    });
   }, []);
 
   const doSave = useCallback(
@@ -93,6 +103,20 @@ export default function App() {
     prevMemosRef.current = memos;
     scheduleSave();
   }, [memos, scheduleSave]);
+
+  // Watch viewport setting changes and trigger save
+  const viewportMode = useEditorStore((s) => s.viewportMode);
+  const customViewportWidth = useEditorStore((s) => s.customViewportWidth);
+  const customViewportHeight = useEditorStore((s) => s.customViewportHeight);
+  const zoom = useEditorStore((s) => s.zoom);
+  const viewportKey = `${viewportMode}:${customViewportWidth}:${customViewportHeight}:${zoom}`;
+  const prevViewportKeyRef = useRef(viewportKey);
+  useEffect(() => {
+    if (loadingRef.current) return;
+    if (prevViewportKeyRef.current === viewportKey) return;
+    prevViewportKeyRef.current = viewportKey;
+    scheduleSave();
+  }, [viewportKey, scheduleSave]);
 
   // Ctrl+S immediate save
   useEffect(() => {
