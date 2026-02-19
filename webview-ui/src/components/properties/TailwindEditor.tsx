@@ -118,8 +118,8 @@ export function TailwindEditor() {
   const [paddingDir, setPaddingDir] = useState(0);
   const [marginDir, setMarginDir] = useState(0);
   const [fontSizeMode, setFontSizeMode] = useState<"preset" | "slider">("preset");
-  const [paletteTarget, setPaletteTarget] = useState<"text" | "bg">("text");
-  const [paletteFamily, setPaletteFamily] = useState<string>("blue");
+  const [textPaletteFamily, setTextPaletteFamily] = useState<string>("blue");
+  const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
 
   useEffect(() => {
     setRawInput(currentClassName);
@@ -184,37 +184,19 @@ export function TailwindEditor() {
   const currentMarginIdx = getSpacingValue(currentMarginPrefix);
   const currentFontSizeIdx = getFontSizeIndex();
 
-  // Detect active palette color for current target (text/bg)
-  const activePaletteColor = (() => {
+  // Detect active palette color per prefix
+  const findPaletteColor = (prefix: string) => {
     for (const cls of activeSet) {
       const parsed = parsePaletteClass(cls);
-      if (parsed && parsed.prefix === paletteTarget) return parsed;
+      if (parsed && parsed.prefix === prefix) return parsed;
     }
     return null;
-  })();
-
-  // Apply a palette color: remove all palette colors for the target prefix, then add
-  const applyPaletteColor = (family: string, shade: string) => {
-    const newCls = `${paletteTarget}-${family}-${shade}`;
-    // Remove existing palette colors AND theme colors for the same prefix
-    const themeGroup = paletteTarget === "text" ? themeTextGroup : themeBgGroup;
-    const filtered = classes.filter((c) => {
-      const parsed = parsePaletteClass(c);
-      if (parsed && parsed.prefix === paletteTarget) return false;
-      if (themeGroup.includes(c)) return false;
-      return true;
-    });
-    if (activeSet.has(newCls)) {
-      // Toggle off
-      updateClassName(filtered.join(" "));
-    } else {
-      updateClassName([...filtered, newCls].join(" "));
-    }
   };
+  const activeTextPalette = findPaletteColor("text");
+  const activeBgPalette = findPaletteColor("bg");
 
-  // Apply a theme color: remove palette colors and other theme colors for the target prefix
-  const applyThemeColor = (prefix: "text" | "bg", colorName: string) => {
-    const cls = `${prefix}-${colorName}`;
+  // Apply a palette or theme color: clears both palette and theme for that prefix
+  const applyColor = (prefix: "text" | "bg", colorCls: string) => {
     const themeGroup = prefix === "text" ? themeTextGroup : themeBgGroup;
     const filtered = classes.filter((c) => {
       if (themeGroup.includes(c)) return false;
@@ -222,10 +204,10 @@ export function TailwindEditor() {
       if (parsed && parsed.prefix === prefix) return false;
       return true;
     });
-    if (activeSet.has(cls)) {
+    if (activeSet.has(colorCls)) {
       updateClassName(filtered.join(" "));
     } else {
-      updateClassName([...filtered, cls].join(" "));
+      updateClassName([...filtered, colorCls].join(" "));
     }
   };
 
@@ -357,73 +339,27 @@ export function TailwindEditor() {
         )}
       </TailwindSection>
 
-      {/* Theme Colors */}
-      <TailwindSection title="Text Color">
-        <div className="flex flex-wrap gap-1">
-          {THEME_COLOR_OPTIONS.map((c) => (
-            <ClassButton key={c} label={c} active={activeSet.has(`text-${c}`)} onClick={() => applyThemeColor("text", c)} />
-          ))}
-        </div>
-      </TailwindSection>
+      {/* Text Color: theme + palette */}
+      <ColorSection
+        title="Text Color"
+        prefix="text"
+        activeSet={activeSet}
+        paletteFamily={textPaletteFamily}
+        onFamilyChange={setTextPaletteFamily}
+        activePalette={activeTextPalette}
+        onApply={(cls) => applyColor("text", cls)}
+      />
 
-      <TailwindSection title="Background">
-        <div className="flex flex-wrap gap-1">
-          {THEME_COLOR_OPTIONS.map((c) => (
-            <ClassButton key={c} label={c} active={activeSet.has(`bg-${c}`)} onClick={() => applyThemeColor("bg", c)} />
-          ))}
-        </div>
-      </TailwindSection>
-
-      {/* Tailwind Color Palette */}
-      <TailwindSection title="Color Palette">
-        {/* Text / Bg toggle */}
-        <div className="mb-1.5 flex gap-1">
-          <ModeToggle label="Text" active={paletteTarget === "text"} onClick={() => setPaletteTarget("text")} />
-          <ModeToggle label="Bg" active={paletteTarget === "bg"} onClick={() => setPaletteTarget("bg")} />
-          {activePaletteColor && (
-            <span className="ml-auto text-[10px] text-[var(--vscode-foreground,#ccc)]">
-              {paletteTarget}-{activePaletteColor.family}-{activePaletteColor.shade}
-            </span>
-          )}
-        </div>
-        {/* Family selector */}
-        <div className="mb-1.5 flex flex-wrap gap-1">
-          {PALETTE_FAMILIES.map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setPaletteFamily(f)}
-              title={f}
-              className={`h-4 w-4 rounded-sm transition-all ${
-                paletteFamily === f ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
-              }`}
-              style={{ backgroundColor: P[f]["500"] }}
-            />
-          ))}
-        </div>
-        {/* Shade swatches */}
-        <div className="flex gap-0.5">
-          {PALETTE_SHADES.map((s) => {
-            const cls = `${paletteTarget}-${paletteFamily}-${s}`;
-            const isActive = activeSet.has(cls);
-            return (
-              <button
-                key={s}
-                type="button"
-                onClick={() => applyPaletteColor(paletteFamily, s)}
-                title={`${paletteFamily}-${s}`}
-                className={`h-5 flex-1 rounded-sm transition-all ${
-                  isActive ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-y-125"
-                }`}
-                style={{ backgroundColor: P[paletteFamily][s] }}
-              />
-            );
-          })}
-        </div>
-        <div className="mt-0.5 flex justify-between text-[8px] text-[var(--vscode-descriptionForeground,#666)]">
-          <span>50</span><span>500</span><span>950</span>
-        </div>
-      </TailwindSection>
+      {/* Background: theme + palette */}
+      <ColorSection
+        title="Background"
+        prefix="bg"
+        activeSet={activeSet}
+        paletteFamily={bgPaletteFamily}
+        onFamilyChange={setBgPaletteFamily}
+        activePalette={activeBgPalette}
+        onApply={(cls) => applyColor("bg", cls)}
+      />
 
       <TailwindSection title="Font Weight">
         <div className="flex flex-wrap gap-1">
@@ -445,6 +381,78 @@ export function TailwindEditor() {
 }
 
 /* ---- Sub-components ---- */
+
+function ColorSection({
+  title,
+  prefix,
+  activeSet,
+  paletteFamily,
+  onFamilyChange,
+  activePalette,
+  onApply,
+}: {
+  title: string;
+  prefix: "text" | "bg";
+  activeSet: Set<string>;
+  paletteFamily: string;
+  onFamilyChange: (f: string) => void;
+  activePalette: { family: string; shade: string } | null;
+  onApply: (cls: string) => void;
+}) {
+  return (
+    <TailwindSection title={title}>
+      {/* Theme colors */}
+      <div className="mb-1.5 flex flex-wrap gap-1">
+        {THEME_COLOR_OPTIONS.map((c) => (
+          <ClassButton key={c} label={c} active={activeSet.has(`${prefix}-${c}`)} onClick={() => onApply(`${prefix}-${c}`)} />
+        ))}
+      </div>
+      {/* Palette family selector */}
+      <div className="mb-1 flex items-center gap-1">
+        <div className="flex flex-wrap gap-1">
+          {PALETTE_FAMILIES.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => onFamilyChange(f)}
+              title={f}
+              className={`h-3.5 w-3.5 rounded-sm transition-all ${
+                paletteFamily === f ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: P[f]["500"] }}
+            />
+          ))}
+        </div>
+        {activePalette && (
+          <span className="ml-auto shrink-0 text-[9px] text-[var(--vscode-descriptionForeground,#888)]">
+            {activePalette.family}-{activePalette.shade}
+          </span>
+        )}
+      </div>
+      {/* Shade swatches */}
+      <div className="flex gap-0.5">
+        {PALETTE_SHADES.map((s) => {
+          const cls = `${prefix}-${paletteFamily}-${s}`;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => onApply(cls)}
+              title={`${paletteFamily}-${s}`}
+              className={`h-4 flex-1 rounded-sm transition-all ${
+                activeSet.has(cls) ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-y-125"
+              }`}
+              style={{ backgroundColor: P[paletteFamily][s] }}
+            />
+          );
+        })}
+      </div>
+      <div className="mt-0.5 flex justify-between text-[8px] text-[var(--vscode-descriptionForeground,#666)]">
+        <span>50</span><span>500</span><span>950</span>
+      </div>
+    </TailwindSection>
+  );
+}
 
 function SpacingSlider({
   title,
