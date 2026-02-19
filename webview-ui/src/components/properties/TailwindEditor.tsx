@@ -74,6 +74,9 @@ export function TailwindEditor() {
   const borderRadiusClasses = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const bgClasses = COLOR_OPTIONS.map((c) => `bg-${c}`);
 
+  // Set of active classes for exact word-boundary matching
+  const activeSet = new Set(rawInput.split(/\s+/).filter(Boolean));
+
   return (
     <div className="flex flex-col gap-3">
       <div>
@@ -94,7 +97,7 @@ export function TailwindEditor() {
             <ClassButton
               key={v}
               label={`p-${v}`}
-              active={rawInput.includes(`p-${v}`)}
+              active={activeSet.has(`p-${v}`)}
               onClick={() => toggleClass(`p-${v}`, paddingClasses)}
             />
           ))}
@@ -107,7 +110,7 @@ export function TailwindEditor() {
             <ClassButton
               key={v}
               label={`m-${v}`}
-              active={rawInput.includes(`m-${v}`)}
+              active={activeSet.has(`m-${v}`)}
               onClick={() => toggleClass(`m-${v}`, marginClasses)}
             />
           ))}
@@ -120,7 +123,7 @@ export function TailwindEditor() {
             <ClassButton
               key={c}
               label={c}
-              active={rawInput.includes(`text-${c}`)}
+              active={activeSet.has(`text-${c}`)}
               onClick={() => toggleClass(`text-${c}`, textColorClasses)}
             />
           ))}
@@ -133,7 +136,7 @@ export function TailwindEditor() {
             <ClassButton
               key={c}
               label={c}
-              active={rawInput.includes(`bg-${c}`)}
+              active={activeSet.has(`bg-${c}`)}
               onClick={() => toggleClass(`bg-${c}`, bgClasses)}
             />
           ))}
@@ -146,7 +149,7 @@ export function TailwindEditor() {
             <ClassButton
               key={s}
               label={s}
-              active={rawInput.includes(`text-${s}`)}
+              active={activeSet.has(`text-${s}`)}
               onClick={() => toggleClass(`text-${s}`, textSizeClasses)}
             />
           ))}
@@ -159,7 +162,7 @@ export function TailwindEditor() {
             <ClassButton
               key={w}
               label={w}
-              active={rawInput.includes(`font-${w}`)}
+              active={activeSet.has(`font-${w}`)}
               onClick={() => toggleClass(`font-${w}`, fontWeightClasses)}
             />
           ))}
@@ -172,7 +175,7 @@ export function TailwindEditor() {
             <ClassButton
               key={r}
               label={r}
-              active={rawInput.includes(`rounded-${r}`)}
+              active={activeSet.has(`rounded-${r}`)}
               onClick={() => toggleClass(`rounded-${r}`, borderRadiusClasses)}
             />
           ))}

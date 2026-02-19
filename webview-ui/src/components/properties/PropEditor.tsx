@@ -61,6 +61,20 @@ export function PropEditor() {
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Read-only node ID */}
+      <div className="flex flex-col gap-1">
+        <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+          id
+        </label>
+        <input
+          type="text"
+          value={selectedNodeId}
+          readOnly
+          className={`${INPUT_CLASS} w-full cursor-default opacity-60`}
+          title={selectedNodeId}
+          onClick={(e) => (e.target as HTMLInputElement).select()}
+        />
+      </div>
       {Object.entries(selectedProps).map(([key, value]) => {
         if (key === "children" || key === "className") return null;
 
