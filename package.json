@@ -86,7 +86,7 @@
       "explorer/context": [
         {
           "command": "mocker.createMocFile",
-          "group": "7_modification"
+          "group": "mocker@1"
         }
       ]
     }
