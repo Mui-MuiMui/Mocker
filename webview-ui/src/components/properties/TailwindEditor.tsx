@@ -54,11 +54,10 @@ const ALIGN_SELF_OPTIONS = [
   { label: "Stretch", cls: "self-stretch" },
 ];
 
-const ITEMS_ALIGN_OPTIONS = [
-  { label: "Start", cls: "items-start" },
+const CONTENT_VALIGN_OPTIONS = [
+  { label: "Top", cls: "items-start" },
   { label: "Center", cls: "items-center" },
   { label: "End", cls: "items-end" },
-  { label: "Stretch", cls: "items-stretch" },
 ];
 
 export function TailwindEditor() {
@@ -134,7 +133,7 @@ export function TailwindEditor() {
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const textAlignGroup = TEXT_ALIGN_OPTIONS.map((o) => o.cls);
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
-  const itemsAlignGroup = ITEMS_ALIGN_OPTIONS.map((o) => o.cls);
+  const contentVAlignGroup = CONTENT_VALIGN_OPTIONS.map((o) => o.cls);
 
   const currentPaddingPrefix = PADDING_DIRS[paddingDir].prefix;
   const currentMarginPrefix = MARGIN_DIRS[marginDir].prefix;
@@ -200,14 +199,26 @@ export function TailwindEditor() {
         </div>
       </TailwindSection>
 
-      <TailwindSection title="Align Items">
+      <TailwindSection title="Content V-Align">
         <div className="flex flex-wrap gap-1">
-          {ITEMS_ALIGN_OPTIONS.map((o) => (
+          {CONTENT_VALIGN_OPTIONS.map((o) => (
             <ClassButton
               key={o.cls}
               label={o.label}
               active={activeSet.has(o.cls)}
-              onClick={() => setGroupClass(o.cls, itemsAlignGroup)}
+              onClick={() => {
+                const filtered = classes.filter((c) => !contentVAlignGroup.includes(c));
+                if (activeSet.has(o.cls)) {
+                  // Toggle off: remove the items-* class and flex if no other items-* remains
+                  const withoutCls = filtered;
+                  const noFlex = withoutCls.filter((c) => c !== "flex");
+                  updateClassName(noFlex.join(" "));
+                } else {
+                  // Toggle on: ensure flex is present, add items-*
+                  const withFlex = filtered.includes("flex") ? filtered : ["flex", ...filtered];
+                  updateClassName([...withFlex, o.cls].join(" "));
+                }
+              }}
             />
           ))}
         </div>
