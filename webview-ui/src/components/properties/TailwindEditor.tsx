@@ -46,6 +46,21 @@ const TEXT_ALIGN_OPTIONS = [
   { label: "Justify", cls: "text-justify" },
 ];
 
+const ALIGN_SELF_OPTIONS = [
+  { label: "Auto", cls: "self-auto" },
+  { label: "Start", cls: "self-start" },
+  { label: "Center", cls: "self-center" },
+  { label: "End", cls: "self-end" },
+  { label: "Stretch", cls: "self-stretch" },
+];
+
+const ITEMS_ALIGN_OPTIONS = [
+  { label: "Start", cls: "items-start" },
+  { label: "Center", cls: "items-center" },
+  { label: "End", cls: "items-end" },
+  { label: "Stretch", cls: "items-stretch" },
+];
+
 export function TailwindEditor() {
   const { selectedNodeId, currentClassName, actions } = useEditor((state) => {
     const nodeId = state.events.selected?.values().next().value;
@@ -118,6 +133,8 @@ export function TailwindEditor() {
   const fontWeightGroup = FONT_WEIGHT_OPTIONS.map((w) => `font-${w}`);
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const textAlignGroup = TEXT_ALIGN_OPTIONS.map((o) => o.cls);
+  const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
+  const itemsAlignGroup = ITEMS_ALIGN_OPTIONS.map((o) => o.cls);
 
   const currentPaddingPrefix = PADDING_DIRS[paddingDir].prefix;
   const currentMarginPrefix = MARGIN_DIRS[marginDir].prefix;
@@ -165,6 +182,32 @@ export function TailwindEditor() {
               label={o.label}
               active={activeSet.has(o.cls)}
               onClick={() => setGroupClass(o.cls, textAlignGroup)}
+            />
+          ))}
+        </div>
+      </TailwindSection>
+
+      <TailwindSection title="Align Self">
+        <div className="flex flex-wrap gap-1">
+          {ALIGN_SELF_OPTIONS.map((o) => (
+            <ClassButton
+              key={o.cls}
+              label={o.label}
+              active={activeSet.has(o.cls)}
+              onClick={() => setGroupClass(o.cls, alignSelfGroup)}
+            />
+          ))}
+        </div>
+      </TailwindSection>
+
+      <TailwindSection title="Align Items">
+        <div className="flex flex-wrap gap-1">
+          {ITEMS_ALIGN_OPTIONS.map((o) => (
+            <ClassButton
+              key={o.cls}
+              label={o.label}
+              active={activeSet.has(o.cls)}
+              onClick={() => setGroupClass(o.cls, itemsAlignGroup)}
             />
           ))}
         </div>

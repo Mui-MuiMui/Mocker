@@ -25,8 +25,10 @@
 @source inline("text-xs text-sm text-base text-lg text-xl text-2xl text-3xl text-4xl text-5xl text-6xl text-7xl text-8xl text-9xl");
 /* font weight, border radius */
 @source inline("font-thin font-extralight font-light font-normal font-medium font-semibold font-bold font-extrabold font-black rounded-none rounded-sm rounded-md rounded-lg rounded-xl rounded-2xl rounded-full");
-/* text alignment, layout helpers */
-@source inline("text-left text-center text-right text-justify min-h-screen w-full h-full w-auto h-auto block inline-block inline flex inline-flex hidden overflow-hidden overflow-auto overflow-scroll");
+/* alignment */
+@source inline("text-left text-center text-right text-justify self-auto self-start self-center self-end self-stretch items-start items-center items-end items-stretch items-baseline justify-start justify-center justify-end justify-between justify-around justify-evenly");
+/* layout helpers */
+@source inline("min-h-screen w-full h-full w-auto h-auto block inline-block inline flex inline-flex hidden overflow-hidden overflow-auto overflow-scroll whitespace-pre-line whitespace-nowrap whitespace-normal");
 
 :root {
   --background: oklch(1 0 0);
