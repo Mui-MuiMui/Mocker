@@ -93,8 +93,8 @@ const P: Record<string, Record<string, string>> = {
   rose:    { "50":"#fff1f2","100":"#ffe4e6","200":"#fecdd3","300":"#fda4af","400":"#fb7185","500":"#f43f5e","600":"#e11d48","700":"#be123c","800":"#9f1239","900":"#881337","950":"#4c0519" },
 };
 
-/** Regex to match palette color classes: text-red-500, hover:bg-blue-200, etc. */
-const PALETTE_CLASS_RE = /^((?:hover:)?(?:text|bg))-(\w+)-(\d{2,3})$/;
+/** Regex to match palette color classes: text-red-500, hover:bg-blue-200, border-green-300, etc. */
+const PALETTE_CLASS_RE = /^((?:hover:)?(?:text|bg|border))-(\w+)-(\d{2,3})$/;
 
 function parsePaletteClass(cls: string): { prefix: string; family: string; shade: string } | null {
   const m = cls.match(PALETTE_CLASS_RE);
@@ -120,6 +120,7 @@ export function TailwindEditor() {
   const [fontSizeMode, setFontSizeMode] = useState<"preset" | "slider">("preset");
   const [textPaletteFamily, setTextPaletteFamily] = useState<string>("blue");
   const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
+  const [borderPaletteFamily, setBorderPaletteFamily] = useState<string>("blue");
 
   useEffect(() => {
     setRawInput(currentClassName);
@@ -173,6 +174,7 @@ export function TailwindEditor() {
   const fontSizeGroup = FONT_SIZE_SCALE.map((s) => `text-${s}`);
   const themeTextGroup = THEME_COLOR_OPTIONS.map((c) => `text-${c}`);
   const themeBgGroup = THEME_COLOR_OPTIONS.map((c) => `bg-${c}`);
+  const themeBorderGroup = THEME_COLOR_OPTIONS.map((c) => `border-${c}`);
   const fontWeightGroup = FONT_WEIGHT_OPTIONS.map((w) => `font-${w}`);
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
@@ -195,9 +197,9 @@ export function TailwindEditor() {
 
   // Apply a color: clears palette and theme colors for the given effective prefix
   const applyColor = (effectivePrefix: string, colorCls: string) => {
-    const basePrefix = effectivePrefix.replace("hover:", "") as "text" | "bg";
+    const basePrefix = effectivePrefix.replace("hover:", "") as "text" | "bg" | "border";
     const themeGroup = THEME_COLOR_OPTIONS.map((c) => `${effectivePrefix}-${c}`);
-    const baseThemeGroup = basePrefix === "text" ? themeTextGroup : themeBgGroup;
+    const baseThemeGroup = basePrefix === "text" ? themeTextGroup : basePrefix === "bg" ? themeBgGroup : themeBorderGroup;
     const filtered = classes.filter((c) => {
       if (themeGroup.includes(c)) return false;
       // Also clear base theme colors only when effectivePrefix has no hover
@@ -363,6 +365,17 @@ export function TailwindEditor() {
         onApply={applyColor}
       />
 
+      {/* Border Color: theme + palette */}
+      <ColorSection
+        title="Border Color"
+        prefix="border"
+        activeSet={activeSet}
+        paletteFamily={borderPaletteFamily}
+        onFamilyChange={setBorderPaletteFamily}
+        findPaletteColor={findPaletteColor}
+        onApply={applyColor}
+      />
+
       <TailwindSection title="Font Weight">
         <div className="flex flex-wrap gap-1">
           {FONT_WEIGHT_OPTIONS.map((w) => (
@@ -394,7 +407,7 @@ function ColorSection({
   onApply,
 }: {
   title: string;
-  prefix: "text" | "bg";
+  prefix: "text" | "bg" | "border";
   activeSet: Set<string>;
   paletteFamily: string;
   onFamilyChange: (f: string) => void;
