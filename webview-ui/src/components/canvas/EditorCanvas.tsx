@@ -97,6 +97,8 @@ export function EditorCanvas() {
         isSpaceHeld.current = false;
         isPanning.current = false;
         setCursor("");
+        const content = scrollContentRef.current;
+        if (content) content.style.pointerEvents = "";
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -106,6 +108,11 @@ export function EditorCanvas() {
       window.removeEventListener("keyup", handleKeyUp);
     };
   }, [setCursor]);
+
+  const setContentPointerEvents = useCallback((value: string) => {
+    const el = scrollContentRef.current;
+    if (el) el.style.pointerEvents = value;
+  }, []);
 
   const handlePanMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isSpaceHeld.current) return;
@@ -120,10 +127,12 @@ export function EditorCanvas() {
       scrollTop: container.scrollTop,
     };
     setCursor("grabbing");
-  }, [setCursor]);
+    setContentPointerEvents("none");
+  }, [setCursor, setContentPointerEvents]);
 
   const handlePanMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isPanning.current) return;
+    e.preventDefault();
     const container = scrollContainerRef.current;
     if (!container) return;
     const dx = e.clientX - panStart.current.x;
@@ -136,7 +145,8 @@ export function EditorCanvas() {
     if (!isPanning.current) return;
     isPanning.current = false;
     setCursor(isSpaceHeld.current ? "grab" : "");
-  }, [setCursor]);
+    setContentPointerEvents("");
+  }, [setCursor, setContentPointerEvents]);
 
   useVscodeMessage(
     useCallback(
@@ -192,6 +202,7 @@ export function EditorCanvas() {
           <div
             style={{
               width: viewportWidth * zoom,
+              minHeight: viewportHeight * zoom,
               flexShrink: 0,
             }}
           >
