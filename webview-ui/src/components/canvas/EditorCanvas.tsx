@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Frame, Element } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
@@ -36,7 +36,12 @@ export function EditorCanvas() {
     setZoom,
   } = useEditorStore();
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
+  const isSpaceHeld = useRef(false);
+  const isPanning = useRef(false);
+  const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
+  const [cursorStyle, setCursorStyle] = useState<"default" | "grab" | "grabbing">("default");
 
   const viewportWidth =
     viewportMode === "custom"
@@ -72,6 +77,63 @@ export function EditorCanvas() {
     [zoom, setZoom],
   );
 
+  // Space+Drag panning
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === "Space" && !e.repeat && !isSpaceHeld.current) {
+        const tag = (e.target as HTMLElement)?.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+        e.preventDefault();
+        isSpaceHeld.current = true;
+        if (!isPanning.current) setCursorStyle("grab");
+      }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === "Space") {
+        isSpaceHeld.current = false;
+        isPanning.current = false;
+        setCursorStyle("default");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
+
+  const handlePanMouseDown = useCallback((e: React.MouseEvent) => {
+    if (!isSpaceHeld.current) return;
+    e.preventDefault();
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    isPanning.current = true;
+    panStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      scrollLeft: container.scrollLeft,
+      scrollTop: container.scrollTop,
+    };
+    setCursorStyle("grabbing");
+  }, []);
+
+  const handlePanMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isPanning.current) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+    container.scrollLeft = panStart.current.scrollLeft - dx;
+    container.scrollTop = panStart.current.scrollTop - dy;
+  }, []);
+
+  const handlePanMouseUp = useCallback(() => {
+    if (!isPanning.current) return;
+    isPanning.current = false;
+    setCursorStyle(isSpaceHeld.current ? "grab" : "default");
+  }, []);
+
   useVscodeMessage(
     useCallback(
       (msg) => {
@@ -99,8 +161,14 @@ export function EditorCanvas() {
     <div data-mocker-canvas className="relative flex-1">
       {/* Scrollable canvas area */}
       <div
+        ref={scrollContainerRef}
         className="absolute inset-0 overflow-auto bg-[var(--vscode-editor-background,#1e1e1e)]"
+        style={cursorStyle !== "default" ? { cursor: cursorStyle } : undefined}
         onWheel={handleWheel}
+        onMouseDown={handlePanMouseDown}
+        onMouseMove={handlePanMouseMove}
+        onMouseUp={handlePanMouseUp}
+        onMouseLeave={handlePanMouseUp}
       >
         <div
           ref={scrollContentRef}
