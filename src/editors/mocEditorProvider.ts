@@ -76,30 +76,31 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
       }
     });
 
-    // Track edits we applied ourselves to avoid echoing them back
-    let suppressExternalChange = false;
+    // Track content we last applied to detect save echoes
+    let lastAppliedContent = "";
 
     const changeDocumentSubscription =
       vscode.workspace.onDidChangeTextDocument((e) => {
-        if (e.document.uri.toString() === document.uri.toString()) {
-          if (suppressExternalChange) {
-            suppressExternalChange = false;
-            return;
-          }
-          // On external change, re-parse and send webview-compatible JSON
-          const webviewJson = this.fileToWebviewJson(document.getText());
-          if (webviewJson) {
-            webviewPanel.webview.postMessage({
-              type: "doc:externalChange",
-              payload: { content: webviewJson },
-            });
-          }
+        if (e.document.uri.toString() !== document.uri.toString()) return;
+        if (e.contentChanges.length === 0) return;           // Non-content events
+        const currentText = document.getText();
+        if (currentText === lastAppliedContent) return;       // Echo from our own save
+        // Genuine external change – re-parse and send webview-compatible JSON
+        const webviewJson = this.fileToWebviewJson(currentText);
+        if (webviewJson) {
+          webviewPanel.webview.postMessage({
+            type: "doc:externalChange",
+            payload: { content: webviewJson },
+          });
         }
       });
 
     webviewPanel.webview.onDidReceiveMessage(async (message) => {
       if (message.type === "doc:save") {
-        suppressExternalChange = true;
+        const payload = message.payload as { content: string };
+        if (payload?.content) {
+          lastAppliedContent = this.webviewJsonToFile(payload.content, document.fileName);
+        }
       }
 
       // When the webview React app is ready, send initial data
