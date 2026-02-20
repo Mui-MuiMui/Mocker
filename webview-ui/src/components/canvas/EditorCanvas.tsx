@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Frame, Element } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
@@ -41,7 +41,6 @@ export function EditorCanvas() {
   const isSpaceHeld = useRef(false);
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
-  const [cursorStyle, setCursorStyle] = useState<"default" | "grab" | "grabbing">("default");
 
   const viewportWidth =
     viewportMode === "custom"
@@ -77,7 +76,12 @@ export function EditorCanvas() {
     [zoom, setZoom],
   );
 
-  // Space+Drag panning
+  // Space+Drag panning — all cursor changes via DOM to avoid re-renders
+  const setCursor = useCallback((cursor: string) => {
+    const el = scrollContainerRef.current;
+    if (el) el.style.cursor = cursor;
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !e.repeat && !isSpaceHeld.current) {
@@ -85,14 +89,14 @@ export function EditorCanvas() {
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
         isSpaceHeld.current = true;
-        if (!isPanning.current) setCursorStyle("grab");
+        if (!isPanning.current) setCursor("grab");
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         isSpaceHeld.current = false;
         isPanning.current = false;
-        setCursorStyle("default");
+        setCursor("");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -101,7 +105,7 @@ export function EditorCanvas() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [setCursor]);
 
   const handlePanMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isSpaceHeld.current) return;
@@ -115,8 +119,8 @@ export function EditorCanvas() {
       scrollLeft: container.scrollLeft,
       scrollTop: container.scrollTop,
     };
-    setCursorStyle("grabbing");
-  }, []);
+    setCursor("grabbing");
+  }, [setCursor]);
 
   const handlePanMouseMove = useCallback((e: React.MouseEvent) => {
     if (!isPanning.current) return;
@@ -131,8 +135,8 @@ export function EditorCanvas() {
   const handlePanMouseUp = useCallback(() => {
     if (!isPanning.current) return;
     isPanning.current = false;
-    setCursorStyle(isSpaceHeld.current ? "grab" : "default");
-  }, []);
+    setCursor(isSpaceHeld.current ? "grab" : "");
+  }, [setCursor]);
 
   useVscodeMessage(
     useCallback(
@@ -163,7 +167,6 @@ export function EditorCanvas() {
       <div
         ref={scrollContainerRef}
         className="absolute inset-0 overflow-auto bg-[var(--vscode-editor-background,#1e1e1e)]"
-        style={cursorStyle !== "default" ? { cursor: cursorStyle } : undefined}
         onWheel={handleWheel}
         onMouseDown={handlePanMouseDown}
         onMouseMove={handlePanMouseMove}
