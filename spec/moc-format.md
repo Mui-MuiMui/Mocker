@@ -15,6 +15,7 @@ TSX（TypeScript JSX）形式をベースとし、人間・GUI・AIエージェ�
 - **CSS**: Tailwind CSS v4（ユーティリティファーストCSS）
 - **UIコンポーネント**: shadcn/ui（Radix UI + Tailwind CSSベース）
 - importパス `@/components/ui/*` はshadcn/uiコンポーネントを指す
+- 導入先にTailwind CSSやshadcn/uiがない場合は、導入先の技術スタックで同等の見た目・レイアウトを再現すること
 
 ### 設計原則
 
@@ -68,6 +69,8 @@ TSX（TypeScript JSX）形式をベースとし、人間・GUI・AIエージェ�
  *   CSS: Tailwind CSS v4（ユーティリティファーストCSS）
  *   UIコンポーネント: shadcn/ui（Radix UI + Tailwind CSSベース）
  *   importパス「@/components/ui/*」はshadcn/uiコンポーネントです。
+ *   導入先にTailwind CSSやshadcn/uiがない場合は、
+ *   導入先の技術スタックで同等の見た目・レイアウトを再現してください。
  *
  * SSOT（Single Source of Truth）:
  *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、

@@ -39,6 +39,8 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(" *   CSS: Tailwind CSS v4（ユーティリティファーストCSS）");
   lines.push(" *   UIコンポーネント: shadcn/ui（Radix UI + Tailwind CSSベース）");
   lines.push(" *   importパス「@/components/ui/*」はshadcn/uiコンポーネントです。");
+  lines.push(" *   導入先にTailwind CSSやshadcn/uiがない場合は、");
+  lines.push(" *   導入先の技術スタックで同等の見た目・レイアウトを再現してください。");
   lines.push(" *");
   lines.push(" * SSOT（Single Source of Truth）:");
   lines.push(" *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、");
