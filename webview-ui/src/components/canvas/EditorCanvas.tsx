@@ -82,6 +82,25 @@ export function EditorCanvas() {
     if (el) el.style.cursor = cursor;
   }, []);
 
+  // Capture-phase document listeners to block Craft.js during pan
+  const panHandlers = useRef<{
+    move: ((e: MouseEvent) => void) | null;
+    up: ((e: MouseEvent) => void) | null;
+  }>({ move: null, up: null });
+
+  const stopPan = useCallback(() => {
+    isPanning.current = false;
+    setCursor(isSpaceHeld.current ? "grab" : "");
+    if (panHandlers.current.move) {
+      document.removeEventListener("mousemove", panHandlers.current.move, true);
+      panHandlers.current.move = null;
+    }
+    if (panHandlers.current.up) {
+      document.removeEventListener("mouseup", panHandlers.current.up, true);
+      panHandlers.current.up = null;
+    }
+  }, [setCursor]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.code === "Space" && !e.repeat && !isSpaceHeld.current) {
@@ -95,10 +114,8 @@ export function EditorCanvas() {
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.code === "Space") {
         isSpaceHeld.current = false;
-        isPanning.current = false;
+        if (isPanning.current) stopPan();
         setCursor("");
-        const content = scrollContentRef.current;
-        if (content) content.style.pointerEvents = "";
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -106,17 +123,14 @@ export function EditorCanvas() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      stopPan();
     };
-  }, [setCursor]);
-
-  const setContentPointerEvents = useCallback((value: string) => {
-    const el = scrollContentRef.current;
-    if (el) el.style.pointerEvents = value;
-  }, []);
+  }, [setCursor, stopPan]);
 
   const handlePanMouseDown = useCallback((e: React.MouseEvent) => {
     if (!isSpaceHeld.current) return;
     e.preventDefault();
+    e.stopPropagation();
     const container = scrollContainerRef.current;
     if (!container) return;
     isPanning.current = true;
@@ -127,26 +141,23 @@ export function EditorCanvas() {
       scrollTop: container.scrollTop,
     };
     setCursor("grabbing");
-    setContentPointerEvents("none");
-  }, [setCursor, setContentPointerEvents]);
 
-  const handlePanMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!isPanning.current) return;
-    e.preventDefault();
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const dx = e.clientX - panStart.current.x;
-    const dy = e.clientY - panStart.current.y;
-    container.scrollLeft = panStart.current.scrollLeft - dx;
-    container.scrollTop = panStart.current.scrollTop - dy;
-  }, []);
-
-  const handlePanMouseUp = useCallback(() => {
-    if (!isPanning.current) return;
-    isPanning.current = false;
-    setCursor(isSpaceHeld.current ? "grab" : "");
-    setContentPointerEvents("");
-  }, [setCursor, setContentPointerEvents]);
+    const onMove = (ev: MouseEvent) => {
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      const dx = ev.clientX - panStart.current.x;
+      const dy = ev.clientY - panStart.current.y;
+      container.scrollLeft = panStart.current.scrollLeft - dx;
+      container.scrollTop = panStart.current.scrollTop - dy;
+    };
+    const onUp = (ev: MouseEvent) => {
+      ev.stopImmediatePropagation();
+      stopPan();
+    };
+    panHandlers.current = { move: onMove, up: onUp };
+    document.addEventListener("mousemove", onMove, true);
+    document.addEventListener("mouseup", onUp, true);
+  }, [setCursor, stopPan]);
 
   useVscodeMessage(
     useCallback(
@@ -179,9 +190,6 @@ export function EditorCanvas() {
         className="absolute inset-0 overflow-auto bg-[var(--vscode-editor-background,#1e1e1e)]"
         onWheel={handleWheel}
         onMouseDown={handlePanMouseDown}
-        onMouseMove={handlePanMouseMove}
-        onMouseUp={handlePanMouseUp}
-        onMouseLeave={handlePanMouseUp}
       >
         <div
           ref={scrollContentRef}
