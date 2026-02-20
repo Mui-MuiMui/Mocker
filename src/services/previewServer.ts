@@ -158,9 +158,10 @@ export async function startPreviewServer(
       color: var(--foreground);
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style type="text/tailwindcss">
     @import "tailwindcss";
-    @theme inline {
+    @theme {
       --color-background: var(--background);
       --color-foreground: var(--foreground);
       --color-card: var(--card);
@@ -186,7 +187,6 @@ export async function startPreviewServer(
       --radius-xl: calc(var(--radius) + 4px);
     }
   </style>
-  <script type="module" src="https://esm.sh/@tailwindcss/browser@4"></script>
 </head>
 <body${darkClass}>
   ${errorHtml}
