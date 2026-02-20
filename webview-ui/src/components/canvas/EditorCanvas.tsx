@@ -101,6 +101,31 @@ export function EditorCanvas() {
     }
   }, [setCursor]);
 
+  // Temporarily expand scrollable area so scrollTop/scrollLeft have room
+  const expandContent = useCallback(() => {
+    const content = scrollContentRef.current;
+    const container = scrollContainerRef.current;
+    if (!content || !container) return;
+    const h = container.clientHeight;
+    // Add large top padding & matching minHeight so we can scroll in both directions
+    content.style.paddingTop = `${h}px`;
+    content.style.minHeight = `${h * 3}px`;
+    // Shift scroll to keep viewport visually in place
+    container.scrollTop += h - 80; // compensate for old 80px → new h padding
+  }, []);
+
+  const shrinkContent = useCallback(() => {
+    const content = scrollContentRef.current;
+    const container = scrollContainerRef.current;
+    if (!content || !container) return;
+    const h = container.clientHeight;
+    const prevScrollTop = container.scrollTop;
+    content.style.paddingTop = "";
+    content.style.minHeight = "";
+    // Shift scroll back; browser clamps to valid range
+    container.scrollTop = prevScrollTop - (h - 80);
+  }, []);
+
   // All pan events use native capture-phase listeners to intercept
   // BEFORE Craft.js (which uses React delegation / document listeners)
   useEffect(() => {
@@ -142,7 +167,11 @@ export function EditorCanvas() {
         const tag = (e.target as HTMLElement)?.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
         e.preventDefault();
+        e.stopImmediatePropagation();
         isSpaceHeld.current = true;
+        // Block browser page-down & expand scrollable area
+        container.style.overflow = "hidden";
+        expandContent();
         if (!isPanning.current) setCursor("grab");
       }
     };
@@ -150,20 +179,22 @@ export function EditorCanvas() {
       if (e.code === "Space") {
         isSpaceHeld.current = false;
         if (isPanning.current) stopPan();
+        shrinkContent();
+        container.style.overflow = "";
         setCursor("");
       }
     };
 
     container.addEventListener("mousedown", handleMouseDown, true);
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown, true);
+    window.addEventListener("keyup", handleKeyUp, true);
     return () => {
       container.removeEventListener("mousedown", handleMouseDown, true);
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown, true);
+      window.removeEventListener("keyup", handleKeyUp, true);
       stopPan();
     };
-  }, [setCursor, stopPan]);
+  }, [setCursor, stopPan, expandContent, shrinkContent]);
 
   useVscodeMessage(
     useCallback(
