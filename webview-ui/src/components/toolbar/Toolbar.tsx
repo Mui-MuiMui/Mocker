@@ -17,6 +17,7 @@ import {
   Settings2,
   Circle,
   ExternalLink,
+  Camera,
 } from "lucide-react";
 
 export function Toolbar() {
@@ -74,6 +75,10 @@ export function Toolbar() {
 
   const handleBrowserPreview = useCallback(() => {
     getVsCodeApi().postMessage({ type: "command:openBrowserPreview" });
+  }, []);
+
+  const handleExportImage = useCallback(() => {
+    getVsCodeApi().postMessage({ type: "command:exportImage" });
   }, []);
 
   // Close popover on click outside
@@ -226,6 +231,12 @@ export function Toolbar() {
         title={t("toolbar.browserPreview")}
       >
         <ExternalLink size={16} />
+      </ToolbarButton>
+      <ToolbarButton
+        onClick={handleExportImage}
+        title={t("toolbar.exportImage")}
+      >
+        <Camera size={16} />
       </ToolbarButton>
 
       <ConfirmDialog

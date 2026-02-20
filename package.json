@@ -72,6 +72,11 @@
         "command": "mocker.openBrowserPreview",
         "title": "%command.openBrowserPreview%",
         "category": "Mocker"
+      },
+      {
+        "command": "mocker.exportImage",
+        "title": "%command.exportImage%",
+        "category": "Mocker"
       }
     ],
     "languages": [

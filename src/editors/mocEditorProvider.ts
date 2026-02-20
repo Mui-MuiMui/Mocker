@@ -327,6 +327,42 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       }
 
+      case "command:exportImage": {
+        webviewPanel.webview.postMessage({ type: "capture:start" });
+        break;
+      }
+
+      case "capture:complete": {
+        const { dataUrl } = message.payload as { dataUrl: string };
+
+        const defaultUri = vscode.Uri.file(
+          document.fileName.replace(/\.moc$/, ".png"),
+        );
+
+        const saveUri = await vscode.window.showSaveDialog({
+          defaultUri,
+          filters: { "PNG Image": ["png"] },
+        });
+
+        if (saveUri) {
+          const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+          const buffer = Buffer.from(base64, "base64");
+          await vscode.workspace.fs.writeFile(saveUri, buffer);
+          vscode.window.showInformationMessage(
+            vscode.l10n.t("Image saved: {0}", saveUri.fsPath),
+          );
+        }
+        break;
+      }
+
+      case "capture:error": {
+        const { error } = message.payload as { error: string };
+        vscode.window.showErrorMessage(
+          vscode.l10n.t("Image capture failed: {0}", error),
+        );
+        break;
+      }
+
       case "editor:ready":
         break;
     }

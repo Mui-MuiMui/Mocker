@@ -14,6 +14,7 @@
   "toolbar.viewportCustom": "Custom",
   "toolbar.unsaved": "Unsaved changes",
   "toolbar.browserPreview": "Open in Browser",
+  "toolbar.exportImage": "Export as Image",
   "palette.title": "Components",
   "palette.shadcn": "shadcn/ui",
   "palette.html": "HTML Elements",

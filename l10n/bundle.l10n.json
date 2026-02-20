@@ -7,6 +7,7 @@
   "command.toggleTheme": "Toggle Preview Theme",
   "command.exportFlatTsx": "Export Flat TSX",
   "command.openBrowserPreview": "Open in Browser",
+  "command.exportImage": "Export as PNG",
   "template.empty": "Empty Page",
   "template.loginForm": "Login Form",
   "template.dashboard": "Dashboard",

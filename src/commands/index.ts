@@ -114,6 +114,12 @@ export function registerCommands(context: vscode.ExtensionContext): void {
       await vscode.env.openExternal(vscode.Uri.parse(url));
     }),
 
+    vscode.commands.registerCommand("mocker.exportImage", () => {
+      if (!MocEditorProvider.postToWebview({ type: "capture:start" })) {
+        vscode.window.showWarningMessage("No active Mocker editor");
+      }
+    }),
+
     vscode.commands.registerCommand("mocker.exportFlatTsx", async () => {
       const editor = vscode.window.activeTextEditor;
       const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
