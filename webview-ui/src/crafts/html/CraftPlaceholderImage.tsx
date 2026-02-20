@@ -6,6 +6,7 @@ interface CraftPlaceholderImageProps {
   alt?: string;
   width?: string;
   height?: string;
+  keepAspectRatio?: boolean;
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export const CraftPlaceholderImage: UserComponent<CraftPlaceholderImageProps> = 
   alt = "Placeholder",
   width = "auto",
   height = "auto",
+  keepAspectRatio = false,
   className = "",
 }) => {
   const {
@@ -47,6 +49,7 @@ CraftPlaceholderImage.craft = {
     alt: "Placeholder",
     width: "auto",
     height: "auto",
+    keepAspectRatio: false,
     className: "",
   },
   rules: {

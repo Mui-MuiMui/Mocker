@@ -124,7 +124,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftBadge: { variant: "default", text: "Badge" },
   CraftSeparator: { orientation: "horizontal" },
   CraftText: { tag: "p", text: "Text" },
-  CraftPlaceholderImage: { alt: "Placeholder" },
+  CraftPlaceholderImage: { alt: "Placeholder", keepAspectRatio: false },
   CraftImage: { alt: "", objectFit: "cover", keepAspectRatio: false },
   CraftLabel: { text: "Label" },
   CraftCard: { title: "Card Title", description: "" },
