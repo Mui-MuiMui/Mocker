@@ -4,3 +4,4 @@ dist/
 *.vsix
 .vscode-test/
 PLAN.md
+moc_test/

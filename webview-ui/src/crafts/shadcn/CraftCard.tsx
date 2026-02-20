@@ -35,9 +35,9 @@ export const CraftCard: UserComponent<CraftCardProps> = ({
     >
       {(title || description) && (
         <div className="flex flex-col space-y-1.5 p-6">
-          {title && <h3 className="font-semibold leading-none tracking-tight">{title}</h3>}
+          {title && <h3 className="font-semibold leading-none tracking-tight" style={{ whiteSpace: "pre-line" }}>{title}</h3>}
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground" style={{ whiteSpace: "pre-line" }}>{description}</p>
           )}
         </div>
       )}

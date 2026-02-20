@@ -17,7 +17,7 @@ const SAVE_DEBOUNCE_MS = 800;
 
 export default function App() {
   const { i18n } = useTranslation();
-  const { setDocumentContent, setFileName, setThemeMode, setIsDirty } =
+  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode } =
     useEditorStore();
 
   // --- Save system ---
@@ -26,11 +26,20 @@ export default function App() {
   const loadingRef = useRef(false);
   const lastCraftStateRef = useRef<string>("");
 
-  /** Build combined save payload (craftState + memos) */
+  /** Build combined save payload (craftState + memos + canvas size) */
   const buildSaveContent = useCallback((craftStateStr: string) => {
-    const memos = useEditorStore.getState().memos;
+    const s = useEditorStore.getState();
     const craftState = JSON.parse(craftStateStr);
-    return JSON.stringify({ version: 1, craftState, memos });
+    return JSON.stringify({
+      version: 1,
+      craftState,
+      memos: s.memos,
+      viewport: {
+        mode: s.viewportMode,
+        width: s.customViewportWidth,
+        height: s.customViewportHeight,
+      },
+    });
   }, []);
 
   const doSave = useCallback(
@@ -94,6 +103,19 @@ export default function App() {
     scheduleSave();
   }, [memos, scheduleSave]);
 
+  // Watch canvas size changes and trigger save
+  const viewportMode = useEditorStore((s) => s.viewportMode);
+  const customViewportWidth = useEditorStore((s) => s.customViewportWidth);
+  const customViewportHeight = useEditorStore((s) => s.customViewportHeight);
+  const viewportKey = `${viewportMode}:${customViewportWidth}:${customViewportHeight}`;
+  const prevViewportKeyRef = useRef(viewportKey);
+  useEffect(() => {
+    if (loadingRef.current) return;
+    if (prevViewportKeyRef.current === viewportKey) return;
+    prevViewportKeyRef.current = viewportKey;
+    scheduleSave();
+  }, [viewportKey, scheduleSave]);
+
   // Ctrl+S immediate save
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -139,9 +161,19 @@ export default function App() {
           i18n.changeLanguage(lang);
           break;
         }
+        case "command:toggleTheme": {
+          const newTheme = useEditorStore.getState().themeMode === "light" ? "dark" : "light";
+          setThemeMode(newTheme);
+          break;
+        }
+        case "command:switchLayoutMode": {
+          const newLayout = useEditorStore.getState().layoutMode === "flow" ? "absolute" : "flow";
+          setLayoutMode(newLayout);
+          break;
+        }
       }
     },
-    [setDocumentContent, setFileName, setThemeMode, i18n],
+    [setDocumentContent, setFileName, setThemeMode, setLayoutMode, i18n],
   );
 
   useVscodeMessage(handleMessage);

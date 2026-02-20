@@ -1,10 +1,9 @@
 export interface MocMetadata {
   version: string;
-  id: string;
   intent: string;
   theme: "light" | "dark";
   layout: "flow" | "absolute";
-  viewport: "desktop" | "tablet" | "mobile";
+  viewport: string;
   memos: MocMemo[];
   craftState?: string;
   selection?: SelectionContext;
@@ -27,6 +26,11 @@ export interface MocDocument {
 export interface MocEditorData {
   craftState: Record<string, unknown>;
   memos: MocEditorMemo[];
+  viewport?: {
+    mode: string;
+    width: number;
+    height: number;
+  };
 }
 
 /** Full memo object as used by the GUI editor (richer than MocMemo) */

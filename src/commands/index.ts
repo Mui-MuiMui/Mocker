@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { createMocFile } from "./createMocFile.js";
 import { generateFlatTsx } from "../services/flatExportService.js";
+import { MocEditorProvider } from "../editors/mocEditorProvider.js";
 
 export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -49,17 +50,15 @@ export function registerCommands(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand("mocker.switchLayoutMode", () => {
-      // Handled by webview internally
-      vscode.window.showInformationMessage(
-        vscode.l10n.t("command.switchLayoutMode"),
-      );
+      if (!MocEditorProvider.postToWebview({ type: "command:switchLayoutMode" })) {
+        vscode.window.showWarningMessage("No active Mocker editor");
+      }
     }),
 
     vscode.commands.registerCommand("mocker.toggleTheme", () => {
-      // Handled by webview internally
-      vscode.window.showInformationMessage(
-        vscode.l10n.t("command.toggleTheme"),
-      );
+      if (!MocEditorProvider.postToWebview({ type: "command:toggleTheme" })) {
+        vscode.window.showWarningMessage("No active Mocker editor");
+      }
     }),
 
     vscode.commands.registerCommand("mocker.exportFlatTsx", async () => {

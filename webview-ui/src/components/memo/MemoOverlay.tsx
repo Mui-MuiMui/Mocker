@@ -1,7 +1,7 @@
-import { useState, useRef, type RefObject } from "react";
+import { useState, useRef, useEffect, useCallback, type RefObject } from "react";
 import { useEditor } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
-import { StickyNote, Plus, X, ChevronDown, ChevronRight, Link2, Unlink } from "lucide-react";
+import { StickyNote, Plus, X, ChevronDown, ChevronRight, Link2, Unlink, GripVertical } from "lucide-react";
 import { useEditorStore, type Memo, type MemoColor } from "../../stores/editorStore";
 
 const MEMO_COLORS = [
@@ -94,8 +94,8 @@ function MemoSticker({
 
   const colors = getColorScheme(memo.color);
 
-  // Get linked node display name
-  const linkedNodeName = (() => {
+  // Get linked node display label (e.g. "Button[qqU5A87koR]")
+  const linkedNodeLabel = (() => {
     if (!memo.targetNodeId) return null;
     try {
       const node = query.node(memo.targetNodeId).get();
@@ -106,15 +106,18 @@ function MemoSticker({
         (typeof node.data.type === "string"
           ? node.data.type
           : node.data.type?.name) ||
-        memo.targetNodeId;
-      return String(displayName);
+        "Element";
+      return `${String(displayName)}[${memo.targetNodeId}]`;
     } catch {
       return null;
     }
   })();
 
+  const positionRef = useRef(position);
+  positionRef.current = position;
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest("button, input, textarea")) return;
+    e.preventDefault();
     const container = scrollContentRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
@@ -125,23 +128,34 @@ function MemoSticker({
     };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const container = scrollContentRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    setPosition({
-      x: e.clientX - rect.left - dragOffsetRef.current.x,
-      y: e.clientY - rect.top - dragOffsetRef.current.y,
-    });
-  };
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const container = scrollContentRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const newPos = {
+        x: e.clientX - rect.left - dragOffsetRef.current.x,
+        y: e.clientY - rect.top - dragOffsetRef.current.y,
+      };
+      setPosition(newPos);
+    },
+    [scrollContentRef],
+  );
 
-  const handleMouseUp = () => {
-    if (isDragging) {
-      onUpdate({ x: position.x, y: position.y });
-    }
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+    onUpdate({ x: positionRef.current.x, y: positionRef.current.y });
+  }, [onUpdate]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   const toggleCollapse = () => {
     onUpdate({ collapsed: !memo.collapsed });
@@ -159,17 +173,21 @@ function MemoSticker({
 
   return (
     <div
-      className={`absolute z-40 w-56 rounded shadow-lg ${colors.bg}`}
+      className={`absolute z-40 w-56 rounded shadow-lg ${colors.bg} ${isDragging ? "select-none" : ""}`}
       style={{ left: position.x, top: position.y }}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
     >
       {/* Header */}
       <div
-        className={`flex cursor-move items-center gap-1 rounded-t px-2 py-1.5 ${colors.header}`}
-        onMouseDown={handleMouseDown}
+        className={`flex items-center gap-1 rounded-t px-1 py-1.5 ${colors.header}`}
       >
+        {/* Drag handle */}
+        <div
+          className={`shrink-0 cursor-grab active:cursor-grabbing ${colors.headerText} opacity-50 hover:opacity-100`}
+          onMouseDown={handleMouseDown}
+        >
+          <GripVertical size={14} />
+        </div>
+
         <button
           type="button"
           onClick={toggleCollapse}
@@ -239,10 +257,10 @@ function MemoSticker({
       </div>
 
       {/* Linked element indicator */}
-      {linkedNodeName && (
+      {linkedNodeLabel && (
         <div className={`flex items-center gap-1 px-2 py-0.5 text-[10px] ${colors.text} opacity-70 border-b ${colors.border}`}>
           <Link2 size={10} />
-          <span className="truncate">{linkedNodeName}</span>
+          <span className="truncate font-mono">{linkedNodeLabel}</span>
         </div>
       )}
 

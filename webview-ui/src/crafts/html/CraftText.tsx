@@ -28,7 +28,7 @@ export const CraftText: UserComponent<CraftTextProps> = ({
         if (ref) connect(drag(ref));
       }}
       className={cn(className)}
-      style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
+      style={{ whiteSpace: "pre-line", width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       {text}
     </Tag>
