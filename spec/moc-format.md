@@ -10,6 +10,12 @@
 `.moc` ファイルは、VSCode拡張「Mocker」で作成されるGUIモックアップの定義ファイルです。
 TSX（TypeScript JSX）形式をベースとし、人間・GUI・AIエージェントが協調して開発を行うための統合データ形式です。
 
+### 技術スタック
+
+- **CSS**: Tailwind CSS v4（ユーティリティファーストCSS）
+- **UIコンポーネント**: shadcn/ui（Radix UI + Tailwind CSSベース）
+- importパス `@/components/ui/*` はshadcn/uiコンポーネントを指す
+
 ### 設計原則
 
 - **人間可読性**: TSX部分はそのままReactコンポーネントとして読解可能
@@ -57,6 +63,11 @@ TSX（TypeScript JSX）形式をベースとし、人間・GUI・AIエージェ�
  *   メタデータと付箋メモをJSDocコメント内に、
  *   エディタ内部状態をテンプレートリテラル変数に格納しています。
  *   TSX部分はそのままReactコンポーネントとして読解可能です。
+ *
+ * 技術スタック:
+ *   CSS: Tailwind CSS v4（ユーティリティファーストCSS）
+ *   UIコンポーネント: shadcn/ui（Radix UI + Tailwind CSSベース）
+ *   importパス「@/components/ui/*」はshadcn/uiコンポーネントです。
  *
  * SSOT（Single Source of Truth）:
  *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、

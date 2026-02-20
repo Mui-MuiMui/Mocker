@@ -10,6 +10,11 @@ export function v4Template(componentName: string): string {
  *   エディタ内部状態をテンプレートリテラル変数に格納しています。
  *   TSX部分はそのままReactコンポーネントとして読解可能です。
  *
+ * 技術スタック:
+ *   CSS: Tailwind CSS v4（ユーティリティファーストCSS）
+ *   UIコンポーネント: shadcn/ui（Radix UI + Tailwind CSSベース）
+ *   importパス「@/components/ui/*」はshadcn/uiコンポーネントです。
+ *
  * SSOT（Single Source of Truth）:
  *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、
  *   TSXコードよりcraftStateが正となります。

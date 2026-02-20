@@ -35,6 +35,11 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(" *   エディタ内部状態をテンプレートリテラル変数に格納しています。");
   lines.push(" *   TSX部分はそのままReactコンポーネントとして読解可能です。");
   lines.push(" *");
+  lines.push(" * 技術スタック:");
+  lines.push(" *   CSS: Tailwind CSS v4（ユーティリティファーストCSS）");
+  lines.push(" *   UIコンポーネント: shadcn/ui（Radix UI + Tailwind CSSベース）");
+  lines.push(" *   importパス「@/components/ui/*」はshadcn/uiコンポーネントです。");
+  lines.push(" *");
   lines.push(" * SSOT（Single Source of Truth）:");
   lines.push(" *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、");
   lines.push(" *   TSXコードよりcraftStateが正となります。");
