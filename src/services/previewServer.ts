@@ -3,7 +3,7 @@ import * as path from "path";
 import * as crypto from "crypto";
 import * as vscode from "vscode";
 import { compileTsx } from "./esbuildService.js";
-import { parseMocFile } from "./mocParser.js";
+import { parseMocFile, extractComponentName } from "./mocParser.js";
 import { craftStateToTsx } from "./craftToTsx.js";
 
 interface PreviewSession {
@@ -65,9 +65,24 @@ export async function startPreviewServer(
         await compileLinkedMocFiles(craftState);
       }
 
-      let fullTsx = mocDoc.imports
-        ? `${mocDoc.imports}\n${mocDoc.tsxSource}`
-        : mocDoc.tsxSource;
+      // Regenerate TSX from craftState (SSOT) to ensure latest props are reflected
+      let fullTsx: string;
+      if (craftState) {
+        const componentName = extractComponentName(mocDoc.tsxSource) || "MockPage";
+        const memos = mocDoc.editorData?.memos;
+        const generated = craftStateToTsx(
+          craftState as Record<string, Record<string, unknown>>,
+          componentName,
+          memos,
+        );
+        fullTsx = generated.imports
+          ? `${generated.imports}\n${generated.tsxSource}`
+          : generated.tsxSource;
+      } else {
+        fullTsx = mocDoc.imports
+          ? `${mocDoc.imports}\n${mocDoc.tsxSource}`
+          : mocDoc.tsxSource;
+      }
 
       // Inject linked component imports and replace comment placeholders
       fullTsx = injectLinkedComponents(fullTsx);
