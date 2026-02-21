@@ -723,20 +723,16 @@ const FALLBACK_SOURCES: Record<string, string> = {
 
   // --- Overlay wrapper components (context-based for proper state sharing) ---
 
-  tooltip: `import { createContext, useContext, useState, isValidElement, cloneElement } from "react";
+  tooltip: `import { createContext, useContext, useState } from "react";
 const Ctx = createContext<any>(null);
 export function TooltipProvider(props: any) { return <>{props.children}</>; }
 export function Tooltip(props: any) {
   const [show, setShow] = useState(false);
-  return <Ctx.Provider value={{ show, setShow }}><span className="relative inline-block">{props.children}</span></Ctx.Provider>;
+  return <Ctx.Provider value={{ show, setShow }}><span className="relative inline-block w-fit">{props.children}</span></Ctx.Provider>;
 }
 export function TooltipTrigger(props: any) {
   const ctx = useContext(Ctx);
-  const handlers = { onMouseEnter: () => ctx?.setShow(true), onMouseLeave: () => ctx?.setShow(false) };
-  if (props.asChild && isValidElement(props.children)) {
-    return cloneElement(props.children as any, handlers);
-  }
-  return <span {...handlers} style={{ display: "inline-block" }}>{props.children}</span>;
+  return <span onMouseEnter={() => ctx?.setShow(true)} onMouseLeave={() => ctx?.setShow(false)} style={{ display: "inline-block" }}>{props.children}</span>;
 }
 export function TooltipContent(props: any) {
   const ctx = useContext(Ctx);
