@@ -115,20 +115,18 @@ function setTailwindClass(className: string, options: string[], newValue: string
 
 // --- Property grouping ---
 
-type PropGroup = "basic" | "overlay" | "interaction" | "font" | "color" | "size" | "layout" | "other";
+type PropGroup = "basic" | "overlay" | "interaction" | "size" | "layout" | "other";
 
 const GROUP_LABELS: Record<PropGroup, string> = {
   basic: "Basic",
   overlay: "Overlay",
   interaction: "Interaction",
-  font: "Font",
-  color: "Color",
   size: "Size",
   layout: "Layout",
   other: "Other",
 };
 
-const GROUP_ORDER: PropGroup[] = ["basic", "overlay", "interaction", "font", "color", "size", "layout", "other"];
+const GROUP_ORDER: PropGroup[] = ["basic", "overlay", "interaction", "size", "layout", "other"];
 
 const PROP_TO_GROUP: Record<string, PropGroup> = {
   // Basic
@@ -154,8 +152,6 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   alignItems: "layout", gap: "layout", gridCols: "layout",
   orientation: "layout", objectFit: "layout", keepAspectRatio: "layout",
   tag: "layout",
-  // Other
-  className: "other",
 };
 
 function getPropGroup(key: string): PropGroup {
@@ -226,7 +222,7 @@ export function PropEditor() {
 
   // Group properties
   const propEntries = Object.entries(selectedProps).filter(
-    ([key]) => key !== "children",
+    ([key]) => key !== "children" && key !== "className",
   );
 
   const grouped = new Map<PropGroup, [string, unknown][]>();
@@ -236,19 +232,13 @@ export function PropEditor() {
     grouped.get(group)!.push(entry);
   }
 
-  // Tailwind class editor groups for this component
-  const twGroupsForComponent = COMPONENT_TW_GROUPS[componentName] || [];
-  const twGroupItems: Partial<Record<PropGroup, TailwindClassItem[]>> = {
-    font: TAILWIND_FONT_ITEMS,
-    color: TAILWIND_COLOR_ITEMS,
-  };
-
-  // Filter to groups that have at least one property or Tailwind items
-  const activeGroups = GROUP_ORDER.filter(
-    (g) => grouped.has(g) || twGroupsForComponent.includes(g),
-  );
+  // Filter to groups that have at least one property
+  const activeGroups = GROUP_ORDER.filter((g) => grouped.has(g));
   // If only 1 group, don't show group headers (flat layout)
   const showGroupHeaders = activeGroups.length > 1;
+
+  // Tailwind class editor groups for this component
+  const twGroupsForComponent = COMPONENT_TW_GROUPS[componentName] || [];
 
   function renderTailwindEditor(item: TailwindClassItem) {
     const currentClassName = String(selectedProps?.className ?? "");
@@ -415,9 +405,7 @@ export function PropEditor() {
       </div>
 
       {activeGroups.map((group) => {
-        const entries = grouped.get(group);
-        const twItems = twGroupsForComponent.includes(group) ? twGroupItems[group] : null;
-        const entryCount = (entries?.length || 0) + (twItems?.length || 0);
+        const entries = grouped.get(group)!;
         const isCollapsed = collapsedGroups.has(group);
 
         return (
@@ -430,18 +418,77 @@ export function PropEditor() {
               >
                 <span className="text-[10px]">{isCollapsed ? "\u25b6" : "\u25bc"}</span>
                 {GROUP_LABELS[group]}
-                <span className="ml-auto text-[10px] font-normal opacity-60">{entryCount}</span>
+                <span className="ml-auto text-[10px] font-normal opacity-60">{entries.length}</span>
               </button>
             )}
             {!isCollapsed && (
               <div className="flex flex-col gap-2">
-                {entries?.map(([key, value]) => renderProp(key, value))}
-                {twItems?.map((item) => renderTailwindEditor(item))}
+                {entries.map(([key, value]) => renderProp(key, value))}
               </div>
             )}
           </div>
         );
       })}
+
+      {/* TailwindCSS section — className editing with categorized dropdowns */}
+      {twGroupsForComponent.length > 0 && (
+        <>
+          <div className="mt-1 border-t border-[var(--vscode-panel-border,#444)] pt-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--vscode-descriptionForeground,#888)]">
+            TailwindCSS
+          </div>
+
+          {twGroupsForComponent.includes("font") && (
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleGroup("tw-font")}
+                className="flex w-full items-center gap-1 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--vscode-descriptionForeground,#888)] hover:text-[var(--vscode-foreground,#ccc)]"
+              >
+                <span className="text-[10px]">{collapsedGroups.has("tw-font") ? "\u25b6" : "\u25bc"}</span>
+                Font
+                <span className="ml-auto text-[10px] font-normal opacity-60">{TAILWIND_FONT_ITEMS.length}</span>
+              </button>
+              {!collapsedGroups.has("tw-font") && (
+                <div className="flex flex-col gap-2">
+                  {TAILWIND_FONT_ITEMS.map((item) => renderTailwindEditor(item))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {twGroupsForComponent.includes("color") && (
+            <div>
+              <button
+                type="button"
+                onClick={() => toggleGroup("tw-color")}
+                className="flex w-full items-center gap-1 py-1 text-[11px] font-semibold uppercase tracking-wider text-[var(--vscode-descriptionForeground,#888)] hover:text-[var(--vscode-foreground,#ccc)]"
+              >
+                <span className="text-[10px]">{collapsedGroups.has("tw-color") ? "\u25b6" : "\u25bc"}</span>
+                Color
+                <span className="ml-auto text-[10px] font-normal opacity-60">{TAILWIND_COLOR_ITEMS.length}</span>
+              </button>
+              {!collapsedGroups.has("tw-color") && (
+                <div className="flex flex-col gap-2">
+                  {TAILWIND_COLOR_ITEMS.map((item) => renderTailwindEditor(item))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+              className
+            </label>
+            <input
+              type="text"
+              value={String(selectedProps.className ?? "")}
+              onChange={(e) => handlePropChange("className", e.target.value)}
+              className={`${INPUT_CLASS} w-full`}
+              placeholder="Tailwind classes..."
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }
