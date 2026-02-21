@@ -23,11 +23,6 @@ interface CraftBadgeProps {
   text?: string;
   variant?: "default" | "secondary" | "destructive" | "outline";
   tooltipText?: string;
-  fontFamily?: string;
-  fontWeight?: string;
-  fontSize?: string;
-  textColor?: string;
-  bgColor?: string;
   width?: string;
   height?: string;
   className?: string;
@@ -37,11 +32,6 @@ export const CraftBadge: UserComponent<CraftBadgeProps> = ({
   text = "Badge",
   variant = "default",
   tooltipText = "",
-  fontFamily = "",
-  fontWeight = "",
-  fontSize = "",
-  textColor = "",
-  bgColor = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -55,7 +45,7 @@ export const CraftBadge: UserComponent<CraftBadgeProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn(badgeVariants({ variant }), fontFamily, fontWeight, fontSize, textColor, bgColor, className)}
+      className={cn(badgeVariants({ variant }), className)}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       {text}
@@ -69,11 +59,6 @@ CraftBadge.craft = {
     text: "Badge",
     variant: "default",
     tooltipText: "",
-    fontFamily: "",
-    fontWeight: "",
-    fontSize: "",
-    textColor: "",
-    bgColor: "",
     width: "auto",
     height: "auto",
     className: "",

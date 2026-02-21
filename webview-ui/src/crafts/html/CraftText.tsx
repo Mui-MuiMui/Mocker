@@ -4,11 +4,6 @@ import { cn } from "../../utils/cn";
 interface CraftTextProps {
   text: string;
   tag?: "p" | "span" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
-  fontFamily?: string;
-  fontWeight?: string;
-  fontSize?: string;
-  textColor?: string;
-  bgColor?: string;
   width?: string;
   height?: string;
   className?: string;
@@ -17,11 +12,6 @@ interface CraftTextProps {
 export const CraftText: UserComponent<CraftTextProps> = ({
   text = "Text",
   tag = "p",
-  fontFamily = "",
-  fontWeight = "",
-  fontSize = "",
-  textColor = "",
-  bgColor = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -37,7 +27,7 @@ export const CraftText: UserComponent<CraftTextProps> = ({
       ref={(ref: HTMLElement | null) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn(fontFamily, fontWeight, fontSize, textColor, bgColor, className)}
+      className={cn(className)}
       style={{ whiteSpace: "pre-line", width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       {text}
@@ -50,11 +40,6 @@ CraftText.craft = {
   props: {
     text: "Text",
     tag: "p",
-    fontFamily: "",
-    fontWeight: "",
-    fontSize: "",
-    textColor: "",
-    bgColor: "",
     width: "auto",
     height: "auto",
     className: "",

@@ -16,11 +16,6 @@ const PROP_OPTIONS: Record<string, string[]> = {
   objectFit: ["cover", "contain", "fill", "none", "scale-down"],
   overlayType: ["none", "dialog", "alert-dialog", "sheet", "drawer", "popover", "dropdown-menu"],
   sheetSide: ["top", "right", "bottom", "left"],
-  fontFamily: ["", "font-sans", "font-serif", "font-mono"],
-  fontWeight: ["", "font-thin", "font-light", "font-normal", "font-medium", "font-semibold", "font-bold", "font-extrabold"],
-  fontSize: ["", "text-xs", "text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl"],
-  textColor: ["", "text-foreground", "text-primary", "text-primary-foreground", "text-secondary-foreground", "text-muted-foreground", "text-destructive", "text-accent-foreground"],
-  bgColor: ["", "bg-background", "bg-primary", "bg-secondary", "bg-destructive", "bg-accent", "bg-muted", "bg-card"],
 };
 
 /** Property names that have a smaller set of variant options per component. */
@@ -73,6 +68,51 @@ const OVERLAY_CLASS_PRESETS: { label: string; value: string }[] = [
   { label: "Borderless", value: "border-0 shadow-lg rounded-xl p-6" },
 ];
 
+// --- Tailwind class editors (manipulate className) ---
+
+interface TailwindClassItem {
+  label: string;
+  options: string[];
+}
+
+const TAILWIND_FONT_ITEMS: TailwindClassItem[] = [
+  { label: "fontFamily", options: ["", "font-sans", "font-serif", "font-mono"] },
+  { label: "fontWeight", options: ["", "font-thin", "font-light", "font-normal", "font-medium", "font-semibold", "font-bold", "font-extrabold"] },
+  { label: "fontSize", options: ["", "text-xs", "text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl"] },
+];
+
+const TAILWIND_COLOR_ITEMS: TailwindClassItem[] = [
+  { label: "textColor", options: ["", "text-foreground", "text-primary", "text-primary-foreground", "text-secondary-foreground", "text-muted-foreground", "text-destructive", "text-accent-foreground"] },
+  { label: "bgColor", options: ["", "bg-background", "bg-primary", "bg-secondary", "bg-destructive", "bg-accent", "bg-muted", "bg-card"] },
+];
+
+/** Which Tailwind class editor groups each component supports */
+const COMPONENT_TW_GROUPS: Record<string, string[]> = {
+  Text: ["font", "color"],
+  Button: ["font", "color"],
+  Label: ["font", "color"],
+  Badge: ["font", "color"],
+  Input: ["font", "color"],
+  Textarea: ["font", "color"],
+  Div: ["color"],
+  Container: ["color"],
+  Card: ["color"],
+};
+
+function findTailwindClass(className: string, options: string[]): string {
+  if (!className) return "";
+  for (const cls of className.split(/\s+/)) {
+    if (options.includes(cls)) return cls;
+  }
+  return "";
+}
+
+function setTailwindClass(className: string, options: string[], newValue: string): string {
+  const filtered = (className || "").split(/\s+/).filter((c) => c && !options.includes(c));
+  if (newValue) filtered.push(newValue);
+  return filtered.join(" ");
+}
+
 // --- Property grouping ---
 
 type PropGroup = "basic" | "overlay" | "interaction" | "font" | "color" | "size" | "layout" | "other";
@@ -107,10 +147,6 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   contextMenuMocPath: "overlay",
   // Interaction
   tooltipText: "interaction", toastText: "interaction",
-  // Font
-  fontFamily: "font", fontWeight: "font", fontSize: "font",
-  // Color
-  textColor: "color", bgColor: "color",
   // Size
   width: "size", height: "size",
   // Layout
@@ -118,6 +154,8 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   alignItems: "layout", gap: "layout", gridCols: "layout",
   orientation: "layout", objectFit: "layout", keepAspectRatio: "layout",
   tag: "layout",
+  // Other
+  className: "other",
 };
 
 function getPropGroup(key: string): PropGroup {
@@ -188,7 +226,7 @@ export function PropEditor() {
 
   // Group properties
   const propEntries = Object.entries(selectedProps).filter(
-    ([key]) => key !== "children" && key !== "className",
+    ([key]) => key !== "children",
   );
 
   const grouped = new Map<PropGroup, [string, unknown][]>();
@@ -198,10 +236,45 @@ export function PropEditor() {
     grouped.get(group)!.push(entry);
   }
 
-  // Filter to groups that have at least one property
-  const activeGroups = GROUP_ORDER.filter((g) => grouped.has(g));
+  // Tailwind class editor groups for this component
+  const twGroupsForComponent = COMPONENT_TW_GROUPS[componentName] || [];
+  const twGroupItems: Partial<Record<PropGroup, TailwindClassItem[]>> = {
+    font: TAILWIND_FONT_ITEMS,
+    color: TAILWIND_COLOR_ITEMS,
+  };
+
+  // Filter to groups that have at least one property or Tailwind items
+  const activeGroups = GROUP_ORDER.filter(
+    (g) => grouped.has(g) || twGroupsForComponent.includes(g),
+  );
   // If only 1 group, don't show group headers (flat layout)
   const showGroupHeaders = activeGroups.length > 1;
+
+  function renderTailwindEditor(item: TailwindClassItem) {
+    const currentClassName = String(selectedProps?.className ?? "");
+    const currentValue = findTailwindClass(currentClassName, item.options);
+    return (
+      <div key={`tw-${item.label}`} className="flex flex-col gap-1">
+        <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+          {item.label}
+        </label>
+        <select
+          value={currentValue}
+          onChange={(e) => {
+            const newClassName = setTailwindClass(currentClassName, item.options, e.target.value);
+            handlePropChange("className", newClassName);
+          }}
+          className={`${INPUT_CLASS} w-full`}
+        >
+          {item.options.map((opt) => (
+            <option key={opt || "__default"} value={opt}>
+              {opt || "(default)"}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
 
   function renderProp(key: string, value: unknown) {
     // Custom UI for overlayClassName (preset select + text input)
@@ -342,7 +415,9 @@ export function PropEditor() {
       </div>
 
       {activeGroups.map((group) => {
-        const entries = grouped.get(group)!;
+        const entries = grouped.get(group);
+        const twItems = twGroupsForComponent.includes(group) ? twGroupItems[group] : null;
+        const entryCount = (entries?.length || 0) + (twItems?.length || 0);
         const isCollapsed = collapsedGroups.has(group);
 
         return (
@@ -355,12 +430,13 @@ export function PropEditor() {
               >
                 <span className="text-[10px]">{isCollapsed ? "\u25b6" : "\u25bc"}</span>
                 {GROUP_LABELS[group]}
-                <span className="ml-auto text-[10px] font-normal opacity-60">{entries.length}</span>
+                <span className="ml-auto text-[10px] font-normal opacity-60">{entryCount}</span>
               </button>
             )}
             {!isCollapsed && (
               <div className="flex flex-col gap-2">
-                {entries.map(([key, value]) => renderProp(key, value))}
+                {entries?.map(([key, value]) => renderProp(key, value))}
+                {twItems?.map((item) => renderTailwindEditor(item))}
               </div>
             )}
           </div>

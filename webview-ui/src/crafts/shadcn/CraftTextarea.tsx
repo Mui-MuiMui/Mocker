@@ -5,10 +5,6 @@ interface CraftTextareaProps {
   placeholder?: string;
   rows?: number;
   disabled?: boolean;
-  fontFamily?: string;
-  fontSize?: string;
-  textColor?: string;
-  bgColor?: string;
   width?: string;
   height?: string;
   className?: string;
@@ -18,10 +14,6 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
   placeholder = "Type your message here.",
   rows = 3,
   disabled = false,
-  fontFamily = "",
-  fontSize = "",
-  textColor = "",
-  bgColor = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -40,7 +32,6 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
       disabled={disabled}
       className={cn(
         "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-        fontFamily, fontSize, textColor, bgColor,
         className,
       )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
@@ -54,10 +45,6 @@ CraftTextarea.craft = {
     placeholder: "Type your message here.",
     rows: 3,
     disabled: false,
-    fontFamily: "",
-    fontSize: "",
-    textColor: "",
-    bgColor: "",
     width: "auto",
     height: "auto",
     className: "",
