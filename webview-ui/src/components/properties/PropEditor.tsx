@@ -39,13 +39,19 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Resizable: {
     direction: ["horizontal", "vertical"],
   },
+  Dialog: {
+    variant: ["default", "destructive", "outline", "secondary", "ghost", "link"],
+  },
+  Sheet: {
+    side: ["top", "right", "bottom", "left"],
+  },
 };
 
 const INPUT_CLASS =
   "rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-2 py-1 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]";
 
 /** Props that support multiline text input (rendered as textarea). */
-const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", "label"]);
+const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", "label", "triggerText"]);
 
 export function PropEditor() {
   const { selectedProps, actions, selectedNodeId, componentName } = useEditor(

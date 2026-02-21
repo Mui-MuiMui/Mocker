@@ -37,6 +37,20 @@ import { CraftResizable } from "./shadcn/CraftResizable";
 import { CraftCarousel } from "./shadcn/CraftCarousel";
 import { CraftChart } from "./shadcn/CraftChart";
 import { CraftForm } from "./shadcn/CraftForm";
+// Phase 4: Overlay components
+import { CraftDialog } from "./shadcn/CraftDialog";
+import { CraftAlertDialog } from "./shadcn/CraftAlertDialog";
+import { CraftSheet } from "./shadcn/CraftSheet";
+import { CraftDrawer } from "./shadcn/CraftDrawer";
+import { CraftDropdownMenu } from "./shadcn/CraftDropdownMenu";
+import { CraftContextMenu } from "./shadcn/CraftContextMenu";
+import { CraftPopover } from "./shadcn/CraftPopover";
+import { CraftHoverCard } from "./shadcn/CraftHoverCard";
+import { CraftNavigationMenu } from "./shadcn/CraftNavigationMenu";
+import { CraftMenubar } from "./shadcn/CraftMenubar";
+import { CraftCommand } from "./shadcn/CraftCommand";
+import { CraftTooltip } from "./shadcn/CraftTooltip";
+import { CraftSonner } from "./shadcn/CraftSonner";
 
 export const resolvers = {
   CraftDiv,
@@ -78,6 +92,20 @@ export const resolvers = {
   CraftCarousel,
   CraftChart,
   CraftForm,
+  // Phase 4
+  CraftDialog,
+  CraftAlertDialog,
+  CraftSheet,
+  CraftDrawer,
+  CraftDropdownMenu,
+  CraftContextMenu,
+  CraftPopover,
+  CraftHoverCard,
+  CraftNavigationMenu,
+  CraftMenubar,
+  CraftCommand,
+  CraftTooltip,
+  CraftSonner,
 };
 
 export type ResolverKey = keyof typeof resolvers;
@@ -363,5 +391,97 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "FileInput",
     defaultProps: {},
+  },
+  // Phase 4: Overlay components
+  {
+    resolverKey: "CraftDialog",
+    label: "Dialog",
+    category: "shadcn",
+    icon: "PanelTopOpen",
+    defaultProps: { triggerText: "Open Dialog" },
+  },
+  {
+    resolverKey: "CraftAlertDialog",
+    label: "Alert Dialog",
+    category: "shadcn",
+    icon: "AlertTriangle",
+    defaultProps: { triggerText: "Open Alert" },
+  },
+  {
+    resolverKey: "CraftSheet",
+    label: "Sheet",
+    category: "shadcn",
+    icon: "PanelRight",
+    defaultProps: { triggerText: "Open Sheet" },
+  },
+  {
+    resolverKey: "CraftDrawer",
+    label: "Drawer",
+    category: "shadcn",
+    icon: "PanelBottom",
+    defaultProps: { triggerText: "Open Drawer" },
+  },
+  {
+    resolverKey: "CraftDropdownMenu",
+    label: "Dropdown Menu",
+    category: "shadcn",
+    icon: "ChevronDown",
+    defaultProps: { triggerText: "Open Menu" },
+  },
+  {
+    resolverKey: "CraftContextMenu",
+    label: "Context Menu",
+    category: "shadcn",
+    icon: "MousePointer2",
+    defaultProps: {},
+  },
+  {
+    resolverKey: "CraftPopover",
+    label: "Popover",
+    category: "shadcn",
+    icon: "MessageSquare",
+    defaultProps: { triggerText: "Open Popover" },
+  },
+  {
+    resolverKey: "CraftHoverCard",
+    label: "Hover Card",
+    category: "shadcn",
+    icon: "CreditCard",
+    defaultProps: { triggerText: "Hover me" },
+  },
+  {
+    resolverKey: "CraftNavigationMenu",
+    label: "Navigation Menu",
+    category: "shadcn",
+    icon: "Navigation",
+    defaultProps: {},
+  },
+  {
+    resolverKey: "CraftMenubar",
+    label: "Menubar",
+    category: "shadcn",
+    icon: "Menu",
+    defaultProps: {},
+  },
+  {
+    resolverKey: "CraftCommand",
+    label: "Command",
+    category: "shadcn",
+    icon: "Terminal",
+    defaultProps: {},
+  },
+  {
+    resolverKey: "CraftTooltip",
+    label: "Tooltip",
+    category: "shadcn",
+    icon: "MessageCircle",
+    defaultProps: { triggerText: "Hover" },
+  },
+  {
+    resolverKey: "CraftSonner",
+    label: "Sonner",
+    category: "shadcn",
+    icon: "Bell",
+    defaultProps: { triggerText: "Show Toast" },
   },
 ];

@@ -284,6 +284,97 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  // Phase 4: Overlay components
+  CraftDialog: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["variant", "className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftAlertDialog: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftSheet: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftDrawer: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftDropdownMenu: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftContextMenu: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftPopover: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftHoverCard: {
+    tag: "span",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftNavigationMenu: {
+    tag: "nav",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftMenubar: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftCommand: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftTooltip: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
+  CraftSonner: {
+    tag: "Button",
+    importFrom: "@/components/ui/button",
+    importName: "Button",
+    propsMap: ["className"],
+    textProp: "triggerText",
+    isContainer: false,
+  },
 };
 
 /** Default prop values to omit from generated TSX */
@@ -327,6 +418,20 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftCarousel: { items: "Slide 1,Slide 2,Slide 3" },
   CraftChart: { chartType: "bar" },
   CraftForm: {},
+  // Phase 4
+  CraftDialog: { triggerText: "Open Dialog", variant: "default", linkedMocPath: "" },
+  CraftAlertDialog: { triggerText: "Open Alert", linkedMocPath: "" },
+  CraftSheet: { triggerText: "Open Sheet", side: "right", linkedMocPath: "" },
+  CraftDrawer: { triggerText: "Open Drawer", linkedMocPath: "" },
+  CraftDropdownMenu: { triggerText: "Open Menu", linkedMocPath: "" },
+  CraftContextMenu: { linkedMocPath: "" },
+  CraftPopover: { triggerText: "Open Popover", linkedMocPath: "" },
+  CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "" },
+  CraftNavigationMenu: { items: "Home,About,Services,Contact", linkedMocPath: "" },
+  CraftMenubar: { items: "File,Edit,View,Help", linkedMocPath: "" },
+  CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
+  CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
+  CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
 };
 
 export function craftStateToTsx(
