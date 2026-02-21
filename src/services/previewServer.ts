@@ -1,7 +1,10 @@
 import * as http from "http";
+import * as path from "path";
+import * as crypto from "crypto";
 import * as vscode from "vscode";
 import { compileTsx } from "./esbuildService.js";
 import { parseMocFile } from "./mocParser.js";
+import { craftStateToTsx } from "./craftToTsx.js";
 
 interface PreviewSession {
   server: http.Server;
@@ -28,6 +31,7 @@ export async function startPreviewServer(
   let cachedComponentJs = "";
   let cachedError = "";
   const sseClients = new Set<http.ServerResponse>();
+  const linkedJs = new Map<string, string>(); // hash → compiled JS for linked .moc files
 
   // Pre-compile fallback shadcn/ui components → ESM JS
   const fallbackJs = new Map<string, string>();
@@ -65,9 +69,52 @@ export async function startPreviewServer(
         cachedComponentJs = result.code;
         cachedError = "";
       }
+
+      // Compile linked .moc files referenced via linkedMocPath
+      linkedJs.clear();
+      if (mocDoc.craftState) {
+        await compileLinkedMocFiles(mocDoc.craftState);
+      }
     } catch (err) {
       cachedError = err instanceof Error ? err.message : String(err);
       cachedComponentJs = "";
+    }
+  }
+
+  async function compileLinkedMocFiles(craftState: Record<string, unknown>): Promise<void> {
+    const mocDir = path.dirname(mocFilePath);
+    const linkedPaths = new Set<string>();
+
+    // Scan all nodes for linkedMocPath
+    for (const node of Object.values(craftState)) {
+      const n = node as { props?: Record<string, unknown> };
+      const linkedPath = n?.props?.linkedMocPath as string | undefined;
+      if (linkedPath) {
+        linkedPaths.add(linkedPath);
+      }
+    }
+
+    for (const relPath of linkedPaths) {
+      try {
+        const absPath = path.resolve(mocDir, relPath);
+        const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
+        const linkedFileUri = vscode.Uri.file(absPath);
+        const linkedContent = new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(linkedFileUri),
+        );
+        const linkedDoc = parseMocFile(linkedContent);
+        const linkedTsx = linkedDoc.imports
+          ? `${linkedDoc.imports}\n${linkedDoc.tsxSource}`
+          : linkedDoc.tsxSource;
+        const linkedResult = await compileTsx(linkedTsx, workspaceRoot, [
+          shadcnExternalPlugin(),
+        ]);
+        if (linkedResult.code) {
+          linkedJs.set(hash, linkedResult.code);
+        }
+      } catch (err) {
+        console.warn(`[Mocker] Failed to compile linked .moc: ${relPath}`, err);
+      }
     }
   }
 
@@ -254,6 +301,20 @@ export async function startPreviewServer(
       });
       res.end(cachedComponentJs);
       return;
+    }
+
+    // Serve linked .moc compiled components: /linked/<hash>.js
+    if (url.startsWith("/linked/")) {
+      const hash = url.slice(8).replace(/\.js.*$/, "");
+      const js = linkedJs.get(hash);
+      if (js) {
+        res.writeHead(200, {
+          "Content-Type": "application/javascript; charset=utf-8",
+          "Cache-Control": "no-cache",
+        });
+        res.end(js);
+        return;
+      }
     }
 
     // Serve fallback shadcn/ui components: /ui/<name>.js

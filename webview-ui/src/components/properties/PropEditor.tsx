@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useEditor } from "@craftjs/core";
+import { getVsCodeApi } from "../../utils/vscodeApi";
 
 /** Mapping of property names to their allowed values (select options). */
 const PROP_OPTIONS: Record<string, string[]> = {
@@ -65,6 +67,21 @@ export function PropEditor() {
     },
   );
 
+  // Listen for browse:mocFile:result messages from extension
+  useEffect(() => {
+    const listener = (event: MessageEvent) => {
+      const msg = event.data;
+      if (msg?.type === "browse:mocFile:result" && selectedNodeId) {
+        const { relativePath } = msg.payload as { relativePath: string };
+        actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+          props.linkedMocPath = relativePath;
+        });
+      }
+    };
+    window.addEventListener("message", listener);
+    return () => window.removeEventListener("message", listener);
+  }, [selectedNodeId, actions]);
+
   if (!selectedProps || !selectedNodeId) {
     return null;
   }
@@ -99,6 +116,38 @@ export function PropEditor() {
       </div>
       {Object.entries(selectedProps).map(([key, value]) => {
         if (key === "children" || key === "className") return null;
+
+        // Custom UI for linkedMocPath
+        if (key === "linkedMocPath") {
+          return (
+            <div key={key} className="flex flex-col gap-1">
+              <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+                {key}
+              </label>
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={String(value ?? "")}
+                  onChange={(e) => handlePropChange(key, e.target.value)}
+                  className={`${INPUT_CLASS} flex-1`}
+                  placeholder=".moc file path"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    getVsCodeApi().postMessage({
+                      type: "browse:mocFile",
+                      payload: { currentPath: String(value ?? "") },
+                    });
+                  }}
+                  className="rounded border border-[var(--vscode-button-border,transparent)] bg-[var(--vscode-button-background,#0e639c)] px-2 py-1 text-xs text-[var(--vscode-button-foreground,#fff)] hover:opacity-90"
+                >
+                  ...
+                </button>
+              </div>
+            </div>
+          );
+        }
 
         const options = getOptions(key);
 
