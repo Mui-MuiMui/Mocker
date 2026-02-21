@@ -32,11 +32,14 @@ export async function startPreviewServer(
   let cachedError = "";
   const sseClients = new Set<http.ServerResponse>();
   const linkedJs = new Map<string, string>(); // hash → compiled JS for linked .moc files
+  const linkedHashes = new Map<string, string>(); // relPath → hash
 
   // Pre-compile fallback shadcn/ui components → ESM JS
   const fallbackJs = new Map<string, string>();
   for (const [name, source] of Object.entries(FALLBACK_SOURCES)) {
-    const result = await compileTsx(source, workspaceRoot);
+    const result = await compileTsx(source, workspaceRoot, [
+      previewExternalPlugin(),
+    ]);
     if (result.code) {
       fallbackJs.set(name, result.code);
     }
@@ -54,13 +57,23 @@ export async function startPreviewServer(
       const mocDoc = parseMocFile(content);
       currentTheme = mocDoc.metadata.theme;
 
-      const fullTsx = mocDoc.imports
+      // Compile linked .moc files first (needed for injection)
+      linkedJs.clear();
+      linkedHashes.clear();
+      if (mocDoc.craftState) {
+        await compileLinkedMocFiles(mocDoc.craftState);
+      }
+
+      let fullTsx = mocDoc.imports
         ? `${mocDoc.imports}\n${mocDoc.tsxSource}`
         : mocDoc.tsxSource;
 
-      // Externalize @/components/ui/* — browser resolves via import map
+      // Inject linked component imports and replace comment placeholders
+      fullTsx = injectLinkedComponents(fullTsx);
+
+      // Externalize @/components/ui/*, react, @moc-linked/* — browser resolves via import map
       const result = await compileTsx(fullTsx, workspaceRoot, [
-        shadcnExternalPlugin(),
+        previewExternalPlugin(),
       ]);
       if (result.error) {
         cachedError = result.error;
@@ -68,12 +81,6 @@ export async function startPreviewServer(
       } else {
         cachedComponentJs = result.code;
         cachedError = "";
-      }
-
-      // Compile linked .moc files referenced via linkedMocPath
-      linkedJs.clear();
-      if (mocDoc.craftState) {
-        await compileLinkedMocFiles(mocDoc.craftState);
       }
     } catch (err) {
       cachedError = err instanceof Error ? err.message : String(err);
@@ -102,6 +109,7 @@ export async function startPreviewServer(
       try {
         const absPath = path.resolve(mocDir, relPath);
         const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
+        linkedHashes.set(relPath, hash);
         const linkedFileUri = vscode.Uri.file(absPath);
         const linkedContent = new TextDecoder().decode(
           await vscode.workspace.fs.readFile(linkedFileUri),
@@ -111,7 +119,7 @@ export async function startPreviewServer(
           ? `${linkedDoc.imports}\n${linkedDoc.tsxSource}`
           : linkedDoc.tsxSource;
         const linkedResult = await compileTsx(linkedTsx, workspaceRoot, [
-          shadcnExternalPlugin(),
+          previewExternalPlugin(),
         ]);
         if (linkedResult.code) {
           linkedJs.set(hash, linkedResult.code);
@@ -122,6 +130,41 @@ export async function startPreviewServer(
     }
   }
 
+  /**
+   * Replace `{/* linked: PATH * /}` comment placeholders in TSX source
+   * with actual import + component reference so they render in preview.
+   */
+  function injectLinkedComponents(tsx: string): string {
+    if (linkedHashes.size === 0) return tsx;
+
+    const importLines: string[] = [];
+    const usedHashes = new Set<string>();
+
+    const processed = tsx.replace(
+      /\{\/\* linked: (.+?) \*\/\}/g,
+      (_match: string, rawPath: string) => {
+        // Un-escape JSX entities that escapeJsx may have applied
+        const linkedPath = rawPath
+          .replace(/&amp;/g, "&")
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&#123;/g, "{")
+          .replace(/&#125;/g, "}");
+        const hash = linkedHashes.get(linkedPath);
+        if (!hash) return `{/* linked: ${rawPath} (not compiled) */}`;
+        const componentName = `Linked_${hash}`;
+        if (!usedHashes.has(hash)) {
+          usedHashes.add(hash);
+          importLines.push(`import ${componentName} from "@moc-linked/${hash}";`);
+        }
+        return `<${componentName} />`;
+      },
+    );
+
+    if (importLines.length === 0) return tsx;
+    return importLines.join("\n") + "\n" + processed;
+  }
+
   function sendReload(): void {
     const data = JSON.stringify({ theme: currentTheme });
     for (const res of sseClients) {
@@ -129,7 +172,7 @@ export async function startPreviewServer(
     }
   }
 
-  // Build import map: React CDN + shadcn/ui fallback routes
+  // Build import map: React CDN + shadcn/ui fallback routes + linked components
   function buildImportMap(): string {
     const imports: Record<string, string> = {
       "react": "https://esm.sh/react@19",
@@ -138,6 +181,10 @@ export async function startPreviewServer(
     };
     for (const name of Object.keys(FALLBACK_SOURCES)) {
       imports[`@/components/ui/${name}`] = `/ui/${name}.js`;
+    }
+    // Linked .moc components
+    for (const [, hash] of linkedHashes) {
+      imports[`@moc-linked/${hash}`] = `/linked/${hash}.js`;
     }
     // sonner toast — provide a no-op stub for preview
     imports["sonner"] = "data:text/javascript,export function toast(){}";
@@ -413,18 +460,24 @@ function escapeHtml(text: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// --- esbuild plugin: externalize @/components/ui/* for browser import map resolution ---
+// --- esbuild plugin: externalize react, @/components/ui/*, @moc-linked/*, sonner ---
 
-function shadcnExternalPlugin() {
+function previewExternalPlugin() {
   return {
-    name: "shadcn-external",
+    name: "preview-external",
     setup(build: {
       onResolve: (
         opts: { filter: RegExp },
         cb: (args: { path: string }) => { path: string; external: true },
       ) => void;
     }) {
+      build.onResolve({ filter: /^react(-dom)?(\/.*)?$/ }, (args) => {
+        return { path: args.path, external: true };
+      });
       build.onResolve({ filter: /^@\/components\/ui\// }, (args) => {
+        return { path: args.path, external: true };
+      });
+      build.onResolve({ filter: /^@moc-linked\// }, (args) => {
         return { path: args.path, external: true };
       });
       build.onResolve({ filter: /^sonner$/ }, (args) => {
@@ -641,52 +694,150 @@ const FALLBACK_SOURCES: Record<string, string> = {
   return <div className={cls} {...rest}>{children}</div>;
 }`,
 
-  // Overlay wrapper components
-  tooltip: `import { useState } from "react";
+  // --- Overlay wrapper components (context-based for proper state sharing) ---
+
+  tooltip: `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
 export function TooltipProvider(props: any) { return <>{props.children}</>; }
 export function Tooltip(props: any) {
   const [show, setShow] = useState(false);
-  return <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>{typeof props.children === "function" ? props.children({ open: show }) : props.children}{show && <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50"><div data-slot="tooltip-content" className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md">{/* tooltip content injected */}</div></div>}</div>;
+  return <Ctx.Provider value={{ show, setShow }}><span className="relative inline-block">{props.children}</span></Ctx.Provider>;
 }
-export function TooltipTrigger(props: any) { return <>{props.children}</>; }
-export function TooltipContent(props: any) { return <div className="rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md">{props.children}</div>; }`,
+export function TooltipTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onMouseEnter={() => ctx?.setShow(true)} onMouseLeave={() => ctx?.setShow(false)} style={{ display: "inline-block" }}>{props.children}</span>;
+}
+export function TooltipContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.show) return null;
+  return <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-nowrap">{props.children}</div>;
+}`,
 
-  dialog: `import { useState } from "react";
+  dialog: `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
 export function Dialog(props: any) {
   const [open, setOpen] = useState(false);
-  return <div data-slot="dialog">{typeof props.children === "object" && Array.isArray(props.children) ? props.children.map((c: any, i: number) => {
-    if (c?.props?.["data-slot"] === "dialog-trigger" || c?.type?.displayName === "DialogTrigger") return <span key={i} onClick={() => setOpen(true)}>{c}</span>;
-    if (open) return <div key={i} className="fixed inset-0 z-50 flex items-center justify-center"><div className="fixed inset-0 bg-black/80" onClick={() => setOpen(false)} /><div className="relative z-50 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">{c}<button onClick={() => setOpen(false)} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">✕</button></div></div>;
-    return null;
-  }) : props.children}</div>;
+  return <Ctx.Provider value={{ open, setOpen }}>{props.children}</Ctx.Provider>;
 }
-export function DialogTrigger(props: any) { return <>{props.children}</>; }
-export function DialogContent(props: any) { return <div>{props.children}</div>; }`,
+export function DialogTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(true)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function DialogContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center"><div className="fixed inset-0 bg-black/80" onClick={() => ctx?.setOpen(false)} /><div className="relative z-50 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">{props.children}<button type="button" onClick={() => ctx?.setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">\\u2715</button></div></div>;
+}`,
 
-  "alert-dialog": `import { useState } from "react";
-export function AlertDialog(props: any) { return <div>{props.children}</div>; }
-export function AlertDialogTrigger(props: any) { return <>{props.children}</>; }
-export function AlertDialogContent(props: any) { return <div className="w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">{props.children}</div>; }
-export function AlertDialogAction(props: any) { return <button className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">{props.children}</button>; }
-export function AlertDialogCancel(props: any) { return <button className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">{props.children}</button>; }`,
+  "alert-dialog": `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function AlertDialog(props: any) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}>{props.children}</Ctx.Provider>;
+}
+export function AlertDialogTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(true)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function AlertDialogContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center"><div className="fixed inset-0 bg-black/80" /><div className="relative z-50 w-full max-w-lg rounded-lg border bg-background p-6 shadow-lg">{props.children}</div></div>;
+}
+export function AlertDialogAction(props: any) {
+  const ctx = useContext(Ctx);
+  return <button type="button" onClick={() => ctx?.setOpen(false)} className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow hover:bg-primary/90">{props.children}</button>;
+}
+export function AlertDialogCancel(props: any) {
+  const ctx = useContext(Ctx);
+  return <button type="button" onClick={() => ctx?.setOpen(false)} className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-accent hover:text-accent-foreground">{props.children}</button>;
+}`,
 
-  sheet: `export function Sheet(props: any) { return <div>{props.children}</div>; }
-export function SheetTrigger(props: any) { return <>{props.children}</>; }
-export function SheetContent(props: any) { return <div className="fixed inset-y-0 right-0 z-50 w-3/4 max-w-sm border-l bg-background p-6 shadow-lg">{props.children}</div>; }`,
+  sheet: `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function Sheet(props: any) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}>{props.children}</Ctx.Provider>;
+}
+export function SheetTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(true)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function SheetContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  const side = props.side || "right";
+  const posMap: Record<string, string> = {
+    right: "inset-y-0 right-0 w-3/4 max-w-sm border-l",
+    left: "inset-y-0 left-0 w-3/4 max-w-sm border-r",
+    top: "inset-x-0 top-0 border-b",
+    bottom: "inset-x-0 bottom-0 border-t",
+  };
+  const pos = posMap[side] || posMap.right;
+  return <><div className="fixed inset-0 z-50 bg-black/80" onClick={() => ctx?.setOpen(false)} /><div className={"fixed z-50 bg-background p-6 shadow-lg " + pos}>{props.children}<button type="button" onClick={() => ctx?.setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">\\u2715</button></div></>;
+}`,
 
-  drawer: `export function Drawer(props: any) { return <div>{props.children}</div>; }
-export function DrawerTrigger(props: any) { return <>{props.children}</>; }
-export function DrawerContent(props: any) { return <div className="fixed inset-x-0 bottom-0 z-50 rounded-t-lg border-t bg-background p-6 shadow-lg">{props.children}</div>; }`,
+  drawer: `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function Drawer(props: any) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}>{props.children}</Ctx.Provider>;
+}
+export function DrawerTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(true)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function DrawerContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  return <><div className="fixed inset-0 z-50 bg-black/80" onClick={() => ctx?.setOpen(false)} /><div className="fixed inset-x-0 bottom-0 z-50 rounded-t-xl border-t bg-background p-6 shadow-lg">{props.children}<button type="button" onClick={() => ctx?.setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">\\u2715</button></div></>;
+}`,
 
-  popover: `export function Popover(props: any) { return <div className="relative inline-block">{props.children}</div>; }
-export function PopoverTrigger(props: any) { return <>{props.children}</>; }
-export function PopoverContent(props: any) { return <div className="z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">{props.children}</div>; }`,
+  popover: `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function Popover(props: any) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}><div className="relative inline-block">{props.children}</div></Ctx.Provider>;
+}
+export function PopoverTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function PopoverContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  return <div className="absolute left-0 top-full mt-2 z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md">{props.children}</div>;
+}`,
 
-  "dropdown-menu": `export function DropdownMenu(props: any) { return <div className="relative inline-block">{props.children}</div>; }
-export function DropdownMenuTrigger(props: any) { return <>{props.children}</>; }
-export function DropdownMenuContent(props: any) { return <div className="z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">{props.children}</div>; }`,
+  "dropdown-menu": `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function DropdownMenu(props: any) {
+  const [open, setOpen] = useState(false);
+  return <Ctx.Provider value={{ open, setOpen }}><div className="relative inline-block">{props.children}</div></Ctx.Provider>;
+}
+export function DropdownMenuTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function DropdownMenuContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.open) return null;
+  return <div className="absolute left-0 top-full mt-2 z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">{props.children}</div>;
+}`,
 
-  "context-menu": `export function ContextMenu(props: any) { return <div>{props.children}</div>; }
-export function ContextMenuTrigger(props: any) { return <>{props.children}</>; }
-export function ContextMenuContent(props: any) { return <div className="z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md">{props.children}</div>; }`,
+  "context-menu": `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function ContextMenu(props: any) {
+  const [pos, setPos] = useState<any>(null);
+  return <Ctx.Provider value={{ pos, setPos }}>{props.children}</Ctx.Provider>;
+}
+export function ContextMenuTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <div onContextMenu={(e: any) => { e.preventDefault(); ctx?.setPos({ x: e.clientX, y: e.clientY }); }}>{props.children}</div>;
+}
+export function ContextMenuContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.pos) return null;
+  return <><div className="fixed inset-0 z-40" onClick={() => ctx?.setPos(null)} /><div className="fixed z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md" style={{ left: ctx.pos.x, top: ctx.pos.y }}>{props.children}</div></>;
+}`,
 };
