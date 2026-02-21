@@ -33,6 +33,7 @@ export async function startPreviewServer(
   const sseClients = new Set<http.ServerResponse>();
   const linkedJs = new Map<string, string>(); // hash → compiled JS for linked .moc files
   const linkedHashes = new Map<string, string>(); // relPath → hash
+  const linkedAbsPaths = new Set<string>(); // absolute paths of linked .moc files
 
   // Pre-compile fallback shadcn/ui components → ESM JS
   const fallbackJs = new Map<string, string>();
@@ -121,9 +122,11 @@ export async function startPreviewServer(
       }
     }
 
+    linkedAbsPaths.clear();
     for (const relPath of linkedPaths) {
       try {
         const absPath = path.resolve(mocDir, relPath);
+        linkedAbsPaths.add(absPath);
         const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
         linkedHashes.set(relPath, hash);
         const linkedFileUri = vscode.Uri.file(absPath);
@@ -428,9 +431,9 @@ export async function startPreviewServer(
   const addr = server.address() as { port: number };
   const serverUrl = `http://127.0.0.1:${addr.port}`;
 
-  // File watcher: recompile and notify on save
+  // File watcher: recompile and notify on save (main file or linked .moc files)
   const watcher = vscode.workspace.onDidSaveTextDocument(async (doc) => {
-    if (doc.uri.fsPath === mocFilePath) {
+    if (doc.uri.fsPath === mocFilePath || linkedAbsPaths.has(doc.uri.fsPath)) {
       await compileCurrentFile();
       sendReload();
     }
