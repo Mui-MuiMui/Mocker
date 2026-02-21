@@ -241,78 +241,80 @@ export function TailwindEditor() {
         />
       </div>
 
-      <SpacingSlider
-        title="Padding"
-        directions={PADDING_DIRS}
-        dirIndex={paddingDir}
-        onDirChange={setPaddingDir}
-        value={currentPaddingIdx}
-        onChange={(idx) => setSpacingValue(currentPaddingPrefix, idx)}
-      />
+      <TailwindCategory title="Layout" collapsed={collapsedCategories.has("layout")} onToggle={() => toggleCategory("layout")}>
+        <SpacingSlider
+          title="Padding"
+          directions={PADDING_DIRS}
+          dirIndex={paddingDir}
+          onDirChange={setPaddingDir}
+          value={currentPaddingIdx}
+          onChange={(idx) => setSpacingValue(currentPaddingPrefix, idx)}
+        />
 
-      <SpacingSlider
-        title="Margin"
-        directions={MARGIN_DIRS}
-        dirIndex={marginDir}
-        onDirChange={setMarginDir}
-        value={currentMarginIdx}
-        onChange={(idx) => setSpacingValue(currentMarginPrefix, idx)}
-      />
+        <SpacingSlider
+          title="Margin"
+          directions={MARGIN_DIRS}
+          dirIndex={marginDir}
+          onDirChange={setMarginDir}
+          value={currentMarginIdx}
+          onChange={(idx) => setSpacingValue(currentMarginPrefix, idx)}
+        />
 
-      <TailwindSection title="Text Align">
-        <div className="flex gap-1">
-          {TEXT_ALIGN_OPTIONS.map((o) => (
-            <ClassButton
-              key={o.textCls}
-              label={o.label}
-              active={activeSet.has(o.textCls)}
-              onClick={() => {
-                const filtered = classes.filter((c) => !ALL_TEXT_ALIGN_CLASSES.includes(c));
-                if (activeSet.has(o.textCls)) {
-                  updateClassName(filtered.join(" "));
-                } else {
-                  updateClassName([...filtered, o.textCls, o.justifyCls].join(" "));
-                }
-              }}
-            />
-          ))}
-        </div>
-      </TailwindSection>
+        <TailwindSection title="Text Align">
+          <div className="flex gap-1">
+            {TEXT_ALIGN_OPTIONS.map((o) => (
+              <ClassButton
+                key={o.textCls}
+                label={o.label}
+                active={activeSet.has(o.textCls)}
+                onClick={() => {
+                  const filtered = classes.filter((c) => !ALL_TEXT_ALIGN_CLASSES.includes(c));
+                  if (activeSet.has(o.textCls)) {
+                    updateClassName(filtered.join(" "));
+                  } else {
+                    updateClassName([...filtered, o.textCls, o.justifyCls].join(" "));
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </TailwindSection>
 
-      <TailwindSection title="Align Self">
-        <div className="flex flex-wrap gap-1">
-          {ALIGN_SELF_OPTIONS.map((o) => (
-            <ClassButton
-              key={o.cls}
-              label={o.label}
-              active={activeSet.has(o.cls)}
-              onClick={() => setGroupClass(o.cls, alignSelfGroup)}
-            />
-          ))}
-        </div>
-      </TailwindSection>
+        <TailwindSection title="Align Self">
+          <div className="flex flex-wrap gap-1">
+            {ALIGN_SELF_OPTIONS.map((o) => (
+              <ClassButton
+                key={o.cls}
+                label={o.label}
+                active={activeSet.has(o.cls)}
+                onClick={() => setGroupClass(o.cls, alignSelfGroup)}
+              />
+            ))}
+          </div>
+        </TailwindSection>
 
-      <TailwindSection title="Content V-Align">
-        <div className="flex flex-wrap gap-1">
-          {CONTENT_VALIGN_OPTIONS.map((o) => (
-            <ClassButton
-              key={o.cls}
-              label={o.label}
-              active={activeSet.has(o.cls)}
-              onClick={() => {
-                const filtered = classes.filter((c) => !contentVAlignGroup.includes(c));
-                if (activeSet.has(o.cls)) {
-                  const noFlex = filtered.filter((c) => c !== "flex");
-                  updateClassName(noFlex.join(" "));
-                } else {
-                  const withFlex = filtered.includes("flex") ? filtered : ["flex", ...filtered];
-                  updateClassName([...withFlex, o.cls].join(" "));
-                }
-              }}
-            />
-          ))}
-        </div>
-      </TailwindSection>
+        <TailwindSection title="Content V-Align">
+          <div className="flex flex-wrap gap-1">
+            {CONTENT_VALIGN_OPTIONS.map((o) => (
+              <ClassButton
+                key={o.cls}
+                label={o.label}
+                active={activeSet.has(o.cls)}
+                onClick={() => {
+                  const filtered = classes.filter((c) => !contentVAlignGroup.includes(c));
+                  if (activeSet.has(o.cls)) {
+                    const noFlex = filtered.filter((c) => c !== "flex");
+                    updateClassName(noFlex.join(" "));
+                  } else {
+                    const withFlex = filtered.includes("flex") ? filtered : ["flex", ...filtered];
+                    updateClassName([...withFlex, o.cls].join(" "));
+                  }
+                }}
+              />
+            ))}
+          </div>
+        </TailwindSection>
+      </TailwindCategory>
 
       <TailwindCategory title="Font" collapsed={collapsedCategories.has("font")} onToggle={() => toggleCategory("font")}>
         <TailwindSection title="Font Family">
