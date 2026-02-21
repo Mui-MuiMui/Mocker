@@ -60,8 +60,9 @@ export async function startPreviewServer(
       // Compile linked .moc files first (needed for injection)
       linkedJs.clear();
       linkedHashes.clear();
-      if (mocDoc.craftState) {
-        await compileLinkedMocFiles(mocDoc.craftState);
+      const craftState = mocDoc.editorData?.craftState;
+      if (craftState) {
+        await compileLinkedMocFiles(craftState);
       }
 
       let fullTsx = mocDoc.imports
