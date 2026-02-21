@@ -5,6 +5,11 @@ interface CraftLabelProps {
   text?: string;
   htmlFor?: string;
   tooltipText?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontSize?: string;
+  textColor?: string;
+  bgColor?: string;
   width?: string;
   height?: string;
   className?: string;
@@ -14,6 +19,11 @@ export const CraftLabel: UserComponent<CraftLabelProps> = ({
   text = "Label",
   htmlFor = "",
   tooltipText = "",
+  fontFamily = "",
+  fontWeight = "",
+  fontSize = "",
+  textColor = "",
+  bgColor = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -30,6 +40,7 @@ export const CraftLabel: UserComponent<CraftLabelProps> = ({
       htmlFor={htmlFor || undefined}
       className={cn(
         "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        fontFamily, fontWeight, fontSize, textColor, bgColor,
         className,
       )}
       style={{
@@ -53,6 +64,11 @@ CraftLabel.craft = {
     text: "Label",
     htmlFor: "",
     tooltipText: "",
+    fontFamily: "",
+    fontWeight: "",
+    fontSize: "",
+    textColor: "",
+    bgColor: "",
     width: "auto",
     height: "auto",
     className: "",

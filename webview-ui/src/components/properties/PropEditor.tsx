@@ -16,6 +16,11 @@ const PROP_OPTIONS: Record<string, string[]> = {
   objectFit: ["cover", "contain", "fill", "none", "scale-down"],
   overlayType: ["none", "dialog", "alert-dialog", "sheet", "drawer", "popover", "dropdown-menu"],
   sheetSide: ["top", "right", "bottom", "left"],
+  fontFamily: ["", "font-sans", "font-serif", "font-mono"],
+  fontWeight: ["", "font-thin", "font-light", "font-normal", "font-medium", "font-semibold", "font-bold", "font-extrabold"],
+  fontSize: ["", "text-xs", "text-sm", "text-base", "text-lg", "text-xl", "text-2xl", "text-3xl", "text-4xl"],
+  textColor: ["", "text-foreground", "text-primary", "text-primary-foreground", "text-secondary-foreground", "text-muted-foreground", "text-destructive", "text-accent-foreground"],
+  bgColor: ["", "bg-background", "bg-primary", "bg-secondary", "bg-destructive", "bg-accent", "bg-muted", "bg-card"],
 };
 
 /** Property names that have a smaller set of variant options per component. */
@@ -70,17 +75,20 @@ const OVERLAY_CLASS_PRESETS: { label: string; value: string }[] = [
 
 // --- Property grouping ---
 
-type PropGroup = "basic" | "overlay" | "interaction" | "layout" | "other";
+type PropGroup = "basic" | "overlay" | "interaction" | "font" | "color" | "size" | "layout" | "other";
 
 const GROUP_LABELS: Record<PropGroup, string> = {
   basic: "Basic",
   overlay: "Overlay",
   interaction: "Interaction",
+  font: "Font",
+  color: "Color",
+  size: "Size",
   layout: "Layout",
   other: "Other",
 };
 
-const GROUP_ORDER: PropGroup[] = ["basic", "overlay", "interaction", "layout", "other"];
+const GROUP_ORDER: PropGroup[] = ["basic", "overlay", "interaction", "font", "color", "size", "layout", "other"];
 
 const PROP_TO_GROUP: Record<string, PropGroup> = {
   // Basic
@@ -99,8 +107,13 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   contextMenuMocPath: "overlay",
   // Interaction
   tooltipText: "interaction", toastText: "interaction",
+  // Font
+  fontFamily: "font", fontWeight: "font", fontSize: "font",
+  // Color
+  textColor: "color", bgColor: "color",
+  // Size
+  width: "size", height: "size",
   // Layout
-  width: "layout", height: "layout",
   display: "layout", flexDirection: "layout", justifyContent: "layout",
   alignItems: "layout", gap: "layout", gridCols: "layout",
   orientation: "layout", objectFit: "layout", keepAspectRatio: "layout",

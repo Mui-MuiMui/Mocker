@@ -394,20 +394,25 @@ const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["Con
 /** Default prop values to omit from generated TSX */
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftButton: { variant: "default", size: "default", disabled: false, text: "Button",
-    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", toastText: "" },
-  CraftInput: { type: "text", placeholder: "Enter text...", disabled: false, tooltipText: "" },
-  CraftBadge: { variant: "default", text: "Badge", tooltipText: "" },
+    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", toastText: "",
+    fontFamily: "", fontWeight: "", fontSize: "", textColor: "", bgColor: "" },
+  CraftInput: { type: "text", placeholder: "Enter text...", disabled: false, tooltipText: "",
+    fontFamily: "", fontSize: "", textColor: "", bgColor: "" },
+  CraftBadge: { variant: "default", text: "Badge", tooltipText: "",
+    fontFamily: "", fontWeight: "", fontSize: "", textColor: "", bgColor: "" },
   CraftSeparator: { orientation: "horizontal" },
-  CraftText: { tag: "p", text: "Text" },
+  CraftText: { tag: "p", text: "Text",
+    fontFamily: "", fontWeight: "", fontSize: "", textColor: "", bgColor: "" },
   CraftPlaceholderImage: { alt: "Placeholder", keepAspectRatio: false },
   CraftImage: { alt: "", objectFit: "cover", keepAspectRatio: false },
-  CraftLabel: { text: "Label", tooltipText: "" },
-  CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "" },
+  CraftLabel: { text: "Label", tooltipText: "",
+    fontFamily: "", fontWeight: "", fontSize: "", textColor: "", bgColor: "" },
+  CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", bgColor: "" },
   CraftContainer: {
     display: "flex", flexDirection: "column", justifyContent: "start",
-    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "",
+    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "", bgColor: "",
   },
-  CraftDiv: { contextMenuMocPath: "" },
+  CraftDiv: { contextMenuMocPath: "", bgColor: "" },
   // Phase 1
   CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single" },
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default" },
@@ -424,7 +429,8 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
-  CraftTextarea: { placeholder: "Type your message here.", rows: 3, disabled: false },
+  CraftTextarea: { placeholder: "Type your message here.", rows: 3, disabled: false,
+    fontFamily: "", fontSize: "", textColor: "", bgColor: "" },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
   // Phase 2
@@ -710,9 +716,12 @@ export function craftStateToTsx(
       containerClass = "relative";
     }
 
+    // Build styling classes (font/color/size)
+    const stylingClasses = buildStylingClasses(node.props);
+
     // Merge className
     const userClassName = (node.props?.className as string) || "";
-    const combinedClassName = [containerClass, userClassName].filter(Boolean).join(" ");
+    const combinedClassName = [containerClass, stylingClasses, userClassName].filter(Boolean).join(" ");
     const classNameAttr = combinedClassName ? ` className="${combinedClassName}"` : "";
 
     // Build dimension styles
@@ -926,6 +935,12 @@ function buildContainerClasses(props: Record<string, unknown>): string {
   if (gap !== "0") classes.push(`gap-${gap}`);
 
   return classes.join(" ");
+}
+
+/** Build Tailwind styling classes from font/color/size props */
+function buildStylingClasses(props: Record<string, unknown>): string {
+  const keys = ["fontFamily", "fontWeight", "fontSize", "textColor", "bgColor"] as const;
+  return keys.map((k) => (props?.[k] as string) || "").filter(Boolean).join(" ");
 }
 
 function buildStyleAttr(props: Record<string, unknown>): string {

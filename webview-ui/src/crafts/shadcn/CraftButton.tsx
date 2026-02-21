@@ -50,6 +50,11 @@ interface CraftButtonProps {
   overlayClassName?: string;
   tooltipText?: string;
   toastText?: string;
+  fontFamily?: string;
+  fontWeight?: string;
+  fontSize?: string;
+  textColor?: string;
+  bgColor?: string;
   width?: string;
   height?: string;
   className?: string;
@@ -68,6 +73,11 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
   overlayClassName = "",
   tooltipText = "",
   toastText = "",
+  fontFamily = "",
+  fontWeight = "",
+  fontSize = "",
+  textColor = "",
+  bgColor = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -86,7 +96,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
       className="relative inline-flex flex-col items-start"
     >
       <button
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(buttonVariants({ variant, size }), fontFamily, fontWeight, fontSize, textColor, bgColor, className)}
         disabled={disabled}
         type="button"
         style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
@@ -127,6 +137,11 @@ CraftButton.craft = {
     overlayClassName: "",
     tooltipText: "",
     toastText: "",
+    fontFamily: "",
+    fontWeight: "",
+    fontSize: "",
+    textColor: "",
+    bgColor: "",
     width: "auto",
     height: "auto",
     className: "",
