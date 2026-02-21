@@ -47,6 +47,7 @@ interface CraftButtonProps {
   sheetSide?: "top" | "right" | "bottom" | "left";
   overlayWidth?: string;
   overlayHeight?: string;
+  overlayClassName?: string;
   tooltipText?: string;
   toastText?: string;
   width?: string;
@@ -64,6 +65,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
   sheetSide = "right",
   overlayWidth = "",
   overlayHeight = "",
+  overlayClassName = "",
   tooltipText = "",
   toastText = "",
   width = "auto",
@@ -122,6 +124,7 @@ CraftButton.craft = {
     sheetSide: "right",
     overlayWidth: "",
     overlayHeight: "",
+    overlayClassName: "",
     tooltipText: "",
     toastText: "",
     width: "auto",
