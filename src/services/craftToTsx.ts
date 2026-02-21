@@ -115,6 +115,136 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  // Phase 1: Simple components
+  CraftAccordion: {
+    tag: "Accordion",
+    importFrom: "@/components/ui/accordion",
+    importName: "Accordion",
+    propsMap: ["type", "className"],
+    isContainer: false,
+  },
+  CraftAlert: {
+    tag: "Alert",
+    importFrom: "@/components/ui/alert",
+    importName: "Alert",
+    propsMap: ["variant", "className"],
+    isContainer: false,
+  },
+  CraftAspectRatio: {
+    tag: "AspectRatio",
+    importFrom: "@/components/ui/aspect-ratio",
+    importName: "AspectRatio",
+    propsMap: ["ratio", "className"],
+    isContainer: true,
+  },
+  CraftAvatar: {
+    tag: "Avatar",
+    importFrom: "@/components/ui/avatar",
+    importName: "Avatar",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftBreadcrumb: {
+    tag: "Breadcrumb",
+    importFrom: "@/components/ui/breadcrumb",
+    importName: "Breadcrumb",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftCheckbox: {
+    tag: "Checkbox",
+    importFrom: "@/components/ui/checkbox",
+    importName: "Checkbox",
+    propsMap: ["checked", "disabled", "className"],
+    textProp: "label",
+    isContainer: false,
+  },
+  CraftCollapsible: {
+    tag: "Collapsible",
+    importFrom: "@/components/ui/collapsible",
+    importName: "Collapsible",
+    propsMap: ["open", "className"],
+    isContainer: true,
+  },
+  CraftPagination: {
+    tag: "Pagination",
+    importFrom: "@/components/ui/pagination",
+    importName: "Pagination",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftProgress: {
+    tag: "Progress",
+    importFrom: "@/components/ui/progress",
+    importName: "Progress",
+    propsMap: ["value", "className"],
+    isContainer: false,
+  },
+  CraftRadioGroup: {
+    tag: "RadioGroup",
+    importFrom: "@/components/ui/radio-group",
+    importName: "RadioGroup",
+    propsMap: ["value", "className"],
+    isContainer: false,
+  },
+  CraftScrollArea: {
+    tag: "ScrollArea",
+    importFrom: "@/components/ui/scroll-area",
+    importName: "ScrollArea",
+    propsMap: ["className"],
+    isContainer: true,
+  },
+  CraftSkeleton: {
+    tag: "Skeleton",
+    importFrom: "@/components/ui/skeleton",
+    importName: "Skeleton",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftSlider: {
+    tag: "Slider",
+    importFrom: "@/components/ui/slider",
+    importName: "Slider",
+    propsMap: ["value", "min", "max", "step", "className"],
+    isContainer: false,
+  },
+  CraftSwitch: {
+    tag: "Switch",
+    importFrom: "@/components/ui/switch",
+    importName: "Switch",
+    propsMap: ["checked", "disabled", "className"],
+    textProp: "label",
+    isContainer: false,
+  },
+  CraftTabs: {
+    tag: "Tabs",
+    importFrom: "@/components/ui/tabs",
+    importName: "Tabs",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftTextarea: {
+    tag: "Textarea",
+    importFrom: "@/components/ui/textarea",
+    importName: "Textarea",
+    propsMap: ["placeholder", "rows", "disabled", "className"],
+    isContainer: false,
+  },
+  CraftToggle: {
+    tag: "Toggle",
+    importFrom: "@/components/ui/toggle",
+    importName: "Toggle",
+    propsMap: ["variant", "pressed", "className"],
+    textProp: "text",
+    isContainer: false,
+  },
+  CraftToggleGroup: {
+    tag: "ToggleGroup",
+    importFrom: "@/components/ui/toggle-group",
+    importName: "ToggleGroup",
+    propsMap: ["type", "className"],
+    isContainer: false,
+  },
 };
 
 /** Default prop values to omit from generated TSX */
@@ -132,6 +262,25 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
     display: "flex", flexDirection: "column", justifyContent: "start",
     alignItems: "stretch", gap: "4", gridCols: 3,
   },
+  // Phase 1
+  CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single" },
+  CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default" },
+  CraftAspectRatio: { ratio: 1.78 },
+  CraftAvatar: { src: "", fallback: "AB" },
+  CraftBreadcrumb: { items: "Home,Products,Current" },
+  CraftCheckbox: { label: "Accept terms", checked: false, disabled: false },
+  CraftCollapsible: { open: false },
+  CraftPagination: { totalPages: 5, currentPage: 1 },
+  CraftProgress: { value: 50 },
+  CraftRadioGroup: { items: "Option A,Option B,Option C", value: "Option A" },
+  CraftScrollArea: {},
+  CraftSkeleton: { width: "100%", height: "20px" },
+  CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
+  CraftSwitch: { label: "Toggle", checked: false, disabled: false },
+  CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
+  CraftTextarea: { placeholder: "Type your message here.", rows: 3, disabled: false },
+  CraftToggle: { text: "Toggle", variant: "default", pressed: false },
+  CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
 };
 
 export function craftStateToTsx(
@@ -274,6 +423,16 @@ export function craftStateToTsx(
 
     // Self-closing for Input
     if (resolvedName === "CraftInput") {
+      return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+    }
+
+    // Self-closing for Textarea
+    if (resolvedName === "CraftTextarea") {
+      return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+    }
+
+    // Self-closing for Progress, Slider, Skeleton
+    if (resolvedName === "CraftProgress" || resolvedName === "CraftSlider" || resolvedName === "CraftSkeleton") {
       return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
     }
 

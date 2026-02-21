@@ -431,4 +431,119 @@ const FALLBACK_SOURCES: Record<string, string> = {
   const cls = \`w-full caption-bottom text-sm \${className}\`.trim();
   return <div className="relative w-full overflow-auto"><table className={cls} {...rest}>{children}</table></div>;
 }`,
+
+  // Phase 1: Simple components
+  accordion: `export function Accordion(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`w-full \${className}\`.trim();
+  return <div className={cls} {...rest}>{children}</div>;
+}`,
+
+  alert: `export function Alert(props: any) {
+  const { className = "", variant = "default", children, ...rest } = props;
+  const v: Record<string, string> = {
+    default: "bg-background text-foreground",
+    destructive: "border-destructive/50 text-destructive dark:border-destructive",
+  };
+  const cls = \`relative w-full rounded-lg border px-4 py-3 text-sm \${v[variant] || v.default} \${className}\`.trim();
+  return <div role="alert" className={cls} {...rest}>{children}</div>;
+}`,
+
+  "aspect-ratio": `export function AspectRatio(props: any) {
+  const { className = "", ratio = 16/9, children, ...rest } = props;
+  return <div className={\`relative w-full \${className}\`.trim()} style={{ paddingBottom: \`\${(1/ratio)*100}%\` }} {...rest}><div className="absolute inset-0">{children}</div></div>;
+}`,
+
+  avatar: `export function Avatar(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full \${className}\`.trim();
+  return <span className={cls} {...rest}>{children}</span>;
+}`,
+
+  breadcrumb: `export function Breadcrumb(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <nav aria-label="breadcrumb" className={className} {...rest}>{children}</nav>;
+}`,
+
+  checkbox: `export function Checkbox(props: any) {
+  const { className = "", checked, disabled, ...rest } = props;
+  const cls = \`peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 \${checked ? "bg-primary text-primary-foreground" : ""} \${className}\`.trim();
+  return <button type="button" role="checkbox" aria-checked={checked} disabled={disabled} className={cls} {...rest} />;
+}`,
+
+  collapsible: `export function Collapsible(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <div className={className} {...rest}>{children}</div>;
+}`,
+
+  pagination: `export function Pagination(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`mx-auto flex w-full justify-center \${className}\`.trim();
+  return <nav role="navigation" aria-label="pagination" className={cls} {...rest}>{children}</nav>;
+}`,
+
+  progress: `export function Progress(props: any) {
+  const { className = "", value = 0, ...rest } = props;
+  const cls = \`relative h-2 w-full overflow-hidden rounded-full bg-primary/20 \${className}\`.trim();
+  return <div role="progressbar" className={cls} {...rest}><div className="h-full w-full flex-1 bg-primary transition-all" style={{ transform: \`translateX(-\${100 - (value || 0)}%)\` }} /></div>;
+}`,
+
+  "radio-group": `export function RadioGroup(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`grid gap-2 \${className}\`.trim();
+  return <div role="radiogroup" className={cls} {...rest}>{children}</div>;
+}`,
+
+  "scroll-area": `export function ScrollArea(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`relative overflow-auto \${className}\`.trim();
+  return <div className={cls} {...rest}>{children}</div>;
+}`,
+
+  skeleton: `export function Skeleton(props: any) {
+  const { className = "", ...rest } = props;
+  const cls = \`animate-pulse rounded-md bg-primary/10 \${className}\`.trim();
+  return <div className={cls} {...rest} />;
+}`,
+
+  slider: `export function Slider(props: any) {
+  const { className = "", value = [50], min = 0, max = 100, ...rest } = props;
+  const v = Array.isArray(value) ? value[0] : value;
+  const pct = ((v - min) / (max - min)) * 100;
+  const cls = \`relative flex w-full touch-none select-none items-center \${className}\`.trim();
+  return <div className={cls} {...rest}><div className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20"><div className="absolute h-full bg-primary" style={{ width: \`\${pct}%\` }} /></div></div>;
+}`,
+
+  switch: `export function Switch(props: any) {
+  const { className = "", checked, disabled, ...rest } = props;
+  const cls = \`peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors \${checked ? "bg-primary" : "bg-input"} \${disabled ? "cursor-not-allowed opacity-50" : ""} \${className}\`.trim();
+  return <button type="button" role="switch" aria-checked={checked} disabled={disabled} className={cls} {...rest}><span className={\`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform \${checked ? "translate-x-4" : "translate-x-0"}\`} /></button>;
+}`,
+
+  tabs: `export function Tabs(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <div className={className} {...rest}>{children}</div>;
+}`,
+
+  textarea: `export function Textarea(props: any) {
+  const { className = "", ...rest } = props;
+  const cls = \`flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 \${className}\`.trim();
+  return <textarea className={cls} {...rest} />;
+}`,
+
+  toggle: `export function Toggle(props: any) {
+  const { className = "", variant = "default", pressed, children, ...rest } = props;
+  const v: Record<string, string> = {
+    default: "bg-transparent",
+    outline: "border border-input bg-transparent shadow-sm",
+  };
+  const cls = \`inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground h-9 px-3 min-w-9 \${pressed ? "bg-accent text-accent-foreground" : ""} \${v[variant] || v.default} \${className}\`.trim();
+  return <button type="button" aria-pressed={pressed} className={cls} {...rest}>{children}</button>;
+}`,
+
+  "toggle-group": `export function ToggleGroup(props: any) {
+  const { className = "", children, ...rest } = props;
+  const cls = \`flex items-center justify-center gap-1 \${className}\`.trim();
+  return <div role="group" className={cls} {...rest}>{children}</div>;
+}`,
 };

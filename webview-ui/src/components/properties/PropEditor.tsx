@@ -19,6 +19,18 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Badge: {
     variant: ["default", "secondary", "destructive", "outline"],
   },
+  Accordion: {
+    type: ["single", "multiple"],
+  },
+  Alert: {
+    variant: ["default", "destructive"],
+  },
+  Toggle: {
+    variant: ["default", "outline"],
+  },
+  ToggleGroup: {
+    type: ["single", "multiple"],
+  },
 };
 
 const INPUT_CLASS =
