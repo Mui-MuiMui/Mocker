@@ -817,7 +817,7 @@ export function Select(props: any) {
   const { children, ...rest } = props;
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
-  return <SelectCtx.Provider value={{ value, setValue, open, setOpen }}><div className="relative" {...rest}>{children}</div></SelectCtx.Provider>;
+  return <SelectCtx.Provider value={{ value, setValue, open, setOpen }}><div className="relative inline-grid" {...rest}>{children}</div></SelectCtx.Provider>;
 }
 export function SelectTrigger(props: any) {
   const { className = "", children, ...rest } = props;
