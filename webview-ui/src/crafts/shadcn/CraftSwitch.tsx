@@ -10,6 +10,8 @@ interface CraftSwitchProps {
   className?: string;
   checkedColor?: string;
   uncheckedColor?: string;
+  checkedClassName?: string;
+  uncheckedClassName?: string;
 }
 
 export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
@@ -21,6 +23,8 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   className = "",
   checkedColor = "",
   uncheckedColor = "",
+  checkedClassName = "",
+  uncheckedClassName = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -43,6 +47,7 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
           "peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
           checked ? "bg-primary" : "bg-input",
           className,
+          checked ? checkedClassName : uncheckedClassName,
         )}
         style={{ backgroundColor: checked ? (checkedColor || undefined) : (uncheckedColor || undefined) }}
       >
@@ -73,6 +78,8 @@ CraftSwitch.craft = {
     className: "",
     checkedColor: "",
     uncheckedColor: "",
+    checkedClassName: "",
+    uncheckedClassName: "",
   },
   rules: {
     canDrag: () => true,

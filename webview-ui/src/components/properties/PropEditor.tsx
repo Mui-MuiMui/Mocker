@@ -150,6 +150,7 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   side: "basic", role: "basic", descriptions: "basic",
   cardBorderColor: "basic", cardBgColor: "basic", descriptionColor: "basic",
   checkedColor: "basic", uncheckedColor: "basic",
+  checkedClassName: "basic", uncheckedClassName: "basic",
   // Overlay
   overlayType: "overlay", linkedMocPath: "overlay", sheetSide: "overlay",
   overlayWidth: "overlay", overlayHeight: "overlay", overlayClassName: "overlay",
