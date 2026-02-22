@@ -212,7 +212,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Switch",
     importFrom: "@/components/ui/switch",
     importName: "Switch",
-    propsMap: ["checked", "disabled", "description", "invalid", "size", "variant", "checkedClassName", "uncheckedClassName", "className", "tooltipText", "tooltipSide"],
+    propsMap: ["checked", "disabled", "description", "invalid", "size", "variant", "checkedClassName", "uncheckedClassName", "cardBorderColor", "cardBgColor", "descriptionColor", "className", "tooltipText", "tooltipSide"],
     textProp: "label",
     isContainer: false,
   },
