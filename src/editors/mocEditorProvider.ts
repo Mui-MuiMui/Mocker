@@ -385,6 +385,7 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
       }
 
       case "browse:mocFile": {
+        const browsePayload = message.payload as { currentPath?: string; targetProp?: string };
         const docDir = vscode.Uri.joinPath(document.uri, "..");
         const result = await vscode.window.showOpenDialog({
           defaultUri: docDir,
@@ -399,7 +400,7 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
           const relativePath = path.relative(docDirPath, selectedPath).replace(/\\/g, "/");
           webviewPanel.webview.postMessage({
             type: "browse:mocFile:result",
-            payload: { relativePath },
+            payload: { relativePath, targetProp: browsePayload?.targetProp },
           });
         }
         break;

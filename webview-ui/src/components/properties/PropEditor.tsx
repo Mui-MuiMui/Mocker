@@ -59,7 +59,7 @@ const INPUT_CLASS =
 const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", "label", "triggerText", "tooltipText", "toastText"]);
 
 /** Props that use the .moc file browse UI (text input + browse button). */
-const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
+const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "linkedMocPaths"]);
 
 /** overlayClassName presets */
 const OVERLAY_CLASS_PRESETS: { label: string; value: string }[] = [
@@ -100,6 +100,7 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   overlayType: "overlay", linkedMocPath: "overlay", sheetSide: "overlay",
   overlayWidth: "overlay", overlayHeight: "overlay", overlayClassName: "overlay",
   contextMenuMocPath: "overlay",
+  linkedMocPaths: "overlay",
   // Interaction
   tooltipText: "interaction", tooltipSide: "interaction", tooltipTrigger: "interaction", toastText: "interaction", toastPosition: "interaction",
   // Layout

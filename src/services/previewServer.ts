@@ -109,7 +109,7 @@ export async function startPreviewServer(
     const mocDir = path.dirname(mocFilePath);
     const linkedPaths = new Set<string>();
 
-    // Scan all nodes for linkedMocPath and contextMenuMocPath
+    // Scan all nodes for linkedMocPath, contextMenuMocPath, and linkedMocPaths
     for (const node of Object.values(craftState)) {
       const n = node as { props?: Record<string, unknown> };
       const linkedPath = n?.props?.linkedMocPath as string | undefined;
@@ -119,6 +119,13 @@ export async function startPreviewServer(
       const contextMenuPath = n?.props?.contextMenuMocPath as string | undefined;
       if (contextMenuPath) {
         linkedPaths.add(contextMenuPath);
+      }
+      const linkedMocPathsStr = n?.props?.linkedMocPaths as string | undefined;
+      if (linkedMocPathsStr) {
+        for (const p of linkedMocPathsStr.split(",")) {
+          const trimmed = p.trim();
+          if (trimmed) linkedPaths.add(trimmed);
+        }
       }
     }
 
@@ -583,9 +590,43 @@ const FALLBACK_SOURCES: Record<string, string> = {
 }`,
 
   // Phase 1: Simple components
-  accordion: `export function Accordion(props: any) {
-  const { className = "", children, ...rest } = props;
+  accordion: `import { createContext, useContext, useState } from "react";
+const AccCtx = createContext<any>(null);
+const ItemCtx = createContext<string>("");
+export function Accordion(props: any) {
+  const { type = "single", className = "", children, collapsible, ...rest } = props;
+  const [openItems, setOpenItems] = useState<string[]>([]);
+  const toggle = (value: string) => {
+    setOpenItems((prev: string[]) => {
+      if (prev.includes(value)) {
+        return prev.filter((v: string) => v !== value);
+      }
+      return type === "multiple" ? [...prev, value] : [value];
+    });
+  };
   const cls = \`w-full \${className}\`.trim();
+  return <AccCtx.Provider value={{ openItems, toggle }}><div className={cls} {...rest}>{children}</div></AccCtx.Provider>;
+}
+export function AccordionItem(props: any) {
+  const { value, className = "", children, ...rest } = props;
+  const cls = \`border-b \${className}\`.trim();
+  return <ItemCtx.Provider value={value}><div className={cls} {...rest}>{children}</div></ItemCtx.Provider>;
+}
+export function AccordionTrigger(props: any) {
+  const { className = "", children, ...rest } = props;
+  const ctx = useContext(AccCtx);
+  const value = useContext(ItemCtx);
+  const isOpen = ctx?.openItems?.includes(value);
+  const cls = \`flex w-full items-center justify-between py-4 text-sm font-medium transition-all hover:underline \${className}\`.trim();
+  return <button type="button" className={cls} onClick={() => ctx?.toggle(value)} {...rest}>{children}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={\`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 \${isOpen ? "rotate-180" : ""}\`}><path d="m6 9 6 6 6-6"/></svg></button>;
+}
+export function AccordionContent(props: any) {
+  const { className = "", children, ...rest } = props;
+  const ctx = useContext(AccCtx);
+  const value = useContext(ItemCtx);
+  const isOpen = ctx?.openItems?.includes(value);
+  if (!isOpen) return null;
+  const cls = \`overflow-hidden text-sm pb-4 pt-0 \${className}\`.trim();
   return <div className={cls} {...rest}>{children}</div>;
 }`,
 

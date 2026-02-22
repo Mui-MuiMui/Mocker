@@ -409,7 +409,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   },
   CraftDiv: { contextMenuMocPath: "" },
   // Phase 1
-  CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single" },
+  CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single", linkedMocPaths: "" },
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default" },
   CraftAspectRatio: { ratio: 1.78 },
   CraftAvatar: { src: "", fallback: "AB" },
@@ -476,6 +476,13 @@ export function craftStateToTsx(
     const mapping = COMPONENT_MAP[resolvedName];
     if (mapping?.importFrom && mapping?.importName) {
       addImport(mapping.importFrom, mapping.importName);
+    }
+
+    // Collect accordion sub-component imports
+    if (resolvedName === "CraftAccordion") {
+      addImport("@/components/ui/accordion", "AccordionItem");
+      addImport("@/components/ui/accordion", "AccordionTrigger");
+      addImport("@/components/ui/accordion", "AccordionContent");
     }
 
     // Collect overlay-related imports for CraftButton
@@ -770,6 +777,11 @@ export function craftStateToTsx(
       return rendered;
     }
 
+    // Accordion special case: render with AccordionItem/Trigger/Content
+    if (resolvedName === "CraftAccordion") {
+      return `${mocComments}\n${renderAccordion(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
+    }
+
     // Table special case: render as static table
     if (resolvedName === "CraftTable") {
       return `${mocComments}\n${renderTable(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
@@ -991,6 +1003,42 @@ function renderTable(
       lines.push(`${pad}    </tr>`);
     }
     lines.push(`${pad}  </tbody>`);
+  }
+
+  lines.push(`${pad}</${tag}>`);
+  return lines.join("\n");
+}
+
+function renderAccordion(
+  props: Record<string, unknown>,
+  tag: string,
+  propsStr: string,
+  classNameAttr: string,
+  styleAttr: string,
+  pad: string,
+): string {
+  const items = ((props?.items as string) || "Item 1,Item 2,Item 3").split(",").map((s) => s.trim());
+  const linkedMocPaths = ((props?.linkedMocPaths as string) || "").split(",").map((s) => s.trim());
+  const type = (props?.type as string) || "single";
+  const collapsibleAttr = type === "single" ? " collapsible" : "";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}${collapsibleAttr}>`);
+
+  for (let i = 0; i < items.length; i++) {
+    const label = items[i];
+    const mocPath = linkedMocPaths[i] || "";
+    const value = `item-${i + 1}`;
+    lines.push(`${pad}  <AccordionItem value="${value}">`);
+    lines.push(`${pad}    <AccordionTrigger>${escapeJsx(label)}</AccordionTrigger>`);
+    lines.push(`${pad}    <AccordionContent>`);
+    if (mocPath) {
+      lines.push(`${pad}      {/* linked: ${escapeJsx(mocPath)} */}`);
+    } else {
+      lines.push(`${pad}      <p>${escapeJsx(label)} content</p>`);
+    }
+    lines.push(`${pad}    </AccordionContent>`);
+    lines.push(`${pad}  </AccordionItem>`);
   }
 
   lines.push(`${pad}</${tag}>`);
