@@ -766,7 +766,7 @@ export function Skeleton(props: any) {
   slider: `import { cn } from "@/components/ui/_cn";
 import { useState, useRef } from "react";
 export function Slider(props: any) {
-  const { className = "", value: initialValue = [50], min = 0, max = 100, step = 1, onValueChange, disabled, ...rest } = props;
+  const { className = "", value: initialValue = [50], min = 0, max = 100, step = 1, onValueChange, disabled, fillClassName = "", trackClassName = "", ...rest } = props;
   const initVal = Array.isArray(initialValue) ? initialValue[0] : initialValue;
   const [value, setValue] = useState(initVal);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -792,8 +792,8 @@ export function Slider(props: any) {
   const cls = cn("relative flex w-full touch-none select-none items-center", disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer", className);
   return (
     <div className={cls} onMouseDown={onMouseDown} {...rest}>
-      <div ref={trackRef} className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
-        <div className="absolute h-full bg-primary" style={{ width: \`\${pct}%\` }} />
+      <div ref={trackRef} className={\`relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20 \${trackClassName}\`}>
+        <div className={\`absolute h-full bg-primary \${fillClassName}\`} style={{ width: \`\${pct}%\` }} />
       </div>
       <div className="absolute block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors" style={{ left: \`calc(\${pct}% - 8px)\` }} />
     </div>

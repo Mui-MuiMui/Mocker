@@ -205,7 +205,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Slider",
     importFrom: "@/components/ui/slider",
     importName: "Slider",
-    propsMap: ["value", "min", "max", "step", "className"],
+    propsMap: ["value", "min", "max", "step", "fillClassName", "trackClassName", "className"],
     isContainer: false,
   },
   CraftSwitch: {
@@ -421,7 +421,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftRadioGroup: { items: "Option A,Option B,Option C", value: "Option A", orientation: "vertical", variant: "default", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", tooltipText: "", tooltipSide: "" },
   CraftScrollArea: {},
   CraftSkeleton: { width: "100%", height: "20px" },
-  CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
+  CraftSlider: { value: 50, min: 0, max: 100, step: 1, fillClassName: "", trackClassName: "" },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false, checkedClassName: "", uncheckedClassName: "", tooltipText: "", tooltipSide: "" },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
   CraftTextarea: { disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },

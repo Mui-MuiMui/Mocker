@@ -9,6 +9,8 @@ interface CraftSliderProps {
   width?: string;
   height?: string;
   className?: string;
+  fillClassName?: string;
+  trackClassName?: string;
 }
 
 export const CraftSlider: UserComponent<CraftSliderProps> = ({
@@ -19,6 +21,8 @@ export const CraftSlider: UserComponent<CraftSliderProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  fillClassName = "",
+  trackClassName = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -34,8 +38,8 @@ export const CraftSlider: UserComponent<CraftSliderProps> = ({
       className={cn("relative flex w-full touch-none select-none items-center", className)}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
-      <div className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
-        <div className="absolute h-full bg-primary" style={{ width: `${percentage}%` }} />
+      <div className={cn("relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20", trackClassName)}>
+        <div className={cn("absolute h-full bg-primary", fillClassName)} style={{ width: `${percentage}%` }} />
       </div>
       <div
         className="absolute block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -55,6 +59,8 @@ CraftSlider.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    fillClassName: "",
+    trackClassName: "",
   },
   rules: {
     canDrag: () => true,
