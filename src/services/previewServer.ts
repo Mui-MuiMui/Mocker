@@ -207,8 +207,8 @@ export async function startPreviewServer(
     for (const [, hash] of linkedHashes) {
       imports[`@moc-linked/${hash}`] = `/linked/${hash}.js`;
     }
-    // sonner toast — provide a no-op stub for preview
-    imports["sonner"] = "data:text/javascript,export function toast(){}";
+    // sonner toast — fallback implementation for preview
+    imports["sonner"] = "/ui/sonner.js";
     return JSON.stringify({ imports }, null, 4);
   }
 
@@ -865,6 +865,34 @@ export function DropdownMenuContent(props: any) {
   const cls = ("absolute left-0 top-full mt-2 z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md " + (props.className || "")).trim();
   return <div className={cls} style={props.style}>{props.children}</div>;
 }`,
+
+  sonner: `export function toast(message: any) {
+  const text = typeof message === "string" ? message : message?.description || String(message);
+  const el = document.createElement("div");
+  el.textContent = text;
+  Object.assign(el.style, {
+    position: "fixed",
+    bottom: "2rem",
+    right: "2rem",
+    zIndex: "9999",
+    padding: "12px 16px",
+    borderRadius: "8px",
+    fontSize: "14px",
+    lineHeight: "1.4",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    border: "1px solid var(--color-border)",
+    background: "var(--color-background)",
+    color: "var(--color-foreground)",
+    maxWidth: "24rem",
+    transition: "opacity 0.3s",
+  });
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+export function Toaster() { return null; }`,
 
   "context-menu": `import { createContext, useContext, useState } from "react";
 const Ctx = createContext<any>(null);

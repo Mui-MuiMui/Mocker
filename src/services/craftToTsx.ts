@@ -724,9 +724,9 @@ export function craftStateToTsx(
     const children = node.nodes || [];
     const textContent = mapping.textProp ? (node.props?.[mapping.textProp] as string) : undefined;
 
-    // Toast comment for CraftButton
+    // Toast onClick for CraftButton
     const toastText = resolvedName === "CraftButton" ? (node.props?.toastText as string | undefined) : undefined;
-    const toastComment = toastText ? `\n${pad}{/* toast: "${escapeJsx(toastText)}" */}` : "";
+    const toastOnClick = toastText ? ` onClick={() => toast("${escapeJsString(toastText)}")}` : "";
 
     let rendered = "";
 
@@ -803,7 +803,7 @@ export function craftStateToTsx(
 
     // Text content
     if (textContent) {
-      rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>${escapeJsx(textContent)}</${tag}>${toastComment}`;
+      rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr}>${escapeJsx(textContent)}</${tag}>`;
       // Apply wrappers for CraftButton
       if (resolvedName === "CraftButton") {
         rendered = wrapWithOverlay(rendered, node.props, pad);
@@ -824,7 +824,7 @@ export function craftStateToTsx(
     }
 
     // Fallback self-closing
-    rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+    rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr} />`;
     if (resolvedName === "CraftButton") {
       rendered = wrapWithOverlay(rendered, node.props, pad);
       rendered = wrapWithTooltip(rendered, node.props, pad);
@@ -991,4 +991,8 @@ function escapeJsx(text: string): string {
 
 function escapeAttr(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function escapeJsString(text: string): string {
+  return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r");
 }
