@@ -134,8 +134,6 @@ export async function startPreviewServer(
       try {
         const absPath = path.resolve(mocDir, relPath);
         linkedAbsPaths.add(absPath);
-        const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
-        linkedHashes.set(relPath, hash);
         const linkedFileUri = vscode.Uri.file(absPath);
         const linkedContent = new TextDecoder().decode(
           await vscode.workspace.fs.readFile(linkedFileUri),
@@ -146,11 +144,13 @@ export async function startPreviewServer(
         const linkedTsx = linkedDoc.imports
           ? `${linkedDoc.imports}\n${linkedTsxSource}`
           : linkedTsxSource;
-        // Skip compilation for empty .moc files (no TSX content)
+        // Skip empty .moc files entirely (no hash registration = no import map entry)
         if (!linkedTsx.trim()) {
           console.warn(`[Mocker] Skipping empty linked .moc: ${relPath}`);
           continue;
         }
+        const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
+        linkedHashes.set(relPath, hash);
         const linkedResult = await compileTsx(linkedTsx, workspaceRoot, [
           previewExternalPlugin(),
         ]);
