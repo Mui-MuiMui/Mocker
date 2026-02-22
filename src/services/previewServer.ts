@@ -692,17 +692,17 @@ import { useState } from "react";
 export function Checkbox(props: any) {
   const { className = "", style, checked: initialChecked = false, disabled, children, ...rest } = props;
   const [checked, setChecked] = useState(initialChecked);
+  const toggle = () => !disabled && setChecked((v: boolean) => !v);
   return (
-    <div className={cn("flex items-center space-x-2", className)} style={style}>
-      <button type="button" role="checkbox" aria-checked={checked} disabled={disabled}
-        onClick={() => !disabled && setChecked(!checked)}
-        className={cn("peer h-4 w-4 shrink-0 rounded-sm border border-primary shadow focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50", checked && "bg-primary text-primary-foreground")}
+    <label className={cn("flex items-center space-x-2 cursor-pointer", disabled && "cursor-not-allowed opacity-50", className)} style={style} onClick={toggle}>
+      <span role="checkbox" aria-checked={checked}
+        className={cn("flex items-center justify-center h-4 w-4 shrink-0 rounded-sm border border-primary shadow", checked && "bg-primary text-primary-foreground")}
         {...rest}
       >
         {checked && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M20 6 9 17l-5-5"/></svg>}
-      </button>
-      {children && <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">{children}</label>}
-    </div>
+      </span>
+      {children && <span className="text-sm font-medium leading-none select-none">{children}</span>}
+    </label>
   );
 }`,
 
