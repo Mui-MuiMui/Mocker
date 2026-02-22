@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEditor } from "@craftjs/core";
 import { getVsCodeApi } from "../../utils/vscodeApi";
 
@@ -59,7 +59,7 @@ const INPUT_CLASS =
 const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", "label", "triggerText", "tooltipText", "toastText"]);
 
 /** Props that use the .moc file browse UI (text input + browse button). */
-const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "linkedMocPaths"]);
+const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 
 /** overlayClassName presets */
 const OVERLAY_CLASS_PRESETS: { label: string; value: string }[] = [
@@ -136,6 +136,7 @@ export function PropEditor() {
   );
 
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const pendingBrowseIndexRef = useRef<number>(-1);
 
   // Listen for browse:mocFile:result messages from extension
   useEffect(() => {
@@ -143,9 +144,20 @@ export function PropEditor() {
       const msg = event.data;
       if (msg?.type === "browse:mocFile:result" && selectedNodeId) {
         const { relativePath, targetProp } = msg.payload as { relativePath: string; targetProp?: string };
-        actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
-          props[targetProp || "linkedMocPath"] = relativePath;
-        });
+        if (targetProp === "linkedMocPaths" && pendingBrowseIndexRef.current >= 0) {
+          const idx = pendingBrowseIndexRef.current;
+          pendingBrowseIndexRef.current = -1;
+          actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+            const paths = (String(props.linkedMocPaths || "")).split(",");
+            while (paths.length <= idx) paths.push("");
+            paths[idx] = relativePath;
+            props.linkedMocPaths = paths.join(",");
+          });
+        } else {
+          actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+            props[targetProp || "linkedMocPath"] = relativePath;
+          });
+        }
       }
     };
     window.addEventListener("message", listener);
@@ -222,6 +234,79 @@ export function PropEditor() {
             className={`${INPUT_CLASS} w-full`}
             placeholder="Tailwind classes..."
           />
+        </div>
+      );
+    }
+
+    // Custom UI for linkedMocPaths: per-item .moc file browse
+    if (key === "linkedMocPaths") {
+      const itemsRaw = selectedProps?.items;
+      const labels: string[] = typeof itemsRaw === "string"
+        ? itemsRaw.split(",").map((s: string) => s.trim()).filter(Boolean)
+        : [];
+      const paths = String(value ?? "").split(",");
+
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          {labels.length === 0 ? (
+            <span className="text-[11px] italic text-[var(--vscode-descriptionForeground,#888)]">
+              items が未設定です
+            </span>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {labels.map((lbl, idx) => {
+                const currentPath = (paths[idx] || "").trim();
+                const shortPath = currentPath
+                  ? currentPath.split("/").slice(-2).join("/")
+                  : "";
+                return (
+                  <div key={idx} className="flex items-center gap-1">
+                    <span className="min-w-[60px] truncate text-[11px] text-[var(--vscode-foreground,#ccc)]" title={lbl}>
+                      {lbl}
+                    </span>
+                    <span
+                      className="flex-1 truncate text-[11px] text-[var(--vscode-descriptionForeground,#888)]"
+                      title={currentPath || "(未設定)"}
+                    >
+                      {shortPath || "(未設定)"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        pendingBrowseIndexRef.current = idx;
+                        getVsCodeApi().postMessage({
+                          type: "browse:mocFile",
+                          payload: { currentPath, targetProp: "linkedMocPaths" },
+                        });
+                      }}
+                      className="rounded border border-[var(--vscode-button-border,transparent)] bg-[var(--vscode-button-background,#0e639c)] px-1.5 py-0.5 text-[11px] text-[var(--vscode-button-foreground,#fff)] hover:opacity-90"
+                      title="参照..."
+                    >
+                      ...
+                    </button>
+                    {currentPath && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newPaths = [...paths];
+                          while (newPaths.length <= idx) newPaths.push("");
+                          newPaths[idx] = "";
+                          handlePropChange(key, newPaths.join(","));
+                        }}
+                        className="px-1 py-0.5 text-[11px] text-[var(--vscode-descriptionForeground,#888)] hover:text-[var(--vscode-errorForeground,#f44)]"
+                        title="クリア"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }
