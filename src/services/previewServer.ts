@@ -823,8 +823,8 @@ export function Switch(props: any) {
   );
   const labelContent = (children || description) && (
     <div className="flex flex-col">
-      {children && <span className="text-sm font-medium leading-none select-none">{children}</span>}
-      {description && <p className="text-[0.8rem] text-muted-foreground" style={descStyle}>{description}</p>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ whiteSpace: "pre-line" }}>{children}</span>}
+      {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }}>{description}</p>}
     </div>
   );
   if (variant === "card") {

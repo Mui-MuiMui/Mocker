@@ -49,7 +49,7 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   if (cardBorderColor) cardStyle.borderColor = cardBorderColor;
   if (cardBgColor) cardStyle.backgroundColor = cardBgColor;
 
-  const descStyle: React.CSSProperties = {};
+  const descStyle: React.CSSProperties = { whiteSpace: "pre-line" };
   if (descriptionColor) descStyle.color = descriptionColor;
 
   const isSm = size === "sm";
@@ -86,12 +86,12 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   const labelContent = (label || description) && (
     <div className="flex flex-col">
       {label && (
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{ whiteSpace: "pre-line" }}>
           {label}
         </label>
       )}
       {description && (
-        <p className="text-[0.8rem] text-muted-foreground" style={Object.keys(descStyle).length > 0 ? descStyle : undefined}>{description}</p>
+        <p className="text-[0.8rem] text-muted-foreground" style={descStyle}>{description}</p>
       )}
     </div>
   );
