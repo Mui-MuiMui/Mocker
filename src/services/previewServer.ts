@@ -764,12 +764,40 @@ export function Skeleton(props: any) {
 }`,
 
   slider: `import { cn } from "@/components/ui/_cn";
+import { useState, useRef } from "react";
 export function Slider(props: any) {
-  const { className = "", value = [50], min = 0, max = 100, ...rest } = props;
-  const v = Array.isArray(value) ? value[0] : value;
-  const pct = ((v - min) / (max - min)) * 100;
-  const cls = cn("relative flex w-full touch-none select-none items-center", className);
-  return <div className={cls} {...rest}><div className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20"><div className="absolute h-full bg-primary" style={{ width: \`\${pct}%\` }} /></div></div>;
+  const { className = "", value: initialValue = [50], min = 0, max = 100, step = 1, onValueChange, disabled, ...rest } = props;
+  const initVal = Array.isArray(initialValue) ? initialValue[0] : initialValue;
+  const [value, setValue] = useState(initVal);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const pct = ((value - min) / (max - min)) * 100;
+  const updateFromX = (clientX: number) => {
+    if (!trackRef.current || disabled) return;
+    const rect = trackRef.current.getBoundingClientRect();
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+    const raw = min + ratio * (max - min);
+    const newVal = Math.min(max, Math.max(min, Math.round((raw - min) / step) * step + min));
+    setValue(newVal);
+    onValueChange?.([newVal]);
+  };
+  const onMouseDown = (e: React.MouseEvent) => {
+    if (disabled) return;
+    e.preventDefault();
+    updateFromX(e.clientX);
+    const onMove = (ev: MouseEvent) => updateFromX(ev.clientX);
+    const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+  const cls = cn("relative flex w-full touch-none select-none items-center", disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer", className);
+  return (
+    <div className={cls} onMouseDown={onMouseDown} {...rest}>
+      <div ref={trackRef} className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-primary/20">
+        <div className="absolute h-full bg-primary" style={{ width: \`\${pct}%\` }} />
+      </div>
+      <div className="absolute block h-4 w-4 rounded-full border border-primary/50 bg-background shadow transition-colors" style={{ left: \`calc(\${pct}% - 8px)\` }} />
+    </div>
+  );
 }`,
 
   switch: `import { cn } from "@/components/ui/_cn";
