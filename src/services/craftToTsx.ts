@@ -424,7 +424,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
-  CraftTextarea: { placeholder: "Type your message here.", rows: 3, disabled: false },
+  CraftTextarea: { disabled: false },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
   // Phase 2
