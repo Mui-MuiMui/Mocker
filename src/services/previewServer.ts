@@ -829,7 +829,7 @@ export function SelectContent(props: any) {
   const { className = "", children, ...rest } = props;
   const ctx = useContext(SelectCtx);
   if (!ctx?.open) return null;
-  const cls = cn("absolute top-full left-0 z-50 mt-1 max-h-60 w-full min-w-[8rem] overflow-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md", className);
+  const cls = cn("absolute top-full left-0 z-50 mt-1 max-h-60 w-full min-w-[8rem] overflow-auto rounded-md border border-gray-300 bg-popover p-1 text-popover-foreground shadow-lg", className);
   return <div className={cls} {...rest}>{children}</div>;
 }
 export function SelectItem(props: any) {
