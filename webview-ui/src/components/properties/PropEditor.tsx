@@ -180,7 +180,7 @@ function getPropGroup(key: string): PropGroup {
 }
 
 export function PropEditor() {
-  const { selectedProps, actions, selectedNodeId, componentName } = useEditor(
+  const { selectedProps, actions, selectedNodeId, componentName, craftDefaultProps } = useEditor(
     (state) => {
       const nodeId = state.events.selected?.values().next().value;
       if (!nodeId)
@@ -188,6 +188,7 @@ export function PropEditor() {
           selectedProps: null,
           selectedNodeId: null,
           componentName: "",
+          craftDefaultProps: null,
         };
 
       const node = state.nodes[nodeId];
@@ -195,6 +196,7 @@ export function PropEditor() {
         selectedProps: node?.data?.props || {},
         selectedNodeId: nodeId,
         componentName: node?.data?.displayName || node?.data?.name || "",
+        craftDefaultProps: (node?.data?.type as any)?.craft?.props ?? null,
       };
     },
   );
@@ -254,9 +256,12 @@ export function PropEditor() {
     });
   };
 
-  // Group properties — only show props registered in PROP_TO_GROUP (ignores legacy/unknown props)
+  // Group properties — craft.props が権威（UI主導）、取得できない場合は PROP_TO_GROUP にフォールバック
   const propEntries = Object.entries(selectedProps).filter(
-    ([key]) => key !== "children" && key !== "className" && key in PROP_TO_GROUP,
+    ([key]) =>
+      key !== "children" &&
+      key !== "className" &&
+      (craftDefaultProps ? key in craftDefaultProps : key in PROP_TO_GROUP),
   );
 
   const grouped = new Map<PropGroup, [string, unknown][]>();

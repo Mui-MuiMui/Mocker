@@ -104,14 +104,16 @@ function parsePaletteClass(cls: string): { prefix: string; family: string; shade
 }
 
 export function TailwindEditor() {
-  const { selectedNodeId, currentClassName, actions } = useEditor((state) => {
+  const { selectedNodeId, currentClassName, hasClassName, actions } = useEditor((state) => {
     const nodeId = state.events.selected?.values().next().value;
-    if (!nodeId) return { selectedNodeId: null, currentClassName: "" };
+    if (!nodeId) return { selectedNodeId: null, currentClassName: "", hasClassName: true };
 
     const node = state.nodes[nodeId];
+    const craftProps = (node?.data?.type as any)?.craft?.props ?? null;
     return {
       selectedNodeId: nodeId,
       currentClassName: (node?.data?.props?.className as string) || "",
+      hasClassName: craftProps ? "className" in craftProps : true,
     };
   });
 
@@ -129,6 +131,7 @@ export function TailwindEditor() {
   }, [selectedNodeId, currentClassName]);
 
   if (!selectedNodeId) return null;
+  if (!hasClassName) return null;
 
   const classes = rawInput.split(/\s+/).filter(Boolean);
   const activeSet = new Set(classes);
