@@ -8,6 +8,8 @@ interface CraftSwitchProps {
   width?: string;
   height?: string;
   className?: string;
+  checkedColor?: string;
+  uncheckedColor?: string;
 }
 
 export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
@@ -17,6 +19,8 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  checkedColor = "",
+  uncheckedColor = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -40,6 +44,7 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
           checked ? "bg-primary" : "bg-input",
           className,
         )}
+        style={{ backgroundColor: checked ? (checkedColor || undefined) : (uncheckedColor || undefined) }}
       >
         <span
           className={cn(
@@ -66,6 +71,8 @@ CraftSwitch.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    checkedColor: "",
+    uncheckedColor: "",
   },
   rules: {
     canDrag: () => true,

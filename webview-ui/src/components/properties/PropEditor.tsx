@@ -67,7 +67,7 @@ const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", 
 const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 
 /** Props that use the color palette picker UI. */
-const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor"]);
+const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "checkedColor", "uncheckedColor"]);
 
 /**
  * Tailwind CSS color palette (hex) — same data as TailwindEditor.tsx.
@@ -149,6 +149,7 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   totalPages: "basic", currentPage: "basic", triggerText: "basic",
   side: "basic", role: "basic", descriptions: "basic",
   cardBorderColor: "basic", cardBgColor: "basic", descriptionColor: "basic",
+  checkedColor: "basic", uncheckedColor: "basic",
   // Overlay
   overlayType: "overlay", linkedMocPath: "overlay", sheetSide: "overlay",
   overlayWidth: "overlay", overlayHeight: "overlay", overlayClassName: "overlay",
