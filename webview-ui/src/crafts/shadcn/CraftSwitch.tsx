@@ -1,3 +1,4 @@
+import React from "react";
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 
@@ -14,6 +15,9 @@ interface CraftSwitchProps {
   className?: string;
   checkedClassName?: string;
   uncheckedClassName?: string;
+  cardBorderColor?: string;
+  cardBgColor?: string;
+  descriptionColor?: string;
   tooltipText?: string;
   tooltipSide?: "" | "top" | "right" | "bottom" | "left";
 }
@@ -31,12 +35,22 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   className = "",
   checkedClassName = "",
   uncheckedClassName = "",
+  cardBorderColor = "",
+  cardBgColor = "",
+  descriptionColor = "",
   tooltipText = "",
   tooltipSide = "",
 }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
+
+  const cardStyle: React.CSSProperties = {};
+  if (cardBorderColor) cardStyle.borderColor = cardBorderColor;
+  if (cardBgColor) cardStyle.backgroundColor = cardBgColor;
+
+  const descStyle: React.CSSProperties = {};
+  if (descriptionColor) descStyle.color = descriptionColor;
 
   const isSm = size === "sm";
   const btnSize = isSm ? "h-4 w-7" : "h-5 w-9";
@@ -77,14 +91,14 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
         </label>
       )}
       {description && (
-        <p className="text-[0.8rem] text-muted-foreground">{description}</p>
+        <p className="text-[0.8rem] text-muted-foreground" style={Object.keys(descStyle).length > 0 ? descStyle : undefined}>{description}</p>
       )}
     </div>
   );
 
   const inner =
     variant === "card" ? (
-      <div className="flex w-full items-center justify-between gap-4 rounded-lg border p-4">
+      <div className="flex w-full items-center justify-between gap-4 rounded-lg border p-4" style={Object.keys(cardStyle).length > 0 ? cardStyle : undefined}>
         {labelContent}
         {switchButton}
       </div>
@@ -122,6 +136,9 @@ CraftSwitch.craft = {
     className: "",
     checkedClassName: "",
     uncheckedClassName: "",
+    cardBorderColor: "",
+    cardBgColor: "",
+    descriptionColor: "",
     tooltipText: "",
     tooltipSide: "",
   },

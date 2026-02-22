@@ -422,7 +422,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftScrollArea: {},
   CraftSkeleton: { width: "100%", height: "20px" },
   CraftSlider: { value: 50, min: 0, max: 100, step: 1, fillClassName: "", trackClassName: "", tooltipText: "", tooltipSide: "" },
-  CraftSwitch: { label: "Toggle", checked: false, disabled: false, description: "", invalid: false, size: "default", variant: "default", checkedClassName: "", uncheckedClassName: "", tooltipText: "", tooltipSide: "" },
+  CraftSwitch: { label: "Toggle", checked: false, disabled: false, description: "", invalid: false, size: "default", variant: "default", checkedClassName: "", uncheckedClassName: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", tooltipText: "", tooltipSide: "" },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
   CraftTextarea: { disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
