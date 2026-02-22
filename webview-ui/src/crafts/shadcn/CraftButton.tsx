@@ -51,6 +51,7 @@ interface CraftButtonProps {
   tooltipText?: string;
   tooltipSide?: "" | "top" | "right" | "bottom" | "left";
   toastText?: string;
+  toastPosition?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
   width?: string;
   height?: string;
   className?: string;
@@ -70,6 +71,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
   tooltipText = "",
   tooltipSide = "",
   toastText = "",
+  toastPosition = "bottom-right",
   width = "auto",
   height = "auto",
   className = "",
@@ -125,6 +127,7 @@ CraftButton.craft = {
     tooltipText: "",
     tooltipSide: "",
     toastText: "",
+    toastPosition: "bottom-right",
     width: "auto",
     height: "auto",
     className: "",

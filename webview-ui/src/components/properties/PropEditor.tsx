@@ -17,6 +17,7 @@ const PROP_OPTIONS: Record<string, string[]> = {
   overlayType: ["none", "dialog", "alert-dialog", "sheet", "drawer", "popover", "dropdown-menu"],
   sheetSide: ["top", "right", "bottom", "left"],
   tooltipSide: ["", "top", "right", "bottom", "left"],
+  toastPosition: ["bottom-right", "bottom-left", "top-right", "top-left"],
 };
 
 /** Property names that have a smaller set of variant options per component. */
@@ -99,7 +100,7 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   overlayWidth: "overlay", overlayHeight: "overlay", overlayClassName: "overlay",
   contextMenuMocPath: "overlay",
   // Interaction
-  tooltipText: "interaction", tooltipSide: "interaction", toastText: "interaction",
+  tooltipText: "interaction", tooltipSide: "interaction", toastText: "interaction", toastPosition: "interaction",
   // Layout
   width: "layout", height: "layout",
   display: "layout", flexDirection: "layout", justifyContent: "layout",

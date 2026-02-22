@@ -394,7 +394,7 @@ const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["Con
 /** Default prop values to omit from generated TSX */
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftButton: { variant: "default", size: "default", disabled: false, text: "Button",
-    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "" },
+    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
   CraftInput: { type: "text", placeholder: "Enter text...", disabled: false, tooltipText: "", tooltipSide: "" },
   CraftBadge: { variant: "default", text: "Badge", tooltipText: "", tooltipSide: "" },
   CraftSeparator: { orientation: "horizontal" },
@@ -726,7 +726,15 @@ export function craftStateToTsx(
 
     // Toast onClick for CraftButton
     const toastText = resolvedName === "CraftButton" ? (node.props?.toastText as string | undefined) : undefined;
-    const toastOnClick = toastText ? ` onClick={() => toast("${escapeJsString(toastText)}")}` : "";
+    let toastOnClick = "";
+    if (toastText) {
+      const toastPosition = (node.props?.toastPosition as string | undefined) || "bottom-right";
+      if (toastPosition !== "bottom-right") {
+        toastOnClick = ` onClick={() => toast("${escapeJsString(toastText)}", { position: "${toastPosition}" })}`;
+      } else {
+        toastOnClick = ` onClick={() => toast("${escapeJsString(toastText)}")}`;
+      }
+    }
 
     let rendered = "";
 

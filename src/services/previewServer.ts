@@ -866,14 +866,17 @@ export function DropdownMenuContent(props: any) {
   return <div className={cls} style={props.style}>{props.children}</div>;
 }`,
 
-  sonner: `export function toast(message: any) {
+  sonner: `export function toast(message: any, options?: any) {
   const text = typeof message === "string" ? message : message?.description || String(message);
+  const pos = options?.position || "bottom-right";
+  const isTop = pos.startsWith("top");
+  const isLeft = pos.endsWith("-left");
   const el = document.createElement("div");
   el.textContent = text;
   Object.assign(el.style, {
     position: "fixed",
-    bottom: "2rem",
-    right: "2rem",
+    [isTop ? "top" : "bottom"]: "2rem",
+    [isLeft ? "left" : "right"]: "2rem",
     zIndex: "9999",
     padding: "12px 16px",
     borderRadius: "8px",
