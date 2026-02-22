@@ -428,7 +428,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
   // Phase 2
-  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option" },
+  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
   CraftCalendar: {},
   CraftResizable: { direction: "horizontal" },
   CraftCarousel: { items: "Slide 1,Slide 2,Slide 3" },
@@ -822,6 +822,7 @@ export function craftStateToTsx(
     // Select special case: render with SelectTrigger/Content/Item
     if (resolvedName === "CraftSelect") {
       rendered = `${mocComments}\n${renderSelect(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
+      rendered = wrapWithTooltip(rendered, node.props, pad);
       return rendered;
     }
 

@@ -4,6 +4,8 @@ import { cn } from "../../utils/cn";
 interface CraftSelectProps {
   items?: string;
   placeholder?: string;
+  tooltipText?: string;
+  tooltipSide?: "" | "top" | "right" | "bottom" | "left";
   width?: string;
   height?: string;
   className?: string;
@@ -12,6 +14,8 @@ interface CraftSelectProps {
 export const CraftSelect: UserComponent<CraftSelectProps> = ({
   items = "Option 1,Option 2,Option 3",
   placeholder = "Select an option",
+  tooltipText = "",
+  tooltipSide = "",
   width = "auto",
   height = "auto",
   className = "",
@@ -43,6 +47,8 @@ CraftSelect.craft = {
   props: {
     items: "Option 1,Option 2,Option 3",
     placeholder: "Select an option",
+    tooltipText: "",
+    tooltipSide: "",
     width: "auto",
     height: "auto",
     className: "",
