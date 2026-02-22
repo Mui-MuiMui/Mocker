@@ -424,7 +424,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
-  CraftTextarea: { disabled: false },
+  CraftTextarea: { disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
   // Phase 2
@@ -830,7 +830,10 @@ export function craftStateToTsx(
 
     // Self-closing for Textarea
     if (resolvedName === "CraftTextarea") {
-      return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+      rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+      const textareaTooltipTrigger = node.props?.tooltipTrigger as string | undefined;
+      rendered = wrapWithTooltip(rendered, node.props, pad, textareaTooltipTrigger);
+      return rendered;
     }
 
     // Self-closing for Progress, Slider, Skeleton

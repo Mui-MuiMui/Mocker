@@ -5,6 +5,9 @@ interface CraftTextareaProps {
   placeholder?: string;
   rows?: number;
   disabled?: boolean;
+  tooltipText?: string;
+  tooltipSide?: "" | "top" | "right" | "bottom" | "left";
+  tooltipTrigger?: "hover" | "focus";
   width?: string;
   height?: string;
   className?: string;
@@ -14,6 +17,9 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
   placeholder = "Type your message here.",
   rows = 3,
   disabled = false,
+  tooltipText = "",
+  tooltipSide = "",
+  tooltipTrigger = "hover",
   width = "auto",
   height = "auto",
   className = "",
@@ -45,6 +51,9 @@ CraftTextarea.craft = {
     placeholder: "Type your message here.",
     rows: 3,
     disabled: false,
+    tooltipText: "",
+    tooltipSide: "",
+    tooltipTrigger: "hover",
     width: "auto",
     height: "auto",
     className: "",
