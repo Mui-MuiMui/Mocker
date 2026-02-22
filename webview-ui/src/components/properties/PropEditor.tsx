@@ -69,34 +69,22 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 /** Props that use the color palette picker UI. */
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor"]);
 
-/** Color palette for visual color picker. */
-const COLOR_PALETTE: { label: string; value: string }[] = [
-  // Standard (500)
-  { label: "Red", value: "#ef4444" },
-  { label: "Orange", value: "#f97316" },
-  { label: "Yellow", value: "#eab308" },
-  { label: "Green", value: "#22c55e" },
-  { label: "Teal", value: "#14b8a6" },
-  { label: "Cyan", value: "#06b6d4" },
-  { label: "Blue", value: "#3b82f6" },
-  { label: "Indigo", value: "#6366f1" },
-  { label: "Violet", value: "#8b5cf6" },
-  { label: "Pink", value: "#ec4899" },
-  { label: "Slate", value: "#64748b" },
-  { label: "Dark", value: "#1e293b" },
-  // Light (200)
-  { label: "Red Light", value: "#fecaca" },
-  { label: "Orange Light", value: "#fed7aa" },
-  { label: "Yellow Light", value: "#fef08a" },
-  { label: "Green Light", value: "#bbf7d0" },
-  { label: "Teal Light", value: "#99f6e4" },
-  { label: "Cyan Light", value: "#a5f3fc" },
-  { label: "Blue Light", value: "#bfdbfe" },
-  { label: "Indigo Light", value: "#c7d2fe" },
-  { label: "Violet Light", value: "#ddd6fe" },
-  { label: "Pink Light", value: "#fbcfe8" },
-  { label: "Slate Light", value: "#e2e8f0" },
-  { label: "White", value: "#ffffff" },
+/** Tailwind CSS default color palette (shades × color families). */
+const TW_SHADES = [100, 300, 500, 700, 900] as const;
+const TW_COLORS: { name: string; values: string[] }[] = [
+  // values order: shade 100, 300, 500, 700, 900
+  { name: "slate",  values: ["#f1f5f9", "#cbd5e1", "#64748b", "#334155", "#0f172a"] },
+  { name: "red",    values: ["#fee2e2", "#fca5a5", "#ef4444", "#b91c1c", "#7f1d1d"] },
+  { name: "orange", values: ["#ffedd5", "#fdba74", "#f97316", "#c2410c", "#7c2d12"] },
+  { name: "amber",  values: ["#fef3c7", "#fcd34d", "#f59e0b", "#b45309", "#78350f"] },
+  { name: "green",  values: ["#dcfce7", "#86efac", "#22c55e", "#15803d", "#14532d"] },
+  { name: "teal",   values: ["#ccfbf1", "#5eead4", "#14b8a6", "#0f766e", "#134e4a"] },
+  { name: "cyan",   values: ["#cffafe", "#67e8f9", "#06b6d4", "#0e7490", "#164e63"] },
+  { name: "blue",   values: ["#dbeafe", "#93c5fd", "#3b82f6", "#1d4ed8", "#1e3a8a"] },
+  { name: "indigo", values: ["#e0e7ff", "#a5b4fc", "#6366f1", "#4338ca", "#312e81"] },
+  { name: "violet", values: ["#ede9fe", "#c4b5fd", "#8b5cf6", "#6d28d9", "#4c1d95"] },
+  { name: "pink",   values: ["#fce7f3", "#f9a8d4", "#ec4899", "#be185d", "#831843"] },
+  { name: "rose",   values: ["#ffe4e6", "#fda4af", "#f43f5e", "#be123c", "#881337"] },
 ];
 
 /** overlayClassName presets */
@@ -295,37 +283,50 @@ export function PropEditor() {
     // Custom UI for color palette props (cardBorderColor, cardBgColor, descriptionColor)
     if (COLOR_PALETTE_PROPS.has(key)) {
       const currentValue = String(value ?? "");
+      const colCount = TW_COLORS.length;
       return (
         <div key={key} className="flex flex-col gap-1">
           <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
             {key}
           </label>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => handlePropChange(key, "")}
               title="クリア"
-              className={`flex h-5 w-5 items-center justify-center rounded-sm border text-[10px] ${!currentValue ? "ring-1 ring-[var(--vscode-focusBorder,#007fd4)]" : "border-[var(--vscode-input-border,#3c3c3c)]"}`}
+              className={`flex h-5 shrink-0 items-center rounded border px-1 text-[10px] ${!currentValue ? "ring-1 ring-[var(--vscode-focusBorder,#007fd4)]" : "border-[var(--vscode-input-border,#3c3c3c)]"}`}
               style={{ background: "var(--vscode-input-background, #3c3c3c)", color: "var(--vscode-input-foreground, #ccc)" }}
             >
-              -
+              none
             </button>
-            {COLOR_PALETTE.map((color) => (
-              <button
-                key={color.value}
-                type="button"
-                onClick={() => handlePropChange(key, color.value)}
-                title={color.label}
-                className={`h-5 w-5 rounded-sm border ${currentValue === color.value ? "ring-1 ring-[var(--vscode-focusBorder,#007fd4)]" : "border-[var(--vscode-input-border,#3c3c3c)]"}`}
-                style={{ backgroundColor: color.value }}
-              />
-            ))}
+            {currentValue && (
+              <div className="flex items-center gap-1">
+                <span
+                  className="inline-block h-3.5 w-3.5 rounded-sm border border-[var(--vscode-input-border,#3c3c3c)]"
+                  style={{ backgroundColor: currentValue }}
+                />
+                <span className="text-[10px] text-[var(--vscode-descriptionForeground,#888)]">
+                  {currentValue}
+                </span>
+              </div>
+            )}
           </div>
-          {currentValue && (
-            <span className="text-[10px] text-[var(--vscode-descriptionForeground,#888)]">
-              {currentValue}
-            </span>
-          )}
+          <div
+            style={{ display: "grid", gridTemplateColumns: `repeat(${colCount}, 1fr)`, gap: "1px" }}
+          >
+            {TW_SHADES.map((shade, si) =>
+              TW_COLORS.map((color) => (
+                <button
+                  key={`${color.name}-${shade}`}
+                  type="button"
+                  onClick={() => handlePropChange(key, color.values[si])}
+                  title={`${color.name}-${shade}`}
+                  className={`h-3.5 rounded-sm ${currentValue === color.values[si] ? "ring-1 ring-[var(--vscode-focusBorder,#007fd4)]" : ""}`}
+                  style={{ backgroundColor: color.values[si] }}
+                />
+              )),
+            )}
+          </div>
         </div>
       );
     }
