@@ -29,19 +29,23 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
   } = useNode();
 
   return (
-    <textarea
+    <div
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      placeholder={placeholder}
-      rows={rows}
-      disabled={disabled}
-      className={cn(
-        "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
-    />
+    >
+      <textarea
+        placeholder={placeholder}
+        rows={rows}
+        disabled={disabled}
+        className={cn(
+          "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          height !== "auto" && "h-full",
+          className,
+        )}
+      />
+    </div>
   );
 };
 
