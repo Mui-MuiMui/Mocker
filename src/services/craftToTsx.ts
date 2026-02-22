@@ -1151,8 +1151,8 @@ function renderSelect(
   const placeholder = (props?.placeholder as string) || "Select an option";
 
   const lines: string[] = [];
-  lines.push(`${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>`);
-  lines.push(`${pad}  <SelectTrigger>`);
+  lines.push(`${pad}<${tag}>`);
+  lines.push(`${pad}  <SelectTrigger${classNameAttr}${styleAttr}>`);
   lines.push(`${pad}    <SelectValue placeholder="${escapeAttr(placeholder)}" />`);
   lines.push(`${pad}  </SelectTrigger>`);
   lines.push(`${pad}  <SelectContent>`);
