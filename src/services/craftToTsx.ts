@@ -212,7 +212,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Switch",
     importFrom: "@/components/ui/switch",
     importName: "Switch",
-    propsMap: ["checked", "disabled", "checkedClassName", "uncheckedClassName", "className"],
+    propsMap: ["checked", "disabled", "checkedClassName", "uncheckedClassName", "className", "tooltipText", "tooltipSide"],
     textProp: "label",
     isContainer: false,
   },
@@ -422,7 +422,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftScrollArea: {},
   CraftSkeleton: { width: "100%", height: "20px" },
   CraftSlider: { value: 50, min: 0, max: 100, step: 1 },
-  CraftSwitch: { label: "Toggle", checked: false, disabled: false, checkedClassName: "", uncheckedClassName: "" },
+  CraftSwitch: { label: "Toggle", checked: false, disabled: false, checkedClassName: "", uncheckedClassName: "", tooltipText: "", tooltipSide: "" },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
   CraftTextarea: { disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false },
@@ -886,8 +886,8 @@ export function craftStateToTsx(
         rendered = wrapWithOverlay(rendered, node.props, pad);
         rendered = wrapWithTooltip(rendered, node.props, pad);
       }
-      // Apply tooltip wrapper for Badge/Label/Checkbox
-      if (resolvedName === "CraftBadge" || resolvedName === "CraftLabel" || resolvedName === "CraftCheckbox") {
+      // Apply tooltip wrapper for Badge/Label/Checkbox/Switch
+      if (resolvedName === "CraftBadge" || resolvedName === "CraftLabel" || resolvedName === "CraftCheckbox" || resolvedName === "CraftSwitch") {
         rendered = wrapWithTooltip(rendered, node.props, pad);
       }
       return rendered;
@@ -904,6 +904,9 @@ export function craftStateToTsx(
     rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr} />`;
     if (resolvedName === "CraftButton") {
       rendered = wrapWithOverlay(rendered, node.props, pad);
+      rendered = wrapWithTooltip(rendered, node.props, pad);
+    }
+    if (resolvedName === "CraftSwitch") {
       rendered = wrapWithTooltip(rendered, node.props, pad);
     }
     return rendered;

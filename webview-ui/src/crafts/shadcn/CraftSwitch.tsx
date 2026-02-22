@@ -10,6 +10,8 @@ interface CraftSwitchProps {
   className?: string;
   checkedClassName?: string;
   uncheckedClassName?: string;
+  tooltipText?: string;
+  tooltipSide?: "" | "top" | "right" | "bottom" | "left";
 }
 
 export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
@@ -21,6 +23,8 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   className = "",
   checkedClassName = "",
   uncheckedClassName = "",
+  tooltipText = "",
+  tooltipSide = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -73,6 +77,8 @@ CraftSwitch.craft = {
     className: "",
     checkedClassName: "",
     uncheckedClassName: "",
+    tooltipText: "",
+    tooltipSide: "",
   },
   rules: {
     canDrag: () => true,
