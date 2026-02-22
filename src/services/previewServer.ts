@@ -803,7 +803,7 @@ export function Slider(props: any) {
   switch: `import { cn } from "@/components/ui/_cn";
 import { useState } from "react";
 export function Switch(props: any) {
-  const { className = "", checked: initialChecked = false, disabled, description = "", invalid = false, size = "default", variant = "default", checkedClassName = "", uncheckedClassName = "", cardBorderColor = "", cardBgColor = "", descriptionColor = "", children, ...rest } = props;
+  const { className = "", checked: initialChecked = false, disabled, description = "", invalid = false, size = "default", variant = "default", checkedClassName = "", uncheckedClassName = "", cardBorderColor = "", cardBgColor = "", descriptionColor = "", labelColor = "", children, ...rest } = props;
   const [checked, setChecked] = useState(initialChecked);
   const toggle = () => !disabled && setChecked((v: boolean) => !v);
   const isSm = size === "sm";
@@ -816,6 +816,7 @@ export function Switch(props: any) {
     ...(cardBgColor && { backgroundColor: cardBgColor }),
   };
   const descStyle = descriptionColor ? { color: descriptionColor } : undefined;
+  const labelStyle = labelColor ? { color: labelColor } : {};
   const switchBtn = (
     <button type="button" role="switch" aria-checked={checked} aria-invalid={invalid ? "true" : undefined} disabled={disabled} className={btnCls} onClick={toggle} {...rest}>
       <span className={cn("pointer-events-none block rounded-full bg-background shadow-lg ring-0 transition-transform", thumbSize, checked ? thumbTranslate : "translate-x-0")} />
@@ -823,7 +824,7 @@ export function Switch(props: any) {
   );
   const labelContent = (children || description) && (
     <div className="flex flex-col">
-      {children && <span className="text-sm font-medium leading-none select-none" style={{ whiteSpace: "pre-line" }}>{children}</span>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ ...labelStyle, whiteSpace: "pre-line" }}>{children}</span>}
       {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }}>{description}</p>}
     </div>
   );

@@ -71,7 +71,7 @@ const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", 
 const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 
 /** Props that use the color palette picker UI (stores hex values). */
-const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor"]);
+const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
 const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName"]);
@@ -162,7 +162,7 @@ const PROP_TO_GROUP: Record<string, PropGroup> = {
   icon: "basic", ratio: "basic", chartType: "basic", direction: "basic",
   totalPages: "basic", currentPage: "basic", triggerText: "basic",
   side: "basic", role: "basic", descriptions: "basic",
-  cardBorderColor: "basic", cardBgColor: "basic", descriptionColor: "basic",
+  cardBorderColor: "basic", cardBgColor: "basic", descriptionColor: "basic", labelColor: "basic",
   checkedClassName: "basic", uncheckedClassName: "basic",
   fillClassName: "basic", trackClassName: "basic",
   // Overlay

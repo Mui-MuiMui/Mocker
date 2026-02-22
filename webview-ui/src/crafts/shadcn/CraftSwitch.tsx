@@ -18,6 +18,7 @@ interface CraftSwitchProps {
   cardBorderColor?: string;
   cardBgColor?: string;
   descriptionColor?: string;
+  labelColor?: string;
   tooltipText?: string;
   tooltipSide?: "" | "top" | "right" | "bottom" | "left";
 }
@@ -38,6 +39,7 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   cardBorderColor = "",
   cardBgColor = "",
   descriptionColor = "",
+  labelColor = "",
   tooltipText = "",
   tooltipSide = "",
 }) => {
@@ -51,6 +53,9 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
 
   const descStyle: React.CSSProperties = { whiteSpace: "pre-line" };
   if (descriptionColor) descStyle.color = descriptionColor;
+
+  const labelStyle: React.CSSProperties = { whiteSpace: "pre-line" };
+  if (labelColor) labelStyle.color = labelColor;
 
   const isSm = size === "sm";
   const btnSize = isSm ? "h-4 w-7" : "h-5 w-9";
@@ -86,7 +91,7 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
   const labelContent = (label || description) && (
     <div className="flex flex-col">
       {label && (
-        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{ whiteSpace: "pre-line" }}>
+        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={labelStyle}>
           {label}
         </label>
       )}
@@ -139,6 +144,7 @@ CraftSwitch.craft = {
     cardBorderColor: "",
     cardBgColor: "",
     descriptionColor: "",
+    labelColor: "",
     tooltipText: "",
     tooltipSide: "",
   },
