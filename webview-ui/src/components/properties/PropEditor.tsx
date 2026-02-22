@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useEditor } from "@craftjs/core";
 import { getVsCodeApi } from "../../utils/vscodeApi";
+import { IconCombobox } from "./IconCombobox";
 
 /** Mapping of property names to their allowed values (select options). */
 const PROP_OPTIONS: Record<string, string[]> = {
@@ -31,7 +32,6 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   },
   Alert: {
     variant: ["default", "destructive"],
-    icon: ["AlertCircle", "AlertTriangle", "Info", "Terminal", "Bell", "CheckCircle2", "XCircle", "ShieldAlert"],
   },
   Toggle: {
     variant: ["default", "outline"],
@@ -208,6 +208,21 @@ export function PropEditor() {
   const showGroupHeaders = activeGroups.length > 1;
 
   function renderProp(key: string, value: unknown) {
+    // Custom UI for icon (combobox with all Lucide icons)
+    if (key === "icon") {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          <IconCombobox
+            value={String(value ?? "")}
+            onChange={(v) => handlePropChange(key, v)}
+          />
+        </div>
+      );
+    }
+
     // Custom UI for overlayClassName (preset select + text input)
     if (key === "overlayClassName") {
       const currentValue = String(value ?? "");
