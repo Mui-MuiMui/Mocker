@@ -11,6 +11,8 @@ interface CraftSliderProps {
   className?: string;
   fillClassName?: string;
   trackClassName?: string;
+  tooltipText?: string;
+  tooltipSide?: "" | "top" | "right" | "bottom" | "left";
 }
 
 export const CraftSlider: UserComponent<CraftSliderProps> = ({
@@ -23,6 +25,8 @@ export const CraftSlider: UserComponent<CraftSliderProps> = ({
   className = "",
   fillClassName = "",
   trackClassName = "",
+  tooltipText = "",
+  tooltipSide = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -61,6 +65,8 @@ CraftSlider.craft = {
     className: "",
     fillClassName: "",
     trackClassName: "",
+    tooltipText: "",
+    tooltipSide: "",
   },
   rules: {
     canDrag: () => true,
