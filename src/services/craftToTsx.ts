@@ -395,7 +395,7 @@ const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["Con
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftButton: { variant: "default", size: "default", disabled: false, text: "Button",
     overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
-  CraftInput: { type: "text", placeholder: "Enter text...", disabled: false, tooltipText: "", tooltipSide: "" },
+  CraftInput: { type: "text", disabled: false, tooltipText: "", tooltipSide: "" },
   CraftBadge: { variant: "default", text: "Badge", tooltipText: "", tooltipSide: "" },
   CraftSeparator: { orientation: "horizontal" },
   CraftText: { tag: "p", text: "Text" },
