@@ -877,19 +877,27 @@ export function Toggle(props: any) {
 }`,
 
   "toggle-group": `import { cn } from "@/components/ui/_cn";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
+const TGCtx = createContext<any>({ variant: "default", size: "default", disabled: false });
 export function ToggleGroup(props: any) {
-  const { className = "", children, orientation = "horizontal", disabled, ...rest } = props;
+  const { className = "", children, orientation = "horizontal", disabled = false, variant = "default", size = "default", ...rest } = props;
   const cls = cn(
     "flex items-center justify-center",
     orientation === "vertical" ? "flex-col" : "flex-row gap-1",
     disabled ? "opacity-50 pointer-events-none" : "",
     className
   );
-  return <div role="group" className={cls} {...rest}>{children}</div>;
+  return (
+    <TGCtx.Provider value={{ variant, size, disabled }}>
+      <div role="group" className={cls} {...rest}>{children}</div>
+    </TGCtx.Provider>
+  );
 }
 export function ToggleGroupItem(props: any) {
-  const { className = "", children, value, variant = "default", size = "default", ...rest } = props;
+  const { className = "", children, value, ...rest } = props;
+  const ctx = useContext(TGCtx);
+  const variant = props.variant ?? ctx.variant;
+  const size = props.size ?? ctx.size;
   const [pressed, setPressed] = useState(false);
   const v: Record<string, string> = {
     default: "bg-transparent",
