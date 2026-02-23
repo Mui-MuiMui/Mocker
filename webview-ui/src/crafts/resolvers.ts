@@ -232,9 +232,8 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Table",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
-  // Phase 1: Simple components
   {
     resolverKey: "CraftAccordion",
     label: "Accordion",
@@ -258,7 +257,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "RatioIcon",
     defaultProps: {},
     isCanvas: true,
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftAvatar",
@@ -266,7 +265,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "CircleUser",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftBreadcrumb",
@@ -274,7 +273,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ChevronRight",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftCheckbox",
@@ -291,7 +290,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "ChevronsDownUp",
     defaultProps: {},
     isCanvas: true,
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftPagination",
@@ -299,7 +298,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ArrowLeftRight",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftProgress",
@@ -307,7 +306,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Loader",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftRadioGroup",
@@ -324,7 +323,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "ScrollText",
     defaultProps: {},
     isCanvas: true,
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftSkeleton",
@@ -332,7 +331,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "RectangleHorizontal",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftSlider",
@@ -356,7 +355,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "PanelTop",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftTextarea",
@@ -372,7 +371,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ToggleRight",
     defaultProps: { text: "Toggle" },
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftToggleGroup",
@@ -380,7 +379,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Group",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   // Phase 2: Complex components
   {
@@ -397,7 +396,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Calendar",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftResizable",
@@ -405,7 +404,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "GripVertical",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftCarousel",
@@ -413,7 +412,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "GalleryHorizontal",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftChart",
@@ -421,7 +420,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "BarChart3",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftForm",
@@ -429,7 +428,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "FileInput",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   // Phase 4: Overlay components (standalone kept in palette)
   {
@@ -438,7 +437,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Navigation",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftMenubar",
@@ -446,7 +445,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Menu",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
   {
     resolverKey: "CraftCommand",
@@ -454,6 +453,6 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Terminal",
     defaultProps: {},
-    enabled: true,
+    enabled: false,
   },
 ];
