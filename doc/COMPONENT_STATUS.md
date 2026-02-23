@@ -31,9 +31,9 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Combobox      | Planned     | [ ]       | Command ベースで構成                       |
 | Switch        | Implemented | [x]       |                                            |
 | Slider        | Implemented | [x]       | 横スライダーのみ他は要件等                 |
-| Toggle        | Implemented | [x]       | 見た目だけ実装。On/Offのトグルが効かない   |
-| Toggle Group  | Implemented | [ ]       |                                            |
-| Form          | Implemented | [ ]       |                                            |
+| Toggle        | Implemented | [x]       |                                            |
+| Toggle Group  | Implemented | [x]       |                                            |
+| Form          | Implemented | [x]       |                                            |
 | Field         | Not Planned | [x]       | Container で代用可能。将来追加の可能性あり |
 
 ### Layout / Container
@@ -111,6 +111,6 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 ## Summary
 
 - **Implemented**: 44
-- **Planned**: 3 (Native Select, Combobox, Date Picker)
+- **Planned**: 2 (Native Select, Combobox, Date Picker)
 - **TBD**: 8 (Button Group, Input Group, Input OTP, Sidebar, Data Table, Typography, Kbd, Empty, Spinner, Item)
-- **Not Planned**: 3 (Toast, Field, Direction)
+- **Not Planned**: 4 (Toast, Field, Direction)

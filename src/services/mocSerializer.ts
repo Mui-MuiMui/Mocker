@@ -45,8 +45,13 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(" * SSOT（Single Source of Truth）:");
   lines.push(" *   GUIエディタの状態（craftState）が末尾のエディタデータに存在する場合、");
   lines.push(" *   TSXコードよりcraftStateが正となります。");
-  lines.push(" *   TSXはcraftStateから自動生成される派生データです。");
-  lines.push(" *   AIエージェントがTSXを編集した場合、GUIエディタ側でcraftStateが再構築されます。");
+  lines.push(" *   TSXはcraftStateから自動生成される派生データであり、AIがページ構造を");
+  lines.push(" *   読み取るための参照用です。コンポーネントの配置変更はGUIで行ってください。");
+  lines.push(" *   (GUIで編集した場合、craftStateの内容がtsxにも上書きされます。)");
+  lines.push(" *");
+  lines.push(" * AI読み取り優先順位:");
+  lines.push(" *   1. TSXコード（構造・レイアウトの主軸 読み手理解用）");
+  lines.push(" *   2. craftState（GUIエディタの詳細プロパティ参照用）");
   lines.push(" *");
   lines.push(" * メタデータ:");
   lines.push(" *   @moc-version  - ドキュメント形式バージョン（必須）");
@@ -71,13 +76,6 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(` * @moc-theme ${metadata.theme}`);
   lines.push(` * @moc-layout ${metadata.layout}`);
   lines.push(` * @moc-viewport ${metadata.viewport}`);
-
-  if (metadata.memos.length > 0) {
-    lines.push(" *");
-    for (const memo of metadata.memos) {
-      lines.push(` * @moc-memo #${memo.targetId} "${memo.text}"`);
-    }
-  }
 
   lines.push(" */");
 
