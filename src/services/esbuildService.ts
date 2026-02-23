@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { pathToFileURL } from "url";
 import * as path from "path";
 import * as esbuild from "esbuild-wasm";
 
@@ -7,10 +7,8 @@ let initialized = false;
 async function ensureInitialized(): Promise<void> {
   if (initialized) return;
   const wasmPath = path.join(__dirname, "esbuild.wasm");
-  const wasmBuffer = readFileSync(wasmPath);
   await esbuild.initialize({
-    wasmModule: new WebAssembly.Module(wasmBuffer),
-    worker: false,
+    wasmURL: pathToFileURL(wasmPath).href,
   });
   initialized = true;
 }
