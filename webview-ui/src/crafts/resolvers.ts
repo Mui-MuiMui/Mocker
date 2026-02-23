@@ -118,6 +118,8 @@ export interface PaletteItem {
   defaultProps: Record<string, unknown>;
   /** When true, the element is created as a Craft.js canvas that accepts children */
   isCanvas?: boolean;
+  /** false にするとパレットから非表示になる。省略時は表示（デフォルト true） */
+  enabled?: boolean;
 }
 
 export const paletteItems: PaletteItem[] = [
