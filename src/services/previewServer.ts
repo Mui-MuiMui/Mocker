@@ -894,10 +894,11 @@ export function ToggleGroup(props: any) {
   );
 }
 export function ToggleGroupItem(props: any) {
-  const { className = "", children, value, ...rest } = props;
+  const { className = "", children, value, disabled: itemDisabled, ...rest } = props;
   const ctx = useContext(TGCtx);
   const variant = props.variant ?? ctx.variant;
   const size = props.size ?? ctx.size;
+  const disabled = itemDisabled ?? ctx.disabled;
   const [pressed, setPressed] = useState(false);
   const v: Record<string, string> = {
     default: "bg-transparent",
@@ -909,13 +910,12 @@ export function ToggleGroupItem(props: any) {
     lg: "h-10 px-3 min-w-10",
   };
   const cls = cn(
-    "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-    pressed ? "bg-accent text-accent-foreground" : "",
+    "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
     s[size] || s.default,
     v[variant] || v.default,
     className
   );
-  return <button type="button" onClick={() => setPressed((p: boolean) => !p)} className={cls} {...rest}>{children}</button>;
+  return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-disabled={disabled || undefined} disabled={disabled} onClick={() => !disabled && setPressed((p: boolean) => !p)} className={cls} {...rest}>{children}</button>;
 }`,
 
   // Phase 2: Complex components
