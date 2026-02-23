@@ -254,6 +254,8 @@ export async function startPreviewServer(
       background-color: var(--color-background);
       color: var(--color-foreground);
     }
+    /* Toggle: icon fill when pressed */
+    [data-toggle-pressed] svg.lucide { fill: currentColor; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style type="text/tailwindcss">
@@ -873,14 +875,49 @@ export function Toggle(props: any) {
   };
   const IconComponent = icon ? (Icons as any)[icon] : null;
   const cls = cn("inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", s[size] || s.default, v[variant] || v.default, className);
-  return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-disabled={disabled || undefined} disabled={disabled} onClick={() => setPressed((p: boolean) => !p)} className={cls} {...rest}>{IconComponent && <IconComponent className="h-4 w-4" />}{children}</button>;
+  return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-toggle-pressed={pressed || undefined} data-disabled={disabled || undefined} disabled={disabled} onClick={() => setPressed((p: boolean) => !p)} className={cls} {...rest}>{IconComponent && <IconComponent className="h-4 w-4" />}{children}</button>;
 }`,
 
   "toggle-group": `import { cn } from "@/components/ui/_cn";
+import { createContext, useContext, useState } from "react";
+const TGCtx = createContext<any>({ variant: "default", size: "default", disabled: false });
 export function ToggleGroup(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("flex items-center justify-center gap-1", className);
-  return <div role="group" className={cls} {...rest}>{children}</div>;
+  const { className = "", children, orientation = "horizontal", disabled = false, variant = "default", size = "default", ...rest } = props;
+  const cls = cn(
+    "flex items-center justify-center",
+    orientation === "vertical" ? "flex-col" : "flex-row gap-1",
+    disabled ? "opacity-50 pointer-events-none" : "",
+    className
+  );
+  return (
+    <TGCtx.Provider value={{ variant, size, disabled }}>
+      <div role="group" className={cls} {...rest}>{children}</div>
+    </TGCtx.Provider>
+  );
+}
+export function ToggleGroupItem(props: any) {
+  const { className = "", children, value, disabled: itemDisabled, ...rest } = props;
+  const ctx = useContext(TGCtx);
+  const variant = props.variant ?? ctx.variant;
+  const size = props.size ?? ctx.size;
+  const disabled = itemDisabled ?? ctx.disabled;
+  const [pressed, setPressed] = useState(false);
+  const v: Record<string, string> = {
+    default: "bg-transparent",
+    outline: "border border-input bg-transparent shadow-sm hover:bg-accent hover:text-accent-foreground",
+  };
+  const s: Record<string, string> = {
+    default: "h-9 px-3 min-w-9",
+    sm: "h-8 px-2 min-w-8",
+    lg: "h-10 px-3 min-w-10",
+  };
+  const cls = cn(
+    "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+    s[size] || s.default,
+    v[variant] || v.default,
+    className
+  );
+  return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-disabled={disabled || undefined} disabled={disabled} onClick={() => !disabled && setPressed((p: boolean) => !p)} className={cls} {...rest}>{children}</button>;
 }`,
 
   // Phase 2: Complex components

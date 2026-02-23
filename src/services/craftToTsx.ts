@@ -242,7 +242,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "ToggleGroup",
     importFrom: "@/components/ui/toggle-group",
     importName: "ToggleGroup",
-    propsMap: ["type", "className"],
+    propsMap: ["type", "variant", "size", "disabled", "orientation", "className"],
     isContainer: false,
   },
   // Phase 2: Complex components
@@ -426,7 +426,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
   CraftTextarea: { disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftToggle: { text: "Toggle", variant: "default", pressed: false, size: "default", disabled: false, icon: "", tooltipText: "", tooltipSide: "" },
-  CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single" },
+  CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single", variant: "default", size: "default", disabled: false, gap: "1", orientation: "horizontal", tooltipText: "", tooltipSide: "", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "" },
   // Phase 2
   CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
   CraftCalendar: {},
@@ -488,6 +488,11 @@ export function craftStateToTsx(
     if (resolvedName === "CraftToggle") {
       const icon = node.props?.icon as string | undefined;
       if (icon) addImport("lucide-react", icon);
+    }
+
+    // Collect toggle-group sub-component imports
+    if (resolvedName === "CraftToggleGroup") {
+      addImport("@/components/ui/toggle-group", "ToggleGroupItem");
     }
 
     // Collect accordion sub-component imports
@@ -843,6 +848,13 @@ export function craftStateToTsx(
       return `${mocComments}\n${renderTable(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
     }
 
+    // ToggleGroup special case: render items as ToggleGroupItem children
+    if (resolvedName === "CraftToggleGroup") {
+      rendered = `${mocComments}\n${renderToggleGroup(node.props, tag, propsStr, styleAttr, pad)}`;
+      rendered = wrapWithTooltip(rendered, node.props, pad);
+      return rendered;
+    }
+
     // Self-closing for img
     if (resolvedName === "CraftImage" || resolvedName === "CraftPlaceholderImage") {
       return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
@@ -1166,6 +1178,58 @@ function renderRadioGroup(
     }
   }
   lines.push(`${pad}</${tag}>`);
+  return lines.join("\n");
+}
+
+function renderToggleGroup(
+  props: Record<string, unknown>,
+  tag: string,
+  propsStr: string,
+  styleAttr: string,
+  pad: string,
+): string {
+  const items = ((props?.items as string) || "Bold,Italic,Underline")
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  const descriptionsRaw = (props?.descriptions as string) || "";
+  const descList = descriptionsRaw ? descriptionsRaw.split(",").map((s) => s.trim()) : [];
+  const cardBorderColor = (props?.cardBorderColor as string) || "";
+  const cardBgColor = (props?.cardBgColor as string) || "";
+  const descriptionColor = (props?.descriptionColor as string) || "";
+
+  const gap = (props?.gap as string) || "1";
+  const userClassName = (props?.className as string) || "";
+  const gapClass = gap ? `gap-${gap}` : "";
+  const combinedCls = [gapClass, userClassName].filter(Boolean).join(" ");
+  const tgClassAttr = combinedCls ? ` className="${combinedCls}"` : "";
+
+  const itemStyleParts: string[] = [];
+  if (cardBorderColor) itemStyleParts.push(`borderColor: "${cardBorderColor}"`);
+  if (cardBgColor) itemStyleParts.push(`backgroundColor: "${cardBgColor}"`);
+  const itemStyleAttr = itemStyleParts.length > 0 ? ` style={{ ${itemStyleParts.join(", ")} }}` : "";
+  const descStyleAttr = descriptionColor ? ` style={{ color: "${descriptionColor}" }}` : "";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<ToggleGroup${propsStr}${tgClassAttr}${styleAttr}>`);
+
+  for (let i = 0; i < items.length; i++) {
+    const label = items[i];
+    const desc = descList[i] || "";
+
+    if (desc) {
+      lines.push(`${pad}  <ToggleGroupItem value="${escapeAttr(label)}"${itemStyleAttr}>`);
+      lines.push(`${pad}    <div className="flex flex-col items-center gap-0.5">`);
+      lines.push(`${pad}      <span>${escapeJsx(label)}</span>`);
+      lines.push(`${pad}      <span className="text-xs text-muted-foreground"${descStyleAttr}>${escapeJsx(desc)}</span>`);
+      lines.push(`${pad}    </div>`);
+      lines.push(`${pad}  </ToggleGroupItem>`);
+    } else if (itemStyleAttr) {
+      lines.push(`${pad}  <ToggleGroupItem value="${escapeAttr(label)}"${itemStyleAttr}>${escapeJsx(label)}</ToggleGroupItem>`);
+    } else {
+      lines.push(`${pad}  <ToggleGroupItem value="${escapeAttr(label)}">${escapeJsx(label)}</ToggleGroupItem>`);
+    }
+  }
+
+  lines.push(`${pad}</ToggleGroup>`);
   return lines.join("\n");
 }
 
