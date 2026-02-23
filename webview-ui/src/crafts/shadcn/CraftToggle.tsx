@@ -56,15 +56,18 @@ export const CraftToggle: UserComponent<CraftToggleProps> = ({
   } = useNode();
 
   const IconComponent = icon
-    ? (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[icon]
+    ? (Icons as unknown as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[icon]
     : null;
+
+  const hasCustomWidth = width !== "auto";
+  const hasCustomHeight = height !== "auto";
 
   return (
     <div
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      style={{ display: "inline-flex", width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
+      style={{ display: "inline-flex", width: hasCustomWidth ? width : undefined, height: hasCustomHeight ? height : undefined }}
     >
       <button
         type="button"
@@ -76,9 +79,9 @@ export const CraftToggle: UserComponent<CraftToggleProps> = ({
           pressed ? "bg-accent text-accent-foreground" : "bg-transparent",
           className,
         )}
-        style={{ width: "100%", height: "100%" }}
+        style={{ width: hasCustomWidth ? "100%" : undefined, height: hasCustomHeight ? "100%" : undefined }}
       >
-        {IconComponent && <IconComponent className="h-4 w-4" />}
+        {IconComponent && <IconComponent className="h-4 w-4" style={{ fill: pressed ? "currentColor" : undefined }} />}
         {text}
       </button>
     </div>
