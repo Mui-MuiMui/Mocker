@@ -371,7 +371,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ToggleRight",
     defaultProps: { text: "Toggle" },
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftToggleGroup",
