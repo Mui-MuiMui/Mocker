@@ -1,3 +1,4 @@
+import React from "react";
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
@@ -41,6 +42,10 @@ interface CraftToggleGroupProps {
   width?: string;
   height?: string;
   className?: string;
+  descriptions?: string;
+  cardBorderColor?: string;
+  cardBgColor?: string;
+  descriptionColor?: string;
 }
 
 export const CraftToggleGroup: UserComponent<CraftToggleGroupProps> = ({
@@ -56,12 +61,17 @@ export const CraftToggleGroup: UserComponent<CraftToggleGroupProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  descriptions = "",
+  cardBorderColor = "",
+  cardBgColor = "",
+  descriptionColor = "",
 }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
 
   const itemList = items.split(",").map((s) => s.trim()).filter(Boolean);
+  const descList = descriptions ? descriptions.split(",").map((s) => s.trim()) : [];
 
   return (
     <div
@@ -79,20 +89,38 @@ export const CraftToggleGroup: UserComponent<CraftToggleGroupProps> = ({
       )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
-      {itemList.map((item, i) => (
-        <button
-          key={i}
-          type="button"
-          aria-pressed={i === 0}
-          data-state={i === 0 ? "on" : "off"}
-          className={cn(
-            toggleVariants({ variant, size }),
-            i === 0 && "bg-accent text-accent-foreground",
-          )}
-        >
-          {item}
-        </button>
-      ))}
+      {itemList.map((item, i) => {
+        const desc = descList[i] || "";
+        const itemStyle: React.CSSProperties = {};
+        if (cardBorderColor) itemStyle.borderColor = cardBorderColor;
+        if (cardBgColor) itemStyle.backgroundColor = cardBgColor;
+
+        return (
+          <button
+            key={i}
+            type="button"
+            aria-pressed={i === 0}
+            data-state={i === 0 ? "on" : "off"}
+            style={Object.keys(itemStyle).length > 0 ? itemStyle : undefined}
+            className={cn(
+              toggleVariants({ variant, size }),
+              i === 0 && "bg-accent text-accent-foreground",
+            )}
+          >
+            {desc ? (
+              <span className="flex flex-col items-center gap-0.5">
+                <span>{item}</span>
+                <span
+                  className="text-[10px] font-normal opacity-80"
+                  style={descriptionColor ? { color: descriptionColor } : undefined}
+                >
+                  {desc}
+                </span>
+              </span>
+            ) : item}
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -112,6 +140,10 @@ CraftToggleGroup.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    descriptions: "",
+    cardBorderColor: "",
+    cardBgColor: "",
+    descriptionColor: "",
   },
   rules: {
     canDrag: () => true,
