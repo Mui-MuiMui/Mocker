@@ -48,6 +48,10 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(" *   TSXはcraftStateから自動生成される派生データであり、AIがページ構造を");
   lines.push(" *   読み取るための参照用です。コンポーネントの配置変更はGUIで行ってください。");
   lines.push(" *");
+  lines.push(" * AI読み取り優先順位:");
+  lines.push(" *   1. TSXコード（構造・レイアウトの主軸）");
+  lines.push(" *   2. craftState（GUIエディタの詳細プロパティ参照用）");
+  lines.push(" *");
   lines.push(" * メタデータ:");
   lines.push(" *   @moc-version  - ドキュメント形式バージョン（必須）");
   lines.push(" *   @moc-intent   - このページの目的・意図（任意、人間が記述）");
@@ -71,13 +75,6 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(` * @moc-theme ${metadata.theme}`);
   lines.push(` * @moc-layout ${metadata.layout}`);
   lines.push(` * @moc-viewport ${metadata.viewport}`);
-
-  if (metadata.memos.length > 0) {
-    lines.push(" *");
-    for (const memo of metadata.memos) {
-      lines.push(` * @moc-memo #${memo.targetId} "${memo.text}"`);
-    }
-  }
 
   lines.push(" */");
 
