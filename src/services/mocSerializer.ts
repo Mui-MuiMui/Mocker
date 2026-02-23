@@ -47,9 +47,10 @@ function serializeMetadata(metadata: MocMetadata): string {
   lines.push(" *   TSXコードよりcraftStateが正となります。");
   lines.push(" *   TSXはcraftStateから自動生成される派生データであり、AIがページ構造を");
   lines.push(" *   読み取るための参照用です。コンポーネントの配置変更はGUIで行ってください。");
+  lines.push(" *   (GUIで編集した場合、craftStateの内容がtsxにも上書きされます。)");
   lines.push(" *");
   lines.push(" * AI読み取り優先順位:");
-  lines.push(" *   1. TSXコード（構造・レイアウトの主軸）");
+  lines.push(" *   1. TSXコード（構造・レイアウトの主軸 読み手理解用）");
   lines.push(" *   2. craftState（GUIエディタの詳細プロパティ参照用）");
   lines.push(" *");
   lines.push(" * メタデータ:");
