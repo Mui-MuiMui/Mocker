@@ -111,7 +111,7 @@ export const CraftToggleGroup: UserComponent<CraftToggleGroupProps> = ({
               <span className="flex flex-col items-center gap-0.5">
                 <span>{item}</span>
                 <span
-                  className="text-[10px] font-normal opacity-80"
+                  className="text-xs text-muted-foreground"
                   style={descriptionColor ? { color: descriptionColor } : undefined}
                 >
                   {desc}
