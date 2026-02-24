@@ -23,4 +23,6 @@ pnpm-lock.yaml
 PLAN.md
 CLAUDE.md
 spec/**
+doc/**
+moc_test/**
 **/*.map
