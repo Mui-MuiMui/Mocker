@@ -1054,10 +1054,15 @@ function buildStyleAttr(props: Record<string, unknown>): string {
   const w = props?.width as string | undefined;
   const h = props?.height as string | undefined;
   const objectFit = props?.objectFit as string | undefined;
+  const top = props?.top as string | undefined;
+  const left = props?.left as string | undefined;
   const parts: string[] = [];
   if (w && w !== "auto") parts.push(`width: "${w}"`);
   if (h && h !== "auto") parts.push(`height: "${h}"`);
   if (objectFit && objectFit !== "cover") parts.push(`objectFit: "${objectFit}"`);
+  if (top || left) parts.push(`position: "absolute"`);
+  if (top) parts.push(`top: "${top}"`);
+  if (left) parts.push(`left: "${left}"`);
   if (parts.length === 0) return "";
   return ` style={{ ${parts.join(", ")} }}`;
 }
