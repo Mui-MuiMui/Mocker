@@ -893,7 +893,7 @@ export function craftStateToTsx(
       }
       if (triggerStyle !== "none") {
         const svg = TRIGGER_SVGS[triggerStyle] || TRIGGER_SVGS.chevron;
-        lines.push(`${pad}    <CollapsibleTrigger className="rounded-md border p-1 hover:bg-accent">`);
+        lines.push(`${pad}    <CollapsibleTrigger className="rounded-md border p-1 hover:bg-accent" data-variant="${triggerStyle}">`);
         lines.push(`${pad}      ${svg}`);
         lines.push(`${pad}    </CollapsibleTrigger>`);
       }
