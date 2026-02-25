@@ -560,6 +560,23 @@ export function craftStateToTsx(
       }
     }
 
+    // CraftCollapsible: content slot is only rendered when linkedMocPath is not set
+    if (resolvedName === "CraftCollapsible") {
+      const hasLinkedMoc = !!(node.props?.linkedMocPath as string);
+      const headerSlotId = node.linkedNodes?.header;
+      if (headerSlotId) collectImports(headerSlotId);
+      if (!hasLinkedMoc) {
+        const contentSlotId = node.linkedNodes?.content;
+        if (contentSlotId) collectImports(contentSlotId);
+      }
+      return;
+    }
+
+    // CraftCard: children are not rendered when linkedMocPath is set
+    if (resolvedName === "CraftCard" && (node.props?.linkedMocPath as string)) {
+      return;
+    }
+
     for (const childId of node.nodes || []) {
       collectImports(childId);
     }
@@ -805,14 +822,13 @@ export function craftStateToTsx(
         }
         cardBody.push(`${pad}    </div>`);
       }
-      if (innerChildren.length > 0) {
-        cardBody.push(`${pad}    <div className="p-6 pt-0">`);
-        cardBody.push(...innerChildren.map((c) => `  ${c}`));
-        cardBody.push(`${pad}    </div>`);
-      }
       if (linkedMocPath) {
         cardBody.push(`${pad}    <div className="p-6 pt-0">`);
         cardBody.push(`${pad}      {/* linked: ${escapeJsx(linkedMocPath)} */}`);
+        cardBody.push(`${pad}    </div>`);
+      } else if (innerChildren.length > 0) {
+        cardBody.push(`${pad}    <div className="p-6 pt-0">`);
+        cardBody.push(...innerChildren.map((c) => `  ${c}`));
         cardBody.push(`${pad}    </div>`);
       }
       if (cardBody.length > 0) {
