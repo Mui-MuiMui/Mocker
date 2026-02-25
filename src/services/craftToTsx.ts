@@ -402,7 +402,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftPlaceholderImage: { alt: "Placeholder", keepAspectRatio: false },
   CraftImage: { alt: "", objectFit: "cover", keepAspectRatio: false },
   CraftLabel: { text: "Label", tooltipText: "", tooltipSide: "" },
-  CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "" },
+  CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", linkedMocPath: "" },
   CraftContainer: {
     display: "flex", flexDirection: "column", justifyContent: "start",
     alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "",
@@ -783,6 +783,7 @@ export function craftStateToTsx(
     if (resolvedName === "CraftCard") {
       const title = (node.props?.title as string) || "";
       const desc = (node.props?.description as string) || "";
+      const linkedMocPath = (node.props?.linkedMocPath as string) || "";
       const innerChildren = children.map((id) => renderNode(id, indent + 2)).filter(Boolean);
       const cardBody = [];
       if (title) {
@@ -796,6 +797,11 @@ export function craftStateToTsx(
       if (innerChildren.length > 0) {
         cardBody.push(`${pad}    <div className="p-6 pt-0">`);
         cardBody.push(...innerChildren.map((c) => `  ${c}`));
+        cardBody.push(`${pad}    </div>`);
+      }
+      if (linkedMocPath) {
+        cardBody.push(`${pad}    <div className="p-6 pt-0">`);
+        cardBody.push(`${pad}      {/* linked: ${escapeJsx(linkedMocPath)} */}`);
         cardBody.push(`${pad}    </div>`);
       }
       if (cardBody.length > 0) {

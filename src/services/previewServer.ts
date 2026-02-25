@@ -474,9 +474,13 @@ export async function startPreviewServer(
   const watcher = vscode.workspace.onDidSaveTextDocument(async (doc) => {
     const isLinkedFile = linkedAbsPaths.has(doc.uri.fsPath);
     if (doc.uri.fsPath === mocFilePath || isLinkedFile) {
+      const prevLinkedKeys = new Set(linkedHashes.keys());
       await compileCurrentFile();
-      // Linked file changes require full page reload to bust ES module cache
-      sendReload(isLinkedFile);
+      // Full reload if linked set changed (import map in HTML needs update)
+      const linkedSetChanged =
+        prevLinkedKeys.size !== linkedHashes.size ||
+        [...linkedHashes.keys()].some((k) => !prevLinkedKeys.has(k));
+      sendReload(isLinkedFile || linkedSetChanged);
     }
   });
 
