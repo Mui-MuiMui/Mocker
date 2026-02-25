@@ -20,6 +20,10 @@ const FONT_FAMILY_OPTIONS = ["sans", "serif", "mono"];
 const FONT_WEIGHT_OPTIONS = ["normal", "medium", "semibold", "bold"];
 const BORDER_RADIUS_OPTIONS = ["none", "sm", "md", "lg", "xl", "2xl", "full"];
 
+const SHADOW_SCALE = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl"] as const;
+const SHADOW_PRESET = [...SHADOW_SCALE, "none"] as const;
+const ALL_SHADOW_CLASSES = [...SHADOW_SCALE.map((s) => `shadow-${s}`), "shadow-none", "shadow"];
+
 const PADDING_DIRS = [
   { label: "All", prefix: "p" },
   { label: "X", prefix: "px" },
@@ -122,6 +126,7 @@ export function TailwindEditor() {
   const [paddingDir, setPaddingDir] = useState(0);
   const [marginDir, setMarginDir] = useState(0);
   const [fontSizeMode, setFontSizeMode] = useState<"preset" | "slider">("preset");
+  const [shadowMode, setShadowMode] = useState<"preset" | "slider">("preset");
   const [textPaletteFamily, setTextPaletteFamily] = useState<string>("blue");
   const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
   const [hoverBgPaletteFamily, setHoverBgPaletteFamily] = useState<string>("blue");
@@ -196,11 +201,19 @@ export function TailwindEditor() {
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
   const contentVAlignGroup = CONTENT_VALIGN_OPTIONS.map((o) => o.cls);
 
+  const getShadowIndex = (): number => {
+    for (let i = 0; i < SHADOW_SCALE.length; i++) {
+      if (activeSet.has(`shadow-${SHADOW_SCALE[i]}`)) return i;
+    }
+    return -1;
+  };
+
   const currentPaddingPrefix = PADDING_DIRS[paddingDir].prefix;
   const currentMarginPrefix = MARGIN_DIRS[marginDir].prefix;
   const currentPaddingIdx = getSpacingValue(currentPaddingPrefix);
   const currentMarginIdx = getSpacingValue(currentMarginPrefix);
   const currentFontSizeIdx = getFontSizeIndex();
+  const currentShadowIdx = getShadowIndex();
 
   // Detect active palette color for a given effective prefix (e.g. "text", "hover:bg")
   const findPaletteColor = (effectivePrefix: string) => {
@@ -430,6 +443,59 @@ export function TailwindEditor() {
               <ClassButton key={r} label={r} active={activeSet.has(`rounded-${r}`)} onClick={() => setGroupClass(`rounded-${r}`, borderRadiusGroup)} />
             ))}
           </div>
+        </TailwindSection>
+      </TailwindCategory>
+
+      <TailwindCategory title="Effects" collapsed={collapsedCategories.has("effects")} onToggle={() => toggleCategory("effects")}>
+        <TailwindSection title="Shadow">
+          <div className="mb-1 flex gap-1">
+            <ModeToggle label="Preset" active={shadowMode === "preset"} onClick={() => setShadowMode("preset")} />
+            <ModeToggle label="Slider" active={shadowMode === "slider"} onClick={() => setShadowMode("slider")} />
+          </div>
+          {shadowMode === "preset" ? (
+            <div className="flex flex-wrap gap-1">
+              {SHADOW_PRESET.map((s) => {
+                const cls = `shadow-${s}`;
+                return (
+                  <ClassButton
+                    key={s}
+                    label={s}
+                    active={activeSet.has(cls)}
+                    onClick={() => {
+                      const filtered = classes.filter((c) => !ALL_SHADOW_CLASSES.includes(c));
+                      if (activeSet.has(cls)) {
+                        updateClassName(filtered.join(" "));
+                      } else {
+                        updateClassName([...filtered, cls].join(" "));
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={-1}
+                max={SHADOW_SCALE.length - 1}
+                value={currentShadowIdx}
+                onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  const filtered = classes.filter((c) => !ALL_SHADOW_CLASSES.includes(c));
+                  if (idx < 0) {
+                    updateClassName(filtered.join(" "));
+                  } else {
+                    updateClassName([...filtered, `shadow-${SHADOW_SCALE[idx]}`].join(" "));
+                  }
+                }}
+                className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+              />
+              <span className="w-16 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+                {currentShadowIdx >= 0 ? `shadow-${SHADOW_SCALE[currentShadowIdx]}` : "—"}
+              </span>
+            </div>
+          )}
         </TailwindSection>
       </TailwindCategory>
     </div>
