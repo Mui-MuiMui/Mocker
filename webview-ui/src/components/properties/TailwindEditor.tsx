@@ -124,6 +124,7 @@ export function TailwindEditor() {
   const [fontSizeMode, setFontSizeMode] = useState<"preset" | "slider">("preset");
   const [textPaletteFamily, setTextPaletteFamily] = useState<string>("blue");
   const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
+  const [hoverBgPaletteFamily, setHoverBgPaletteFamily] = useState<string>("blue");
   const [borderPaletteFamily, setBorderPaletteFamily] = useState<string>("blue");
 
   useEffect(() => {
@@ -400,6 +401,18 @@ export function TailwindEditor() {
         />
 
         <ColorSection
+          title="Hover BG"
+          prefix="bg"
+          activeSet={activeSet}
+          paletteFamily={hoverBgPaletteFamily}
+          onFamilyChange={setHoverBgPaletteFamily}
+          findPaletteColor={findPaletteColor}
+          onApply={applyColor}
+          initialMode="hover"
+          showToggle={false}
+        />
+
+        <ColorSection
           title="Border Color"
           prefix="border"
           activeSet={activeSet}
@@ -433,6 +446,8 @@ function ColorSection({
   onFamilyChange,
   findPaletteColor,
   onApply,
+  initialMode = "normal",
+  showToggle = true,
 }: {
   title: string;
   prefix: "text" | "bg" | "border";
@@ -441,8 +456,10 @@ function ColorSection({
   onFamilyChange: (f: string) => void;
   findPaletteColor: (effectivePrefix: string) => { family: string; shade: string } | null;
   onApply: (effectivePrefix: string, colorCls: string) => void;
+  initialMode?: "normal" | "hover";
+  showToggle?: boolean;
 }) {
-  const [mode, setMode] = useState<"normal" | "hover">("normal");
+  const [mode, setMode] = useState<"normal" | "hover">(initialMode);
   const effectivePrefix = mode === "hover" ? `hover:${prefix}` : prefix;
   const activePalette = findPaletteColor(effectivePrefix);
 
@@ -459,10 +476,12 @@ function ColorSection({
   return (
     <TailwindSection title={title}>
       {/* Normal / Hover toggle */}
-      <div className="mb-1.5 flex gap-1">
-        <ModeToggle label="Normal" active={mode === "normal"} onClick={() => setMode("normal")} />
-        <ModeToggle label="Hover" active={mode === "hover"} onClick={() => setMode("hover")} />
-      </div>
+      {showToggle && (
+        <div className="mb-1.5 flex gap-1">
+          <ModeToggle label="Normal" active={mode === "normal"} onClick={() => setMode("normal")} />
+          <ModeToggle label="Hover" active={mode === "hover"} onClick={() => setMode("hover")} />
+        </div>
+      )}
       {/* Theme colors */}
       <div className="mb-1.5 flex flex-wrap gap-1">
         {THEME_COLOR_OPTIONS.map((c) => (
