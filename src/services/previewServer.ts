@@ -739,7 +739,8 @@ export function Collapsible(props: any) {
 export function CollapsibleTrigger(props: any) {
   const { className = "", children, ...rest } = props;
   const ctx = useContext(CollCtx);
-  return <button type="button" className={className} onClick={() => ctx?.toggle()} {...rest}>{children}</button>;
+  const open = ctx?.open;
+  return <button type="button" className={className} onClick={() => ctx?.toggle()} {...rest}><span style={{ display: "inline-flex", transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s ease" }}>{children}</span></button>;
 }
 export function CollapsibleContent(props: any) {
   const { className = "", children, ...rest } = props;
