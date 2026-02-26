@@ -651,9 +651,33 @@ export function Separator(props: any) {
 
   table: `import { cn } from "@/components/ui/_cn";
 export function Table(props: any) {
-  const { className = "", children, ...rest } = props;
+  const { className = "", children, style, ...rest } = props;
   const cls = cn("w-full caption-bottom text-sm", className);
-  return <div className="relative w-full overflow-auto"><table className={cls} {...rest}>{children}</table></div>;
+  return <div className="relative w-full overflow-auto" style={style}><table className={cls} {...rest}>{children}</table></div>;
+}
+export function TableHeader(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <thead className={cn("[&_tr]:border-b", className)} {...rest}>{children}</thead>;
+}
+export function TableBody(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...rest}>{children}</tbody>;
+}
+export function TableRow(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <tr className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...rest}>{children}</tr>;
+}
+export function TableHead(props: any) {
+  const { className = "", children, colSpan, rowSpan, ...rest } = props;
+  return <th colSpan={colSpan} rowSpan={rowSpan} className={cn("h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", className)} {...rest}>{children}</th>;
+}
+export function TableCell(props: any) {
+  const { className = "", children, colSpan, rowSpan, ...rest } = props;
+  return <td colSpan={colSpan} rowSpan={rowSpan} className={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", className)} {...rest}>{children}</td>;
+}
+export function TableCaption(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <caption className={cn("mt-4 text-sm text-muted-foreground", className)} {...rest}>{children}</caption>;
 }`,
 
   // Phase 1: Simple components

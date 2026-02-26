@@ -10,7 +10,7 @@ import { CraftCard } from "./shadcn/CraftCard";
 import { CraftLabel } from "./shadcn/CraftLabel";
 import { CraftSeparator } from "./shadcn/CraftSeparator";
 import { CraftBadge } from "./shadcn/CraftBadge";
-import { CraftTable } from "./shadcn/CraftTable";
+import { CraftTable, TableCellSlot } from "./shadcn/CraftTable";
 // Phase 1: Simple components
 import { CraftAccordion } from "./shadcn/CraftAccordion";
 import { CraftAlert } from "./shadcn/CraftAlert";
@@ -67,6 +67,7 @@ export const resolvers = {
   CraftSeparator,
   CraftBadge,
   CraftTable,
+  TableCellSlot,
   // Phase 1
   CraftAccordion,
   CraftAlert,
@@ -235,7 +236,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Table",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftAccordion",

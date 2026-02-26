@@ -115,6 +115,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  TableCellSlot: {
+    tag: "TableCell",
+    propsMap: [],
+    isContainer: true,
+  },
   // Phase 1: Simple components
   CraftAccordion: {
     tag: "Accordion",
@@ -583,6 +588,19 @@ export function craftStateToTsx(
       }
     }
 
+    // CraftTable: add table sub-component imports and traverse cell slot linkedNodes
+    if (resolvedName === "CraftTable") {
+      addImport("@/components/ui/table", "TableHeader");
+      addImport("@/components/ui/table", "TableBody");
+      addImport("@/components/ui/table", "TableRow");
+      addImport("@/components/ui/table", "TableHead");
+      addImport("@/components/ui/table", "TableCell");
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftCollapsible: content slot is only rendered when linkedMocPath is not set
     if (resolvedName === "CraftCollapsible") {
       const hasLinkedMoc = !!(node.props?.linkedMocPath as string);
@@ -957,9 +975,9 @@ export function craftStateToTsx(
       return rendered;
     }
 
-    // Table special case: render as static table
+    // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
-      return `${mocComments}\n${renderTable(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
+      return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
     }
 
     // ToggleGroup special case: render items as ToggleGroupItem children
@@ -1182,44 +1200,123 @@ function buildStyleAttr(props: Record<string, unknown>): string {
 }
 
 function renderTable(
-  props: Record<string, unknown>,
-  tag: string,
-  propsStr: string,
-  classNameAttr: string,
-  styleAttr: string,
-  pad: string,
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
 ): string {
-  const columns = ((props?.columns as string) || "Name,Email,Role").split(",").map((s) => s.trim());
-  const rowsStr = (props?.rows as string) || "";
-  const rows = rowsStr ? rowsStr.split(";").map((r) => r.split(",").map((c) => c.trim())) : [];
-  const hasHeader = props?.hasHeader !== false;
+  const pad = "  ".repeat(indent);
+
+  // Parse tableMeta
+  let rowMap: number[] = [0, 1, 2];
+  let colMap: number[] = [0, 1, 2];
+  try {
+    const meta = JSON.parse((node.props?.tableMeta as string) || "{}");
+    if (Array.isArray(meta.rowMap)) rowMap = meta.rowMap;
+    if (Array.isArray(meta.colMap)) colMap = meta.colMap;
+  } catch {
+    // use defaults
+  }
+
+  // Build className and style attributes
+  const className = (node.props?.className as string) || "";
+  const classNameAttr = className ? ` className="${escapeAttr(className)}"` : "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  // Compute hidden cells due to colspan/rowspan
+  const hiddenCells = new Set<string>();
+  for (let logR = 0; logR < rowMap.length; logR++) {
+    for (let logC = 0; logC < colMap.length; logC++) {
+      const physR = rowMap[logR];
+      const physC = colMap[logC];
+      const slotId = node.linkedNodes?.[`cell_${physR}_${physC}`];
+      if (!slotId || hiddenCells.has(`${logR}_${logC}`)) continue;
+      const slotNode = craftState[slotId];
+      const colspan = (slotNode?.props?.colspan as number) || 1;
+      const rowspan = (slotNode?.props?.rowspan as number) || 1;
+      for (let dr = 0; dr < rowspan; dr++) {
+        for (let dc = 0; dc < colspan; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          if (logR + dr < rowMap.length && logC + dc < colMap.length) {
+            hiddenCells.add(`${logR + dr}_${logC + dc}`);
+          }
+        }
+      }
+    }
+  }
+
+  // Determine how many leading rows are all-header (→ <TableHeader>)
+  let headerRowCount = 0;
+  for (let logR = 0; logR < rowMap.length; logR++) {
+    let allHeader = true;
+    for (let logC = 0; logC < colMap.length; logC++) {
+      if (hiddenCells.has(`${logR}_${logC}`)) continue;
+      const physR = rowMap[logR];
+      const physC = colMap[logC];
+      const slotId = node.linkedNodes?.[`cell_${physR}_${physC}`];
+      if (!slotId) { allHeader = false; break; }
+      const slotNode = craftState[slotId];
+      if (!slotNode?.props?.isHeader) { allHeader = false; break; }
+    }
+    if (allHeader) headerRowCount++;
+    else break;
+  }
 
   const lines: string[] = [];
-  lines.push(`${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>`);
+  lines.push(`${pad}<Table${classNameAttr}${styleAttr}>`);
 
-  if (hasHeader) {
-    lines.push(`${pad}  <thead>`);
-    lines.push(`${pad}    <tr>`);
-    for (const col of columns) {
-      lines.push(`${pad}      <th>${escapeJsx(col)}</th>`);
-    }
-    lines.push(`${pad}    </tr>`);
-    lines.push(`${pad}  </thead>`);
-  }
-
-  if (rows.length > 0) {
-    lines.push(`${pad}  <tbody>`);
-    for (const row of rows) {
-      lines.push(`${pad}    <tr>`);
-      for (const cell of row) {
-        lines.push(`${pad}      <td>${escapeJsx(cell)}</td>`);
+  function renderRow(logR: number, rowIndent: number): void {
+    const rowPad = "  ".repeat(rowIndent);
+    const physR = rowMap[logR];
+    lines.push(`${rowPad}<TableRow>`);
+    for (let logC = 0; logC < colMap.length; logC++) {
+      if (hiddenCells.has(`${logR}_${logC}`)) continue;
+      const physC = colMap[logC];
+      const cellKey = `cell_${physR}_${physC}`;
+      const slotId = node.linkedNodes?.[cellKey];
+      const slotNode = slotId ? craftState[slotId] : null;
+      const isHeader = !!(slotNode?.props?.isHeader);
+      const colspan = (slotNode?.props?.colspan as number) || 1;
+      const rowspan = (slotNode?.props?.rowspan as number) || 1;
+      const bgClass = (slotNode?.props?.bgClass as string) || "";
+      const borderClass = (slotNode?.props?.borderClass as string) || "";
+      const cellTag = isHeader ? "TableHead" : "TableCell";
+      const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
+      const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
+      const cellCls = [bgClass, borderClass].filter(Boolean).join(" ");
+      const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
+      const slotChildren = slotNode
+        ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 2)).filter(Boolean)
+        : [];
+      if (slotChildren.length > 0) {
+        lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}>`);
+        for (const child of slotChildren) lines.push(child);
+        lines.push(`${rowPad}  </${cellTag}>`);
+      } else {
+        lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr} />`);
       }
-      lines.push(`${pad}    </tr>`);
     }
-    lines.push(`${pad}  </tbody>`);
+    lines.push(`${rowPad}</TableRow>`);
   }
 
-  lines.push(`${pad}</${tag}>`);
+  if (headerRowCount > 0) {
+    lines.push(`${pad}  <TableHeader>`);
+    for (let logR = 0; logR < headerRowCount; logR++) {
+      renderRow(logR, indent + 2);
+    }
+    lines.push(`${pad}  </TableHeader>`);
+  }
+
+  const bodyRowCount = rowMap.length - headerRowCount;
+  if (bodyRowCount > 0) {
+    lines.push(`${pad}  <TableBody>`);
+    for (let logR = headerRowCount; logR < rowMap.length; logR++) {
+      renderRow(logR, indent + 2);
+    }
+    lines.push(`${pad}  </TableBody>`);
+  }
+
+  lines.push(`${pad}</Table>`);
   return lines.join("\n");
 }
 
