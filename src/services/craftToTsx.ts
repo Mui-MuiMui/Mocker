@@ -1407,12 +1407,12 @@ function renderCombobox(
   const lines: string[] = [];
   lines.push(`${pad}<Popover>`);
   lines.push(`${pad}  <PopoverTrigger asChild>`);
-  lines.push(`${pad}    <Button variant="outline" role="combobox" className="w-[200px] justify-between"${styleAttr}>`);
+  lines.push(`${pad}    <Button variant="outline" role="combobox" className="w-full justify-between"${styleAttr}>`);
   lines.push(`${pad}      ${escapeJsx(placeholder)}`);
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
   lines.push(`${pad}    </Button>`);
   lines.push(`${pad}  </PopoverTrigger>`);
-  lines.push(`${pad}  <PopoverContent className="w-[200px] p-0">`);
+  lines.push(`${pad}  <PopoverContent className="p-0">`);
   lines.push(`${pad}    <Command>`);
   lines.push(`${pad}      <CommandInput placeholder="Search..." />`);
   lines.push(`${pad}      <CommandList>`);
