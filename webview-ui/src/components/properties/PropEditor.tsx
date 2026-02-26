@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useEditor } from "@craftjs/core";
 import { getVsCodeApi } from "../../utils/vscodeApi";
 import { IconCombobox } from "./IconCombobox";
+import { TableMetaEditor } from "./TableMetaEditor";
 import { useEditorStore } from "../../stores/editorStore";
 
 /** Mapping of property names to their allowed values (select options). */
@@ -33,6 +34,9 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   },
   Collapsible: {
     triggerStyle: ["chevron", "plus-minus", "arrow", "none"],
+    outerShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    contentShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    triggerShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
   },
   Alert: {
     variant: ["default", "destructive"],
@@ -55,6 +59,9 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   },
   Resizable: {
     direction: ["horizontal", "vertical"],
+  },
+  Table: {
+    borderWidth: ["0", "1", "2", "4"],
   },
   Switch: {
     variant: ["default", "card"],
@@ -81,7 +88,10 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
-const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName"]);
+const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass"]);
+
+/** Props that use the Tailwind border class palette picker UI (stores "border-red-500" style class names). */
+const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor"]);
 
 /**
  * Tailwind CSS color palette (hex) — same data as TailwindEditor.tsx.
@@ -116,11 +126,17 @@ const CP: Record<string, Record<string, string>> = {
   rose:    { "50":"#fff1f2","100":"#ffe4e6","200":"#fecdd3","300":"#fda4af","400":"#fb7185","500":"#f43f5e","600":"#e11d48","700":"#be123c","800":"#9f1239","900":"#881337","950":"#4c0519" },
 };
 
-/** Parse "bg-red-500" style Tailwind bg class → { family, shade } */
-function parseBgClass(value: string): { family: string; shade: string } | null {
-  const m = value.match(/^bg-(\w+)-(\d{2,3})$/);
+/** Parse a Tailwind class with given prefix → { family, shade } */
+function parseTailwindColorClass(value: string, prefix: string): { family: string; shade: string } | null {
+  const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = value.match(new RegExp(`^${escaped}-(\\w+)-(\\d{2,3})$`));
   if (!m || !CP[m[1]]) return null;
   return { family: m[1], shade: m[2] };
+}
+
+/** Parse "bg-red-500" style Tailwind bg class → { family, shade } */
+function parseBgClass(value: string): { family: string; shade: string } | null {
+  return parseTailwindColorClass(value, "bg");
 }
 
 /** Reverse lookup: hex value → { family, shade } */
@@ -303,6 +319,17 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
+    // Custom UI for tableMeta (table structure editor)
+    if (key === "tableMeta" && selectedNodeId) {
+      return (
+        <TableMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
     // Custom UI for icon (combobox with all Lucide icons)
     if (key === "icon") {
       return (
@@ -529,6 +556,101 @@ export function PropEditor() {
             onChange={(e) => handlePropChange(key, e.target.value)}
             className={`${INPUT_CLASS} w-full`}
             placeholder="bg-blue-500 ..."
+          />
+        </div>
+      );
+    }
+
+    // Custom UI for Tailwind border class palette props (borderColor)
+    if (TAILWIND_BORDER_PALETTE_PROPS.has(key)) {
+      const currentValue = String(value ?? "");
+      const borderInfo = parseTailwindColorClass(currentValue, "border");
+      const family = colorFamilies[key] || borderInfo?.family || "gray";
+      const setFamily = (f: string) => setColorFamilies((prev) => ({ ...prev, [key]: f }));
+      const isActive = (s: string) => currentValue === `border-${family}-${s}`;
+
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          {/* Special colors: none / black / white */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, "")}
+              className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                !currentValue
+                  ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                  : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+              }`}
+            >
+              none
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, currentValue === "border-black" ? "" : "border-black")}
+              title="black"
+              className={`h-3.5 w-3.5 rounded-sm border border-[var(--vscode-input-border,#555)] transition-all ${
+                currentValue === "border-black" ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: "#000" }}
+            />
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, currentValue === "border-white" ? "" : "border-white")}
+              title="white"
+              className={`h-3.5 w-3.5 rounded-sm border border-[var(--vscode-input-border,#555)] transition-all ${
+                currentValue === "border-white" ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: "#fff" }}
+            />
+            {borderInfo && (
+              <span className="ml-auto shrink-0 text-[9px] text-[var(--vscode-descriptionForeground,#888)]">
+                {borderInfo.family}-{borderInfo.shade}
+              </span>
+            )}
+          </div>
+          {/* Palette family selector */}
+          <div className="flex flex-wrap gap-1">
+            {PALETTE_FAMILIES.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFamily(f)}
+                title={f}
+                className={`h-3.5 w-3.5 rounded-sm transition-all ${
+                  family === f ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+                }`}
+                style={{ backgroundColor: CP[f]["500"] }}
+              />
+            ))}
+          </div>
+          {/* Shade swatches */}
+          <div className="flex gap-0.5">
+            {PALETTE_SHADES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handlePropChange(key, isActive(s) ? "" : `border-${family}-${s}`)}
+                title={`${family}-${s}`}
+                className={`h-4 flex-1 rounded-sm transition-all ${
+                  isActive(s) ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-y-125"
+                }`}
+                style={{ backgroundColor: CP[family][s] }}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between text-[8px] text-[var(--vscode-descriptionForeground,#666)]">
+            <span>50</span><span>500</span><span>950</span>
+          </div>
+          {/* Editable text field for fine-tuning */}
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => handlePropChange(key, e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="border-gray-300 ..."
           />
         </div>
       );

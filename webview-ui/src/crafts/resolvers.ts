@@ -10,7 +10,7 @@ import { CraftCard } from "./shadcn/CraftCard";
 import { CraftLabel } from "./shadcn/CraftLabel";
 import { CraftSeparator } from "./shadcn/CraftSeparator";
 import { CraftBadge } from "./shadcn/CraftBadge";
-import { CraftTable } from "./shadcn/CraftTable";
+import { CraftTable, TableCellSlot } from "./shadcn/CraftTable";
 // Phase 1: Simple components
 import { CraftAccordion } from "./shadcn/CraftAccordion";
 import { CraftAlert } from "./shadcn/CraftAlert";
@@ -32,6 +32,7 @@ import { CraftToggle } from "./shadcn/CraftToggle";
 import { CraftToggleGroup } from "./shadcn/CraftToggleGroup";
 // Phase 2: Complex components
 import { CraftSelect } from "./shadcn/CraftSelect";
+import { CraftCombobox } from "./shadcn/CraftCombobox";
 import { CraftCalendar } from "./shadcn/CraftCalendar";
 import { CraftResizable } from "./shadcn/CraftResizable";
 import { CraftCarousel } from "./shadcn/CraftCarousel";
@@ -66,6 +67,7 @@ export const resolvers = {
   CraftSeparator,
   CraftBadge,
   CraftTable,
+  TableCellSlot,
   // Phase 1
   CraftAccordion,
   CraftAlert,
@@ -88,6 +90,7 @@ export const resolvers = {
   CraftToggleGroup,
   // Phase 2
   CraftSelect,
+  CraftCombobox,
   CraftCalendar,
   CraftResizable,
   CraftCarousel,
@@ -233,7 +236,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Table",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftAccordion",
@@ -388,6 +391,14 @@ export const paletteItems: PaletteItem[] = [
     label: "Select",
     category: "shadcn",
     icon: "ChevronDown",
+    defaultProps: {},
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftCombobox",
+    label: "Combobox",
+    category: "shadcn",
+    icon: "ChevronsUpDown",
     defaultProps: {},
     enabled: true,
   },

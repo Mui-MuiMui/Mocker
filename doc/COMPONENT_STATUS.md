@@ -28,7 +28,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Radio Group   | Implemented | [x]       |                                            |
 | Select        | Implemented | [x]       |                                            |
 | Native Select | Not Planned | [x]       | Selectで代用可能                           |
-| Combobox      | Planned     | [ ]       | Command ベースで構成                       |
+| Combobox      | Implemented | [x]       | Command ベースで構成                       |
 | Switch        | Implemented | [x]       |                                            |
 | Slider        | Implemented | [x]       | 横スライダーのみ他は要件等                 |
 | Toggle        | Implemented | [x]       |                                            |
@@ -55,7 +55,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 | Component  | Status      | Confirmed | Notes                                                        |
 | ---------- | ----------- | --------- | ------------------------------------------------------------ |
-| Table      | Implemented | [ ]       |                                                              |
+| Table      | Implemented | [x]       |                                                              |
 | Data Table | TBD         | [ ]       | Table の高機能版（ソート・フィルタ等）                       |
 | Badge      | Implemented | [ ]       |                                                              |
 | Avatar     | Implemented | [ ]       |                                                              |
@@ -110,7 +110,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 ## Summary
 
-- **Implemented**: 44
-- **Planned**: 2 (Native Select, Combobox, Date Picker)
+- **Implemented**: 45
+- **Planned**: 2 (Native Select, Date Picker)
 - **TBD**: 8 (Button Group, Input Group, Input OTP, Sidebar, Data Table, Typography, Kbd, Empty, Spinner, Item)
 - **Not Planned**: 4 (Toast, Field, Direction)

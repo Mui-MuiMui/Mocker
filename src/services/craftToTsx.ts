@@ -115,6 +115,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  TableCellSlot: {
+    tag: "TableCell",
+    propsMap: [],
+    isContainer: true,
+  },
   // Phase 1: Simple components
   CraftAccordion: {
     tag: "Accordion",
@@ -364,6 +369,13 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  CraftCombobox: {
+    tag: "Popover",
+    importFrom: "@/components/ui/popover",
+    importName: "Popover",
+    propsMap: ["className"],
+    isContainer: false,
+  },
   CraftTooltip: {
     tag: "Button",
     importFrom: "@/components/ui/button",
@@ -451,6 +463,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftNavigationMenu: { items: "Home,About,Services,Contact", linkedMocPath: "" },
   CraftMenubar: { items: "File,Edit,View,Help", linkedMocPath: "" },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
+  CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
   CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
 };
@@ -527,6 +540,21 @@ export function craftStateToTsx(
       addImport("@/components/ui/select", "SelectValue");
     }
 
+    // Collect combobox sub-component imports
+    if (resolvedName === "CraftCombobox") {
+      addImport("@/components/ui/popover", "PopoverContent");
+      addImport("@/components/ui/popover", "PopoverTrigger");
+      addImport("@/components/ui/button", "Button");
+      addImport("@/components/ui/command", "Command");
+      addImport("@/components/ui/command", "CommandEmpty");
+      addImport("@/components/ui/command", "CommandGroup");
+      addImport("@/components/ui/command", "CommandInput");
+      addImport("@/components/ui/command", "CommandItem");
+      addImport("@/components/ui/command", "CommandList");
+      addImport("lucide-react", "Check");
+      addImport("lucide-react", "ChevronsUpDown");
+    }
+
     // Collect overlay-related imports for CraftButton
     if (resolvedName === "CraftButton") {
       const overlayType = node.props?.overlayType as string | undefined;
@@ -558,6 +586,19 @@ export function craftStateToTsx(
       for (const name of CONTEXT_MENU_IMPORT.names) {
         addImport(CONTEXT_MENU_IMPORT.from, name);
       }
+    }
+
+    // CraftTable: add table sub-component imports and traverse cell slot linkedNodes
+    if (resolvedName === "CraftTable") {
+      addImport("@/components/ui/table", "TableHeader");
+      addImport("@/components/ui/table", "TableBody");
+      addImport("@/components/ui/table", "TableRow");
+      addImport("@/components/ui/table", "TableHead");
+      addImport("@/components/ui/table", "TableCell");
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
     }
 
     // CraftCollapsible: content slot is only rendered when linkedMocPath is not set
@@ -868,6 +909,12 @@ export function craftStateToTsx(
       const open = !!(node.props?.open);
       const triggerStyle = (node.props?.triggerStyle as string) || "chevron";
       const linkedMocPath = (node.props?.linkedMocPath as string) || "";
+      const outerBorderColor = (node.props?.outerBorderColor as string) || "";
+      const dividerBorderColor = (node.props?.dividerBorderColor as string) || "";
+      const triggerBorderColor = (node.props?.triggerBorderColor as string) || "";
+      const outerShadow = (node.props?.outerShadow as string) || "";
+      const contentShadow = (node.props?.contentShadow as string) || "";
+      const triggerShadow = (node.props?.triggerShadow as string) || "";
 
       // Resolve header children from linkedNodes
       const headerSlotId = node.linkedNodes?.header;
@@ -885,21 +932,32 @@ export function craftStateToTsx(
         arrow: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg>`,
       };
 
+      // Build outer className: always include "rounded-md border" so outerBorderColor is visible
+      const userClassName = (node.props?.className as string) || "";
+      const outerCls = ["rounded-md border", outerBorderColor, outerShadow, userClassName].filter(Boolean).join(" ");
+      const outerClassAttr = ` className="${escapeAttr(outerCls)}"`;
+
+      // Build trigger className
+      const triggerCls = ["rounded-md border p-1 hover:bg-accent", triggerBorderColor, triggerShadow].filter(Boolean).join(" ");
+
+      // Build divider className
+      const dividerCls = ["border-t px-4 py-2 text-sm", dividerBorderColor, contentShadow].filter(Boolean).join(" ");
+
       const lines: string[] = [];
-      lines.push(`${pad}<Collapsible defaultOpen={${open}}${classNameAttr}${styleAttr}>`);
+      lines.push(`${pad}<Collapsible defaultOpen={${open}}${outerClassAttr}${styleAttr}>`);
       lines.push(`${pad}  <div className="flex items-center justify-between space-x-4 px-4 py-2">`);
       if (headerChildren.length > 0) {
         lines.push(...headerChildren);
       }
       if (triggerStyle !== "none") {
         const svg = TRIGGER_SVGS[triggerStyle] || TRIGGER_SVGS.chevron;
-        lines.push(`${pad}    <CollapsibleTrigger className="rounded-md border p-1 hover:bg-accent" data-variant="${triggerStyle}">`);
+        lines.push(`${pad}    <CollapsibleTrigger className="${escapeAttr(triggerCls)}" data-variant="${triggerStyle}">`);
         lines.push(`${pad}      ${svg}`);
         lines.push(`${pad}    </CollapsibleTrigger>`);
       }
       lines.push(`${pad}  </div>`);
       lines.push(`${pad}  <CollapsibleContent>`);
-      lines.push(`${pad}    <div className="border-t px-4 py-2 text-sm">`);
+      lines.push(`${pad}    <div className="${escapeAttr(dividerCls)}">`);
       if (linkedMocPath) {
         lines.push(`${pad}      {/* linked: ${escapeJsx(linkedMocPath)} */}`);
       } else if (contentChildren.length > 0) {
@@ -919,6 +977,14 @@ export function craftStateToTsx(
       return rendered;
     }
 
+    // Combobox special case: render with Popover + Command structure
+    if (resolvedName === "CraftCombobox") {
+      rendered = `${mocComments}\n${renderCombobox(node.props, styleAttr, pad)}`;
+      const comboboxTooltipTrigger = node.props?.tooltipTrigger as string | undefined;
+      rendered = wrapWithTooltip(rendered, node.props, pad, comboboxTooltipTrigger);
+      return rendered;
+    }
+
     // RadioGroup special case: render with RadioGroupItem + Label
     if (resolvedName === "CraftRadioGroup") {
       rendered = `${mocComments}\n${renderRadioGroup(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
@@ -926,9 +992,9 @@ export function craftStateToTsx(
       return rendered;
     }
 
-    // Table special case: render as static table
+    // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
-      return `${mocComments}\n${renderTable(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`;
+      return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
     }
 
     // ToggleGroup special case: render items as ToggleGroupItem children
@@ -1151,44 +1217,143 @@ function buildStyleAttr(props: Record<string, unknown>): string {
 }
 
 function renderTable(
-  props: Record<string, unknown>,
-  tag: string,
-  propsStr: string,
-  classNameAttr: string,
-  styleAttr: string,
-  pad: string,
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
 ): string {
-  const columns = ((props?.columns as string) || "Name,Email,Role").split(",").map((s) => s.trim());
-  const rowsStr = (props?.rows as string) || "";
-  const rows = rowsStr ? rowsStr.split(";").map((r) => r.split(",").map((c) => c.trim())) : [];
-  const hasHeader = props?.hasHeader !== false;
+  const pad = "  ".repeat(indent);
+
+  // Parse tableMeta
+  let rowMap: number[] = [0, 1, 2];
+  let colMap: number[] = [0, 1, 2];
+  let colWidths: Record<string, string> = {};
+  try {
+    const meta = JSON.parse((node.props?.tableMeta as string) || "{}");
+    if (Array.isArray(meta.rowMap)) rowMap = meta.rowMap;
+    if (Array.isArray(meta.colMap)) colMap = meta.colMap;
+    if (typeof meta.colWidths === "object" && meta.colWidths !== null) colWidths = meta.colWidths;
+  } catch {
+    // use defaults
+  }
+
+  // Build className and style attributes
+  const className = (node.props?.className as string) || "";
+  const classNameAttr = className ? ` className="${escapeAttr(className)}"` : "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  // Compute hidden cells due to colspan/rowspan
+  const hiddenCells = new Set<string>();
+  for (let logR = 0; logR < rowMap.length; logR++) {
+    for (let logC = 0; logC < colMap.length; logC++) {
+      const physR = rowMap[logR];
+      const physC = colMap[logC];
+      const slotId = node.linkedNodes?.[`cell_${physR}_${physC}`];
+      if (!slotId || hiddenCells.has(`${logR}_${logC}`)) continue;
+      const slotNode = craftState[slotId];
+      const colspan = (slotNode?.props?.colspan as number) || 1;
+      const rowspan = (slotNode?.props?.rowspan as number) || 1;
+      for (let dr = 0; dr < rowspan; dr++) {
+        for (let dc = 0; dc < colspan; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          if (logR + dr < rowMap.length && logC + dc < colMap.length) {
+            hiddenCells.add(`${logR + dr}_${logC + dc}`);
+          }
+        }
+      }
+    }
+  }
+
+  // Determine how many leading rows are all-header (→ <TableHeader>)
+  let headerRowCount = 0;
+  for (let logR = 0; logR < rowMap.length; logR++) {
+    let allHeader = true;
+    for (let logC = 0; logC < colMap.length; logC++) {
+      if (hiddenCells.has(`${logR}_${logC}`)) continue;
+      const physR = rowMap[logR];
+      const physC = colMap[logC];
+      const slotId = node.linkedNodes?.[`cell_${physR}_${physC}`];
+      if (!slotId) { allHeader = false; break; }
+      const slotNode = craftState[slotId];
+      if (!slotNode?.props?.isHeader) { allHeader = false; break; }
+    }
+    if (allHeader) headerRowCount++;
+    else break;
+  }
 
   const lines: string[] = [];
-  lines.push(`${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>`);
+  lines.push(`${pad}<Table${classNameAttr}${styleAttr}>`);
 
-  if (hasHeader) {
-    lines.push(`${pad}  <thead>`);
-    lines.push(`${pad}    <tr>`);
-    for (const col of columns) {
-      lines.push(`${pad}      <th>${escapeJsx(col)}</th>`);
-    }
-    lines.push(`${pad}    </tr>`);
-    lines.push(`${pad}  </thead>`);
-  }
+  const tableBorderWidth = (node.props?.borderWidth as string) || "1";
+  const tableBorderColor = (node.props?.borderColor as string) || "";
+  const tableBwClass = tableBorderWidth === "0" ? "border-0"
+    : tableBorderWidth === "2" ? "border-2"
+    : tableBorderWidth === "4" ? "border-4"
+    : "border";
+  const tableBorderClass = [tableBwClass, tableBorderColor || "border-border"].filter(Boolean).join(" ");
 
-  if (rows.length > 0) {
-    lines.push(`${pad}  <tbody>`);
-    for (const row of rows) {
-      lines.push(`${pad}    <tr>`);
-      for (const cell of row) {
-        lines.push(`${pad}      <td>${escapeJsx(cell)}</td>`);
+  function renderRow(logR: number, rowIndent: number): void {
+    const rowPad = "  ".repeat(rowIndent);
+    const physR = rowMap[logR];
+    lines.push(`${rowPad}<TableRow>`);
+    for (let logC = 0; logC < colMap.length; logC++) {
+      if (hiddenCells.has(`${logR}_${logC}`)) continue;
+      const physC = colMap[logC];
+      const cellKey = `cell_${physR}_${physC}`;
+      const slotId = node.linkedNodes?.[cellKey];
+      const slotNode = slotId ? craftState[slotId] : null;
+      const isHeader = !!(slotNode?.props?.isHeader);
+      const colspan = (slotNode?.props?.colspan as number) || 1;
+      const rowspan = (slotNode?.props?.rowspan as number) || 1;
+      const bgClass = (slotNode?.props?.bgClass as string) || "";
+      const borderClass = (slotNode?.props?.borderClass as string) || "";
+      const cellWidth = (slotNode?.props?.width as string) || "";
+      const cellHeight = (slotNode?.props?.height as string) || "";
+      const colWidth = colWidths[String(physC)] || "";
+      const cellTag = isHeader ? "TableHead" : "TableCell";
+      const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
+      const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
+      const cellCls = [bgClass, borderClass, tableBorderClass].filter(Boolean).join(" ");
+      const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
+      const stylePartsCell: string[] = [];
+      const effectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
+        : (colWidth && colWidth !== "auto") ? colWidth
+        : "";
+      if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
+      if (cellHeight && cellHeight !== "auto") stylePartsCell.push(`height: "${cellHeight}"`);
+      const cellStyleAttr = stylePartsCell.length > 0 ? ` style={{ ${stylePartsCell.join(", ")} }}` : "";
+      const slotChildren = slotNode
+        ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 2)).filter(Boolean)
+        : [];
+      if (slotChildren.length > 0) {
+        lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr}>`);
+        for (const child of slotChildren) lines.push(child);
+        lines.push(`${rowPad}  </${cellTag}>`);
+      } else {
+        lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr} />`);
       }
-      lines.push(`${pad}    </tr>`);
     }
-    lines.push(`${pad}  </tbody>`);
+    lines.push(`${rowPad}</TableRow>`);
   }
 
-  lines.push(`${pad}</${tag}>`);
+  if (headerRowCount > 0) {
+    lines.push(`${pad}  <TableHeader>`);
+    for (let logR = 0; logR < headerRowCount; logR++) {
+      renderRow(logR, indent + 2);
+    }
+    lines.push(`${pad}  </TableHeader>`);
+  }
+
+  const bodyRowCount = rowMap.length - headerRowCount;
+  if (bodyRowCount > 0) {
+    lines.push(`${pad}  <TableBody>`);
+    for (let logR = headerRowCount; logR < rowMap.length; logR++) {
+      renderRow(logR, indent + 2);
+    }
+    lines.push(`${pad}  </TableBody>`);
+  }
+
+  lines.push(`${pad}</Table>`);
   return lines.join("\n");
 }
 
@@ -1361,6 +1526,47 @@ function renderSelect(
   }
   lines.push(`${pad}  </SelectContent>`);
   lines.push(`${pad}</${tag}>`);
+  return lines.join("\n");
+}
+
+function renderCombobox(
+  props: Record<string, unknown>,
+  styleAttr: string,
+  pad: string,
+): string {
+  const items = ((props?.items as string) || "Apple,Banana,Cherry").split(",").map((s) => s.trim());
+  const placeholder = (props?.placeholder as string) || "Select an option...";
+  const linkedMocPath = (props?.linkedMocPath as string) || "";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Popover>`);
+  lines.push(`${pad}  <PopoverTrigger asChild>`);
+  lines.push(`${pad}    <Button variant="outline" role="combobox" className="w-full justify-between"${styleAttr}>`);
+  lines.push(`${pad}      ${escapeJsx(placeholder)}`);
+  lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
+  lines.push(`${pad}    </Button>`);
+  lines.push(`${pad}  </PopoverTrigger>`);
+  lines.push(`${pad}  <PopoverContent className="p-0">`);
+  lines.push(`${pad}    <Command>`);
+  lines.push(`${pad}      <CommandInput placeholder="Search..." />`);
+  lines.push(`${pad}      <CommandList>`);
+  lines.push(`${pad}        <CommandEmpty>No results found.</CommandEmpty>`);
+  lines.push(`${pad}        <CommandGroup>`);
+  if (linkedMocPath) {
+    lines.push(`${pad}          {/* linked: ${escapeJsx(linkedMocPath)} */}`);
+  } else {
+    for (const item of items) {
+      lines.push(`${pad}          <CommandItem value="${escapeAttr(item)}">`);
+      lines.push(`${pad}            <Check className="mr-2 h-4 w-4 opacity-0" />`);
+      lines.push(`${pad}            ${escapeJsx(item)}`);
+      lines.push(`${pad}          </CommandItem>`);
+    }
+  }
+  lines.push(`${pad}        </CommandGroup>`);
+  lines.push(`${pad}      </CommandList>`);
+  lines.push(`${pad}    </Command>`);
+  lines.push(`${pad}  </PopoverContent>`);
+  lines.push(`${pad}</Popover>`);
   return lines.join("\n");
 }
 

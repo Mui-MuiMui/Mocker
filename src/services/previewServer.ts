@@ -569,9 +569,17 @@ export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(inputs.filter(Boolean).join(" "));
 }`,
 
+  // Shared combobox context — used by popover, command, button to share value/open state
+  _combobox: `import { createContext } from "react";
+export const ComboboxCtx = createContext<any>(null);`,
+
   button: `import { cn } from "@/components/ui/_cn";
+import { useContext, useRef } from "react";
+import { ComboboxCtx } from "@/components/ui/_combobox";
 export function Button(props: any) {
-  const { className = "", variant = "default", size = "default", children, ...rest } = props;
+  const { className = "", variant = "default", size = "default", children, role, style, ...rest } = props;
+  const comboCtx = useContext(ComboboxCtx);
+  const inputRef = useRef<HTMLInputElement>(null);
   const v: Record<string, string> = {
     default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
     destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
@@ -586,8 +594,17 @@ export function Button(props: any) {
     lg: "h-10 rounded-md px-8",
     icon: "h-9 w-9",
   };
+  if (role === "combobox" && comboCtx) {
+    const childArray = Array.isArray(children) ? children : [children];
+    const placeholder = String(childArray.find((c: any) => typeof c === "string") || "Select...");
+    const icons = childArray.filter((c: any) => c !== null && c !== undefined && typeof c !== "string");
+    return <div className={cn("relative inline-flex items-center z-[51]", className)} style={style} onClick={(e: any) => { e.stopPropagation(); inputRef.current?.focus(); }}>
+      <input ref={inputRef} type="text" className="flex h-9 w-full rounded-md border border-input bg-transparent py-2 pl-3 pr-8 text-sm shadow-sm placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-ring" value={comboCtx.search || ""} placeholder={placeholder} onChange={(e: any) => { comboCtx.setSearch(e.target.value); comboCtx.setOpen(true); }} onFocus={() => comboCtx.setOpen(true)} />
+      <span className="absolute right-2 pointer-events-none opacity-50">{icons}</span>
+    </div>;
+  }
   const cls = cn("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
-  return <button className={cls} {...rest}>{children}</button>;
+  return <button className={cls} role={role} style={style} {...rest}>{children}</button>;
 }`,
 
   input: `import { cn } from "@/components/ui/_cn";
@@ -634,9 +651,33 @@ export function Separator(props: any) {
 
   table: `import { cn } from "@/components/ui/_cn";
 export function Table(props: any) {
-  const { className = "", children, ...rest } = props;
+  const { className = "", children, style, ...rest } = props;
   const cls = cn("w-full caption-bottom text-sm", className);
-  return <div className="relative w-full overflow-auto"><table className={cls} {...rest}>{children}</table></div>;
+  return <div className="relative w-full overflow-auto" style={style}><table className={cls} {...rest}>{children}</table></div>;
+}
+export function TableHeader(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <thead className={cn("[&_tr]:border-b", className)} {...rest}>{children}</thead>;
+}
+export function TableBody(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <tbody className={cn("[&_tr:last-child]:border-0", className)} {...rest}>{children}</tbody>;
+}
+export function TableRow(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <tr className={cn("border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted", className)} {...rest}>{children}</tr>;
+}
+export function TableHead(props: any) {
+  const { className = "", children, colSpan, rowSpan, ...rest } = props;
+  return <th colSpan={colSpan} rowSpan={rowSpan} className={cn("h-10 px-2 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", className)} {...rest}>{children}</th>;
+}
+export function TableCell(props: any) {
+  const { className = "", children, colSpan, rowSpan, ...rest } = props;
+  return <td colSpan={colSpan} rowSpan={rowSpan} className={cn("p-2 align-middle [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]", className)} {...rest}>{children}</td>;
+}
+export function TableCaption(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <caption className={cn("mt-4 text-sm text-muted-foreground", className)} {...rest}>{children}</caption>;
 }`,
 
   // Phase 1: Simple components
@@ -1000,6 +1041,59 @@ export function SelectValue(props: any) {
   return <span className={cn("text-muted-foreground", className)}>{placeholder}</span>;
 }`,
 
+  command: `import { cn } from "@/components/ui/_cn";
+import { createContext, useContext, useState, useEffect } from "react";
+import { ComboboxCtx } from "@/components/ui/_combobox";
+const Ctx = createContext<any>(null);
+export function Command({ children, className = "", ...rest }: any) {
+  const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(0);
+  const cls = cn("flex h-full w-full flex-col overflow-hidden rounded-md bg-popover text-popover-foreground", className);
+  return <Ctx.Provider value={{ search, setSearch, visibleCount, setVisibleCount }}><div className={cls} {...rest}>{children}</div></Ctx.Provider>;
+}
+export function CommandInput({ className = "", placeholder = "", ...rest }: any) {
+  const comboCtx = useContext(ComboboxCtx);
+  if (comboCtx) return null;
+  const ctx = useContext(Ctx);
+  return <div className="flex items-center border-b px-3"><input type="text" className={cn("flex h-10 w-full bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground", className)} placeholder={placeholder} value={ctx?.search || ""} onChange={(e: any) => ctx?.setSearch(e.target.value)} /></div>;
+}
+export function CommandList({ children, className = "", ...rest }: any) {
+  return <div className={cn("max-h-[300px] overflow-y-auto overflow-x-hidden", className)} {...rest}>{children}</div>;
+}
+export function CommandEmpty({ children, className = "", ...rest }: any) {
+  const ctx = useContext(Ctx);
+  const comboCtx = useContext(ComboboxCtx);
+  const search = comboCtx?.search || ctx?.search || "";
+  if (!search || ctx?.visibleCount > 0) return null;
+  return <div className={cn("py-6 text-center text-sm", className)} {...rest}>{children}</div>;
+}
+export function CommandGroup({ children, className = "", heading, ...rest }: any) {
+  return <div className={cn("overflow-hidden p-1 text-foreground", className)} {...rest}>{heading && <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">{heading}</div>}{children}</div>;
+}
+export function CommandItem({ children, value = "", className = "", onSelect, ...rest }: any) {
+  const ctx = useContext(Ctx);
+  const comboCtx = useContext(ComboboxCtx);
+  const search = comboCtx?.search || ctx?.search || "";
+  const visible = !search || String(value).toLowerCase().includes(search.toLowerCase());
+  useEffect(() => {
+    if (!ctx) return;
+    if (visible) {
+      ctx.setVisibleCount((c: number) => c + 1);
+      return () => ctx.setVisibleCount((c: number) => Math.max(0, c - 1));
+    }
+  }, [visible]);
+  if (!visible) return null;
+  const isSelected = comboCtx?.value === value;
+  const handleClick = () => {
+    onSelect?.(value);
+    if (comboCtx) { comboCtx.setValue(value); comboCtx.setSearch(value); comboCtx.setOpen(false); }
+  };
+  return <div className={cn("relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground", isSelected && "bg-accent text-accent-foreground", className)} onClick={handleClick} {...rest}>{children}</div>;
+}
+export function CommandSeparator({ className = "", ...rest }: any) {
+  return <div className={cn("-mx-1 h-px bg-border", className)} {...rest} />;
+}`,
+
   calendar: `import { cn } from "@/components/ui/_cn";
 export function Calendar(props: any) {
   const { className = "", ...rest } = props;
@@ -1145,11 +1239,15 @@ export function DrawerContent(props: any) {
   return <><div className="fixed inset-0 z-50 bg-black/80" onClick={() => ctx?.setOpen(false)} /><div className={cls} style={props.style}>{props.children}<button type="button" onClick={() => ctx?.setOpen(false)} className="absolute right-4 top-4 rounded-sm opacity-70 hover:opacity-100">\u2715</button></div></>;
 }`,
 
-  popover: `import { createContext, useContext, useState } from "react";
+  popover: `import { cn } from "@/components/ui/_cn";
+import { createContext, useContext, useState } from "react";
+import { ComboboxCtx } from "@/components/ui/_combobox";
 const Ctx = createContext<any>(null);
 export function Popover(props: any) {
   const [open, setOpen] = useState(false);
-  return <Ctx.Provider value={{ open, setOpen }}><div className="relative inline-block">{props.children}</div></Ctx.Provider>;
+  const [value, setValue] = useState("");
+  const [search, setSearch] = useState("");
+  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen }}><div className="relative inline-grid">{props.children}</div></Ctx.Provider></ComboboxCtx.Provider>;
 }
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
@@ -1157,9 +1255,11 @@ export function PopoverTrigger(props: any) {
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
+  const comboCtx = useContext(ComboboxCtx);
   if (!ctx?.open) return null;
-  const cls = ("absolute left-0 top-full mt-2 z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md " + (props.className || "")).trim();
-  return <div className={cls} style={props.style}>{props.children}</div>;
+  const cls = cn("absolute left-0 top-full mt-1 z-50 w-full rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
+  const handleClose = () => { ctx.setOpen(false); };
+  return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={props.style} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
 }`,
 
   "dropdown-menu": `import { createContext, useContext, useState } from "react";
