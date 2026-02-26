@@ -154,11 +154,24 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
     const maxC = Math.max(...coords.map((c) => c.c));
     const colspan = maxC - minC + 1;
     const rowspan = maxR - minR + 1;
-    const physR = rowMap[minR];
-    const physC = colMap[minC];
-    const slotId = getSlotNodeId(physR, physC);
-    if (slotId) {
-      actions.setProp(slotId, (props: Record<string, unknown>) => {
+
+    // 1. Reset all cells in the bounding box to colspan=1/rowspan=1
+    for (let r = minR; r <= maxR; r++) {
+      for (let c = minC; c <= maxC; c++) {
+        const slotId = getSlotNodeId(rowMap[r], colMap[c]);
+        if (slotId) {
+          actions.setProp(slotId, (props: Record<string, unknown>) => {
+            props.colspan = 1;
+            props.rowspan = 1;
+          });
+        }
+      }
+    }
+
+    // 2. Set anchor cell's new span
+    const anchorSlotId = getSlotNodeId(rowMap[minR], colMap[minC]);
+    if (anchorSlotId) {
+      actions.setProp(anchorSlotId, (props: Record<string, unknown>) => {
         props.colspan = colspan;
         props.rowspan = rowspan;
       });

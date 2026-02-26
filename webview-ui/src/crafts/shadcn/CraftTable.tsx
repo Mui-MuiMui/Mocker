@@ -85,6 +85,8 @@ interface CraftTableProps {
   width?: string;
   height?: string;
   className?: string;
+  borderColor?: string;
+  borderWidth?: string;
 }
 
 export const CraftTable: UserComponent<CraftTableProps> = ({
@@ -92,6 +94,8 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  borderColor = "",
+  borderWidth = "1",
 }) => {
   const {
     connectors: { connect, drag },
@@ -152,6 +156,12 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   if (width !== "auto") tableStyle.width = width;
   if (height !== "auto") tableStyle.height = height;
 
+  const bwClass = borderWidth === "0" ? "border-0"
+    : borderWidth === "2" ? "border-2"
+    : borderWidth === "4" ? "border-4"
+    : "border";
+  const cellBorderClass = cn(bwClass, borderColor || "border-border");
+
   function renderRow(logR: number) {
     const physR = rowMap[logR];
     return (
@@ -175,7 +185,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
               colSpan={colspan > 1 ? colspan : undefined}
               rowSpan={rowspan > 1 ? rowspan : undefined}
               style={colWidthStyle}
-              className="border border-border p-0 align-top"
+              className={cn(cellBorderClass, "p-0 align-top")}
             >
               <Element
                 id={cellKey}
@@ -194,12 +204,18 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
 
   return (
     <div
-      ref={(ref) => {
-        if (ref) connect(drag(ref));
-      }}
       className={cn("w-full overflow-auto", className)}
       style={tableStyle}
     >
+      {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
+      <div
+        ref={(ref) => {
+          if (ref) connect(drag(ref));
+        }}
+        className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100"
+      >
+        <span className="text-[9px] text-muted-foreground">⠿ Table</span>
+      </div>
       <table className="w-full caption-bottom border-collapse text-sm">
         {headerRowCount > 0 && (
           <thead className="bg-muted/50">
@@ -223,6 +239,8 @@ CraftTable.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    borderColor: "",
+    borderWidth: "1",
   },
   rules: {
     canDrag: () => true,

@@ -1265,6 +1265,14 @@ function renderTable(
   const lines: string[] = [];
   lines.push(`${pad}<Table${classNameAttr}${styleAttr}>`);
 
+  const tableBorderWidth = (node.props?.borderWidth as string) || "1";
+  const tableBorderColor = (node.props?.borderColor as string) || "";
+  const tableBwClass = tableBorderWidth === "0" ? "border-0"
+    : tableBorderWidth === "2" ? "border-2"
+    : tableBorderWidth === "4" ? "border-4"
+    : "border";
+  const tableBorderClass = [tableBwClass, tableBorderColor || "border-border"].filter(Boolean).join(" ");
+
   function renderRow(logR: number, rowIndent: number): void {
     const rowPad = "  ".repeat(rowIndent);
     const physR = rowMap[logR];
@@ -1283,7 +1291,7 @@ function renderTable(
       const cellTag = isHeader ? "TableHead" : "TableCell";
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
-      const cellCls = [bgClass, borderClass].filter(Boolean).join(" ");
+      const cellCls = [bgClass, borderClass, tableBorderClass].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const slotChildren = slotNode
         ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 2)).filter(Boolean)
