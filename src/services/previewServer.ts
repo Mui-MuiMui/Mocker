@@ -1234,7 +1234,7 @@ export function PopoverContent(props: any) {
   const comboCtx = useContext(ComboboxCtx);
   if (!ctx?.open) return null;
   const cls = cn("absolute left-0 top-full mt-1 z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md", props.className);
-  const handleClose = () => { ctx.setOpen(false); comboCtx?.setSearch(""); };
+  const handleClose = () => { ctx.setOpen(false); };
   return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={props.style} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
 }`,
 
