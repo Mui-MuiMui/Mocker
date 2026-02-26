@@ -930,7 +930,8 @@ export function craftStateToTsx(
       };
 
       // Build outer className (user className + outerBorderColor)
-      const outerCls = [className, outerBorderColor].filter(Boolean).join(" ");
+      const userClassName = (node.props?.className as string) || "";
+      const outerCls = [userClassName, outerBorderColor].filter(Boolean).join(" ");
       const outerClassAttr = outerCls ? ` className="${escapeAttr(outerCls)}"` : "";
 
       // Build trigger className
