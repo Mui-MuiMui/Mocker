@@ -37,6 +37,7 @@ export interface TabMeta {
   nextKey: number;
   labels: Record<string, string>;
   icons: Record<string, string>;
+  tooltips: Record<string, string>;
 }
 
 const DEFAULT_TAB_META: TabMeta = {
@@ -44,6 +45,7 @@ const DEFAULT_TAB_META: TabMeta = {
   nextKey: 3,
   labels: { "0": "Tab 1", "1": "Tab 2", "2": "Tab 3" },
   icons: { "0": "", "1": "", "2": "" },
+  tooltips: { "0": "", "1": "", "2": "" },
 };
 
 export const DEFAULT_TAB_META_JSON = JSON.stringify(DEFAULT_TAB_META);
@@ -89,6 +91,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
       nextKey: typeof parsed.nextKey === "number" ? parsed.nextKey : DEFAULT_TAB_META.nextKey,
       labels: typeof parsed.labels === "object" && parsed.labels !== null ? parsed.labels : DEFAULT_TAB_META.labels,
       icons: typeof parsed.icons === "object" && parsed.icons !== null ? parsed.icons : DEFAULT_TAB_META.icons,
+      tooltips: typeof parsed.tooltips === "object" && parsed.tooltips !== null ? parsed.tooltips : DEFAULT_TAB_META.tooltips,
     };
   } catch {
     // use defaults
@@ -121,6 +124,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
         {meta.keys.map((key) => {
           const label = meta.labels[String(key)] ?? `Tab ${key}`;
           const iconName = meta.icons[String(key)];
+          const tooltip = meta.tooltips[String(key)] || "";
           const IconComp = iconName ? (LucideIcons as Record<string, any>)[iconName] : null;
           const isActive = key === activeKey;
           return (
@@ -128,6 +132,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
               key={key}
               type="button"
               onClick={() => setActiveKey(key)}
+              title={tooltip || undefined}
               className={cn(
                 "inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                 isVertical ? "text-left" : "flex-1",

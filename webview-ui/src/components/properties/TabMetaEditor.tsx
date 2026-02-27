@@ -19,6 +19,10 @@ function parseTabMeta(raw: string): TabMeta {
         typeof parsed.icons === "object" && parsed.icons !== null
           ? parsed.icons
           : { "0": "", "1": "", "2": "" },
+      tooltips:
+        typeof parsed.tooltips === "object" && parsed.tooltips !== null
+          ? parsed.tooltips
+          : { "0": "", "1": "", "2": "" },
     };
   } catch {
     return {
@@ -26,6 +30,7 @@ function parseTabMeta(raw: string): TabMeta {
       nextKey: 3,
       labels: { "0": "Tab 1", "1": "Tab 2", "2": "Tab 3" },
       icons: { "0": "", "1": "", "2": "" },
+      tooltips: { "0": "", "1": "", "2": "" },
     };
   }
 }
@@ -53,6 +58,7 @@ export function TabMetaEditor({ value, selectedNodeId }: TabMetaEditorProps) {
       nextKey: newKey + 1,
       labels: { ...meta.labels, [String(newKey)]: `Tab ${newKey + 1}` },
       icons: { ...meta.icons, [String(newKey)]: "" },
+      tooltips: { ...meta.tooltips, [String(newKey)]: "" },
     };
     updateMeta(newMeta);
   }
@@ -63,9 +69,11 @@ export function TabMetaEditor({ value, selectedNodeId }: TabMetaEditorProps) {
     const newKeys = meta.keys.filter((_, i) => i !== idx);
     const newLabels = { ...meta.labels };
     const newIcons = { ...meta.icons };
+    const newTooltips = { ...meta.tooltips };
     delete newLabels[String(removedKey)];
     delete newIcons[String(removedKey)];
-    updateMeta({ ...meta, keys: newKeys, labels: newLabels, icons: newIcons });
+    delete newTooltips[String(removedKey)];
+    updateMeta({ ...meta, keys: newKeys, labels: newLabels, icons: newIcons, tooltips: newTooltips });
   }
 
   function setLabel(key: number, label: string) {
@@ -74,6 +82,10 @@ export function TabMetaEditor({ value, selectedNodeId }: TabMetaEditorProps) {
 
   function setIcon(key: number, icon: string) {
     updateMeta({ ...meta, icons: { ...meta.icons, [String(key)]: icon } });
+  }
+
+  function setTooltip(key: number, tooltip: string) {
+    updateMeta({ ...meta, tooltips: { ...meta.tooltips, [String(key)]: tooltip } });
   }
 
   const btnClass =
@@ -112,6 +124,14 @@ export function TabMetaEditor({ value, selectedNodeId }: TabMetaEditorProps) {
             <IconCombobox
               value={meta.icons[String(key)] ?? ""}
               onChange={(v) => setIcon(key, v)}
+            />
+            {/* Tooltip input */}
+            <input
+              type="text"
+              value={meta.tooltips[String(key)] ?? ""}
+              onChange={(e) => setTooltip(key, e.target.value)}
+              className={`${INPUT_CLASS} w-full`}
+              placeholder="ツールチップ..."
             />
           </div>
         ))}

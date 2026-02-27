@@ -1231,9 +1231,15 @@ function buildContainerClasses(props: Record<string, unknown>): string {
   return classes.join(" ");
 }
 
+/** 単位なし数値文字列に "px" を付ける。"100" → "100px"、"50%" → "50%"（そのまま） */
+function normalizeCssSize(v: string | undefined): string | undefined {
+  if (!v || v === "auto") return v;
+  return /^\d+(\.\d+)?$/.test(v) ? v + "px" : v;
+}
+
 function buildStyleAttr(props: Record<string, unknown>): string {
-  const w = props?.width as string | undefined;
-  const h = props?.height as string | undefined;
+  const w = normalizeCssSize(props?.width as string | undefined);
+  const h = normalizeCssSize(props?.height as string | undefined);
   const objectFit = props?.objectFit as string | undefined;
   const top = props?.top as string | undefined;
   const left = props?.left as string | undefined;
@@ -1341,18 +1347,24 @@ function renderTable(
       const borderClass = (slotNode?.props?.borderClass as string) || "";
       const cellWidth = (slotNode?.props?.width as string) || "";
       const cellHeight = (slotNode?.props?.height as string) || "";
+      const cellAlign = (slotNode?.props?.align as string) || "left";
       const colWidth = colWidths[String(physC)] || "";
       const cellTag = isHeader ? "TableHead" : "TableCell";
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
-      const cellCls = [bgClass, borderClass, tableBorderClass].filter(Boolean).join(" ");
+      const alignCls = cellAlign === "right" ? "flex flex-col items-end"
+        : cellAlign === "center" ? "flex flex-col items-center"
+        : "";
+      const cellCls = [bgClass, borderClass, tableBorderClass, alignCls].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const stylePartsCell: string[] = [];
-      const effectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
+      const rawEffectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
         : (colWidth && colWidth !== "auto") ? colWidth
         : "";
+      const effectiveWidth = normalizeCssSize(rawEffectiveWidth || undefined) || "";
       if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
-      if (cellHeight && cellHeight !== "auto") stylePartsCell.push(`height: "${cellHeight}"`);
+      const normalizedCellHeight = normalizeCssSize(cellHeight || undefined);
+      if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
       const cellStyleAttr = stylePartsCell.length > 0 ? ` style={{ ${stylePartsCell.join(", ")} }}` : "";
       const slotChildren = slotNode
         ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 2)).filter(Boolean)
@@ -1401,11 +1413,13 @@ function renderTabs(
   let keys: number[] = [0, 1, 2];
   let labels: Record<string, string> = { "0": "Tab 1", "1": "Tab 2", "2": "Tab 3" };
   let icons: Record<string, string> = {};
+  let tooltips: Record<string, string> = {};
   try {
     const meta = JSON.parse((node.props?.tabMeta as string) || "{}");
     if (Array.isArray(meta.keys)) keys = meta.keys;
     if (typeof meta.labels === "object" && meta.labels !== null) labels = meta.labels;
     if (typeof meta.icons === "object" && meta.icons !== null) icons = meta.icons;
+    if (typeof meta.tooltips === "object" && meta.tooltips !== null) tooltips = meta.tooltips;
   } catch {
     // use defaults
   }
@@ -1449,11 +1463,13 @@ function renderTabs(
   for (const key of keys) {
     const label = labels[String(key)] ?? `Tab ${key}`;
     const icon = icons[String(key)] ?? "";
+    const tooltip = tooltips[String(key)] ?? "";
     const iconJsx = icon ? `<${icon} className="h-4 w-4" /> ` : "";
     const triggerClassAttr = tabActiveBgClass
       ? ` className="${escapeAttr(`data-[state=active]:${tabActiveBgClass}`)}"`
       : "";
-    lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+    const titleAttr = tooltip ? ` title="${escapeAttr(tooltip)}"` : "";
+    lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}${titleAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
   }
 
   lines.push(`${pad}  </TabsList>`);
