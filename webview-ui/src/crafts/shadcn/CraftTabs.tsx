@@ -128,22 +128,30 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
           const IconComp = iconName ? (LucideIcons as Record<string, any>)[iconName] : null;
           const isActive = key === activeKey;
           return (
-            <button
+            <div
               key={key}
-              type="button"
-              onClick={() => setActiveKey(key)}
-              title={tooltip || undefined}
-              className={cn(
-                "inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                isVertical ? "text-left" : "flex-1",
-                isActive
-                  ? cn("bg-background text-foreground shadow", tabActiveBgClass)
-                  : "text-muted-foreground hover:text-foreground",
-              )}
+              className={cn("relative group", isVertical ? "" : "flex-1")}
             >
-              {IconComp && <IconComp className="h-4 w-4" />}
-              {label}
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveKey(key)}
+                className={cn(
+                  "inline-flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  isVertical ? "text-left" : "",
+                  isActive
+                    ? cn("bg-background text-foreground shadow", tabActiveBgClass)
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {IconComp && <IconComp className="h-4 w-4" />}
+                {label}
+              </button>
+              {tooltip && (
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                  {tooltip}
+                </span>
+              )}
+            </div>
           );
         })}
       </div>

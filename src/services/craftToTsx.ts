@@ -585,6 +585,22 @@ export function craftStateToTsx(
       }
     }
 
+    // Collect tooltip imports for CraftTabs with any tab tooltip set
+    if (resolvedName === "CraftTabs") {
+      try {
+        const tabMetaRaw = node.props?.tabMeta as string | undefined;
+        const tabMeta = JSON.parse(tabMetaRaw || "{}");
+        const tabTooltips = tabMeta.tooltips as Record<string, string> | undefined;
+        if (tabTooltips && Object.values(tabTooltips).some((t) => !!t)) {
+          for (const name of TOOLTIP_IMPORT.names) {
+            addImport(TOOLTIP_IMPORT.from, name);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     // Collect context menu imports for containers with contextMenuMocPath
     const contextMenuMocPath = node.props?.contextMenuMocPath as string | undefined;
     if (contextMenuMocPath) {
@@ -1352,10 +1368,11 @@ function renderTable(
       const cellTag = isHeader ? "TableHead" : "TableCell";
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
+      // alignCls must go on an inner div, NOT on the td (display:flex on td breaks rowspan/colspan)
       const alignCls = cellAlign === "right" ? "flex flex-col items-end"
         : cellAlign === "center" ? "flex flex-col items-center"
         : "";
-      const cellCls = [bgClass, borderClass, tableBorderClass, alignCls].filter(Boolean).join(" ");
+      const cellCls = [bgClass, borderClass, tableBorderClass].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const stylePartsCell: string[] = [];
       const rawEffectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
@@ -1367,11 +1384,17 @@ function renderTable(
       if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
       const cellStyleAttr = stylePartsCell.length > 0 ? ` style={{ ${stylePartsCell.join(", ")} }}` : "";
       const slotChildren = slotNode
-        ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 2)).filter(Boolean)
+        ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 3)).filter(Boolean)
         : [];
       if (slotChildren.length > 0) {
         lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr}>`);
-        for (const child of slotChildren) lines.push(child);
+        if (alignCls) {
+          lines.push(`${rowPad}    <div className="${alignCls}">`);
+          for (const child of slotChildren) lines.push(child);
+          lines.push(`${rowPad}    </div>`);
+        } else {
+          for (const child of slotChildren) lines.push(child);
+        }
         lines.push(`${rowPad}  </${cellTag}>`);
       } else {
         lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr} />`);
@@ -1468,8 +1491,20 @@ function renderTabs(
     const triggerClassAttr = tabActiveBgClass
       ? ` className="${escapeAttr(`data-[state=active]:${tabActiveBgClass}`)}"`
       : "";
-    const titleAttr = tooltip ? ` title="${escapeAttr(tooltip)}"` : "";
-    lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}${titleAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+    if (tooltip) {
+      lines.push(`${pad}    <TooltipProvider>`);
+      lines.push(`${pad}      <Tooltip>`);
+      lines.push(`${pad}        <TooltipTrigger asChild>`);
+      lines.push(`${pad}          <TabsTrigger value="tab-${key}"${triggerClassAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+      lines.push(`${pad}        </TooltipTrigger>`);
+      lines.push(`${pad}        <TooltipContent>`);
+      lines.push(`${pad}          <p>${escapeJsx(tooltip)}</p>`);
+      lines.push(`${pad}        </TooltipContent>`);
+      lines.push(`${pad}      </Tooltip>`);
+      lines.push(`${pad}    </TooltipProvider>`);
+    } else {
+      lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+    }
   }
 
   lines.push(`${pad}  </TabsList>`);
