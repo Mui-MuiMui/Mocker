@@ -110,6 +110,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 ## Summary
 
+- **Confirmed**: 29
 - **Implemented**: 45
 - **Planned**: 2 (Native Select, Date Picker)
 - **TBD**: 8 (Button Group, Input Group, Input OTP, Sidebar, Data Table, Typography, Kbd, Empty, Spinner, Item)
