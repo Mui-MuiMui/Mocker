@@ -176,6 +176,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: true,
   },
+  TabContentSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   CraftPagination: {
     tag: "Pagination",
     importFrom: "@/components/ui/pagination",
@@ -601,6 +606,28 @@ export function craftStateToTsx(
       return;
     }
 
+    // CraftTabs: add tab sub-component imports and traverse linkedNodes
+    if (resolvedName === "CraftTabs") {
+      addImport("@/components/ui/tabs", "TabsList");
+      addImport("@/components/ui/tabs", "TabsTrigger");
+      addImport("@/components/ui/tabs", "TabsContent");
+      // Collect icon imports from tabMeta
+      try {
+        const meta = JSON.parse((node.props?.tabMeta as string) || "{}");
+        if (typeof meta.icons === "object" && meta.icons !== null) {
+          for (const icon of Object.values(meta.icons)) {
+            if (icon && typeof icon === "string") addImport("lucide-react", icon);
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftCollapsible: content slot is only rendered when linkedMocPath is not set
     if (resolvedName === "CraftCollapsible") {
       const hasLinkedMoc = !!(node.props?.linkedMocPath as string);
@@ -992,6 +1019,11 @@ export function craftStateToTsx(
       return rendered;
     }
 
+    // Tabs special case: render as LinkedNodes tabs
+    if (resolvedName === "CraftTabs") {
+      return `${mocComments}\n${renderTabs(node, craftState, indent, renderNode)}`;
+    }
+
     // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
       return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
@@ -1354,6 +1386,92 @@ function renderTable(
   }
 
   lines.push(`${pad}</Table>`);
+  return lines.join("\n");
+}
+
+function renderTabs(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  // Parse tabMeta
+  let keys: number[] = [0, 1, 2];
+  let labels: Record<string, string> = { "0": "Tab 1", "1": "Tab 2", "2": "Tab 3" };
+  let icons: Record<string, string> = {};
+  try {
+    const meta = JSON.parse((node.props?.tabMeta as string) || "{}");
+    if (Array.isArray(meta.keys)) keys = meta.keys;
+    if (typeof meta.labels === "object" && meta.labels !== null) labels = meta.labels;
+    if (typeof meta.icons === "object" && meta.icons !== null) icons = meta.icons;
+  } catch {
+    // use defaults
+  }
+
+  const orientation = (node.props?.orientation as string) || "horizontal";
+  const isVertical = orientation === "vertical";
+  const tabListBgClass = (node.props?.tabListBgClass as string) || "";
+  const contentBgClass = (node.props?.contentBgClass as string) || "";
+  const outerBorderColor = (node.props?.outerBorderColor as string) || "";
+  const contentBorderColor = (node.props?.contentBorderColor as string) || "";
+  const outerShadow = (node.props?.outerShadow as string) || "";
+  const contentShadow = (node.props?.contentShadow as string) || "";
+  const userClassName = (node.props?.className as string) || "";
+
+  const styleAttr = buildStyleAttr(node.props);
+
+  // Build outer wrapper className
+  const outerCls = [isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, userClassName]
+    .filter(Boolean)
+    .join(" ");
+  const outerClassAttr = outerCls ? ` className="${escapeAttr(outerCls)}"` : "";
+
+  // Build TabsList className
+  const tabListBase = isVertical
+    ? "flex flex-col items-stretch bg-muted p-1 rounded-md"
+    : "inline-flex items-center bg-muted p-1 rounded-md w-full";
+  const tabListCls = [tabListBase, tabListBgClass].filter(Boolean).join(" ");
+
+  // Build TabsContent className
+  const contentCls = [contentBgClass, contentBorderColor, contentShadow].filter(Boolean).join(" ");
+
+  // Use first key as default active value
+  const defaultValue = keys.length > 0 ? `tab-${keys[0]}` : "tab-0";
+
+  const lines: string[] = [];
+  const orientationAttr = isVertical ? ` orientation="vertical"` : "";
+  lines.push(`${pad}<Tabs defaultValue="${defaultValue}"${orientationAttr}${outerClassAttr}${styleAttr}>`);
+  lines.push(`${pad}  <TabsList className="${escapeAttr(tabListCls)}">`);
+
+  for (const key of keys) {
+    const label = labels[String(key)] ?? `Tab ${key}`;
+    const icon = icons[String(key)] ?? "";
+    const iconJsx = icon ? `<${icon} className="h-4 w-4" /> ` : "";
+    lines.push(`${pad}    <TabsTrigger value="tab-${key}">${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+  }
+
+  lines.push(`${pad}  </TabsList>`);
+
+  for (const key of keys) {
+    const slotId = node.linkedNodes?.[`tab_${key}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 3)).filter(Boolean)
+      : [];
+
+    const contentClassAttr = contentCls ? ` className="${escapeAttr(contentCls)}"` : "";
+    if (slotChildren.length > 0) {
+      lines.push(`${pad}  <TabsContent value="tab-${key}"${contentClassAttr}>`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}  </TabsContent>`);
+    } else {
+      lines.push(`${pad}  <TabsContent value="tab-${key}"${contentClassAttr} />`);
+    }
+  }
+
+  lines.push(`${pad}</Tabs>`);
   return lines.join("\n");
 }
 

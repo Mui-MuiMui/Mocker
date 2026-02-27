@@ -930,9 +930,38 @@ export function Switch(props: any) {
   );
 }`,
 
-  tabs: `export function Tabs(props: any) {
-  const { className = "", children, ...rest } = props;
-  return <div className={className} {...rest}>{children}</div>;
+  tabs: `import { createContext, useContext, useState } from "react";
+import { cn } from "@/components/ui/_cn";
+const TabsCtx = createContext<any>(null);
+export function Tabs({ defaultValue, orientation = "horizontal", className = "", children, ...rest }: any) {
+  const [value, setValue] = useState(defaultValue);
+  return (
+    <TabsCtx.Provider value={{ value, setValue, orientation }}>
+      <div className={className} data-orientation={orientation} {...rest}>{children}</div>
+    </TabsCtx.Provider>
+  );
+}
+export function TabsList({ className = "", children, ...rest }: any) {
+  const ctx = useContext(TabsCtx);
+  const base = ctx?.orientation === "vertical"
+    ? "flex flex-col items-stretch bg-muted p-1 rounded-md"
+    : "inline-flex items-center bg-muted p-1 rounded-md w-full";
+  return <div className={cn(base, className)} {...rest}>{children}</div>;
+}
+export function TabsTrigger({ value, className = "", children, ...rest }: any) {
+  const ctx = useContext(TabsCtx);
+  const isActive = ctx?.value === value;
+  const base = "inline-flex items-center justify-center gap-1 px-3 py-1 text-sm font-medium rounded-sm transition-all cursor-pointer";
+  return (
+    <button type="button"
+      className={cn(base, isActive ? "bg-background text-foreground shadow" : "text-muted-foreground hover:text-foreground", className)}
+      onClick={() => ctx?.setValue(value)} {...rest}>{children}</button>
+  );
+}
+export function TabsContent({ value, className = "", children, ...rest }: any) {
+  const ctx = useContext(TabsCtx);
+  if (ctx?.value !== value) return null;
+  return <div className={cn("mt-2", className)} {...rest}>{children}</div>;
 }`,
 
   textarea: `import { cn } from "@/components/ui/_cn";
