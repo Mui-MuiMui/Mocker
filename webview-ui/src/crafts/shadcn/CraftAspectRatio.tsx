@@ -6,6 +6,8 @@ interface CraftAspectRatioProps {
   ratio?: number;
   width?: string;
   height?: string;
+  /** RenderNode がドラッグ中に比率を維持するために参照。PropEditor では非表示。 */
+  keepAspectRatio?: boolean;
   className?: string;
   children?: React.ReactNode;
 }
@@ -32,23 +34,23 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
     }
   }, [widthControlled, height, id, actions]);
 
-  // CSS aspect-ratio を常に使用してドラッグ中も動的に比率を維持する。
-  // align-self: flex-start で flex コンテナの align-items:stretch による
-  // height 上書きを回避する。
+  // flex コンテナの align-items:stretch が CSS aspect-ratio を上書きするため、
+  // 寸法が明示されている場合は calc() で相手軸を明示的に計算する。
+  // keepAspectRatio:true により RenderNode がドラッグ中に比率を維持する。
   //
-  // - widthControlled: width 明示 + height:auto → aspect-ratio が高さを計算
-  // - heightControlled: height 明示 + width はブラウザが aspect-ratio から計算
-  // - default: w-full で幅を確保し aspect-ratio が高さを計算
+  // - widthControlled: width 明示 → height を calc で計算
+  // - heightControlled: height 明示 → width を calc で計算
+  // - default: w-full + aspect-ratio（寸法不定のため CSS 任せ）
   const computedStyle: React.CSSProperties = widthControlled
     ? {
         width,
-        aspectRatio: ratio,
+        height: `calc(${width} * ${1 / ratio})`,
         alignSelf: "flex-start",
       }
     : heightControlled
       ? {
           height,
-          aspectRatio: ratio,
+          width: `calc(${height} * ${ratio})`,
           alignSelf: "flex-start",
         }
       : {
@@ -77,6 +79,7 @@ CraftAspectRatio.craft = {
     ratio: 16 / 9,
     width: "auto",
     height: "auto",
+    keepAspectRatio: true,
     className: "",
   },
   rules: {
