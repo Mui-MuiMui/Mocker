@@ -253,7 +253,7 @@ export function PropEditor() {
   const [colorFamilies, setColorFamilies] = useState<Record<string, string>>({});
   const pendingBrowseIndexRef = useRef<number>(-1);
 
-  // Listen for browse:mocFile:result messages from extension
+  // Listen for browse:mocFile:result and browse:imageFile:result messages from extension
   useEffect(() => {
     const listener = (event: MessageEvent) => {
       const msg = event.data;
@@ -273,6 +273,12 @@ export function PropEditor() {
             props[targetProp || "linkedMocPath"] = relativePath;
           });
         }
+      }
+      if (msg?.type === "browse:imageFile:result" && selectedNodeId) {
+        const { relativePath, targetProp } = msg.payload as { relativePath: string; targetProp?: string };
+        actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+          props[targetProp || "src"] = relativePath;
+        });
       }
     };
     window.addEventListener("message", listener);
@@ -878,6 +884,38 @@ export function PropEditor() {
               })}
             </div>
           )}
+        </div>
+      );
+    }
+
+    // Custom UI for Image src prop (text input + file browse button)
+    if (componentName === "Image" && key === "src") {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            src
+          </label>
+          <div className="flex gap-1">
+            <input
+              type="text"
+              value={String(value ?? "")}
+              onChange={(e) => handlePropChange(key, e.target.value)}
+              className={`${INPUT_CLASS} flex-1`}
+              placeholder="image path"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                getVsCodeApi().postMessage({
+                  type: "browse:imageFile",
+                  payload: { currentPath: String(value ?? ""), targetProp: key },
+                });
+              }}
+              className="rounded border border-[var(--vscode-button-border,transparent)] bg-[var(--vscode-button-background,#0e639c)] px-2 py-1 text-xs text-[var(--vscode-button-foreground,#fff)] hover:opacity-90"
+            >
+              ...
+            </button>
+          </div>
         </div>
       );
     }

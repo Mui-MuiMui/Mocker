@@ -395,7 +395,7 @@ export async function startPreviewServer(
   }
 
   // Create HTTP server
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     const url = req.url || "/";
 
     if (url === "/" || url === "/index.html") {
@@ -454,6 +454,34 @@ export async function startPreviewServer(
         sseClients.delete(res);
       });
       return;
+    }
+
+    // Serve static files (images, etc.) from the .moc file's directory
+    {
+      const docDir = path.dirname(mocFilePath);
+      const filePath = path.join(docDir, url.split("?")[0]);
+      // Prevent directory traversal: ensure the resolved path is within docDir
+      if (filePath.startsWith(docDir)) {
+        try {
+          const fileUri = vscode.Uri.file(filePath);
+          const content = await vscode.workspace.fs.readFile(fileUri);
+          const ext = path.extname(filePath).toLowerCase();
+          const mimeMap: Record<string, string> = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+          };
+          const mimeType = mimeMap[ext] ?? "application/octet-stream";
+          res.writeHead(200, { "Content-Type": mimeType });
+          res.end(Buffer.from(content));
+          return;
+        } catch {
+          // File not found → fall through to 404
+        }
+      }
     }
 
     res.writeHead(404, { "Content-Type": "text/plain" });
