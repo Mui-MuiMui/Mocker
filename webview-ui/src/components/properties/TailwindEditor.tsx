@@ -19,6 +19,8 @@ const THEME_COLOR_OPTIONS = [
 const FONT_FAMILY_OPTIONS = ["sans", "serif", "mono"];
 const FONT_WEIGHT_OPTIONS = ["normal", "medium", "semibold", "bold"];
 const BORDER_RADIUS_OPTIONS = ["none", "sm", "md", "lg", "xl", "2xl", "full"];
+const BORDER_WIDTH_SIZES = ["0", "1", "2", "4", "8"] as const;
+const ALL_BORDER_WIDTH_CLASSES = BORDER_WIDTH_SIZES.map((s) => s === "1" ? "border" : `border-${s}`);
 
 const SHADOW_SCALE = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl"] as const;
 const SHADOW_PRESET = [...SHADOW_SCALE, "none"] as const;
@@ -437,6 +439,16 @@ export function TailwindEditor() {
       </TailwindCategory>
 
       <TailwindCategory title="Border" collapsed={collapsedCategories.has("border")} onToggle={() => toggleCategory("border")}>
+        <TailwindSection title="Border Width">
+          <div className="flex flex-wrap gap-1">
+            {BORDER_WIDTH_SIZES.map((s) => {
+              const cls = s === "1" ? "border" : `border-${s}`;
+              return (
+                <ClassButton key={s} label={s} active={activeSet.has(cls)} onClick={() => setGroupClass(cls, ALL_BORDER_WIDTH_CLASSES)} />
+              );
+            })}
+          </div>
+        </TailwindSection>
         <TailwindSection title="Border Radius">
           <div className="flex flex-wrap gap-1">
             {BORDER_RADIUS_OPTIONS.map((r) => (
