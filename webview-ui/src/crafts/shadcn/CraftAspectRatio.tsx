@@ -61,12 +61,12 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
   return (
     <div
       ref={(ref) => { if (ref) connect(drag(ref)); }}
-      className={cn("relative", !widthControlled && !heightControlled && "w-full", className)}
+      className={cn("relative overflow-hidden", !widthControlled && !heightControlled && "w-full", className)}
       style={computedStyle}
     >
       {/* 選択タブ: 子要素がフルサイズでも AspectRatio を選択可能にする。
-          aspect-ratio の計算対象外（絶対配置で上方に突出）。 */}
-      <div className="absolute -top-5 left-0 z-10 flex h-5 cursor-default select-none items-center gap-1 rounded-t-sm border border-border bg-background px-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
+          top-0 のオーバーレイ配置のため比率計算には影響しない。 */}
+      <div className="absolute left-0 top-0 z-10 flex h-5 cursor-default select-none items-center rounded-br-sm bg-background/80 px-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
         AspectRatio
       </div>
       {children ?? (
