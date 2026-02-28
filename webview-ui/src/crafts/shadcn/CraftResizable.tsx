@@ -65,6 +65,7 @@ interface CraftResizableProps {
   panelMeta?: string;
   withHandle?: boolean;
   borderColor?: string;
+  separatorColor?: string;
   borderRadius?: string;
   shadow?: string;
   className?: string;
@@ -76,6 +77,7 @@ export const CraftResizable: UserComponent<CraftResizableProps> = ({
   panelMeta = DEFAULT_PANEL_META_JSON,
   withHandle = true,
   borderColor = "",
+  separatorColor = "",
   borderRadius = "rounded-lg",
   shadow = "",
   className = "",
@@ -91,9 +93,6 @@ export const CraftResizable: UserComponent<CraftResizableProps> = ({
 
   return (
     <div
-      ref={(ref) => {
-        if (ref) connect(drag(ref));
-      }}
       className={cn(
         "flex border overflow-hidden",
         isVertical ? "flex-col" : "flex-row",
@@ -107,6 +106,16 @@ export const CraftResizable: UserComponent<CraftResizableProps> = ({
         height: height !== "auto" ? height : undefined,
       }}
     >
+      {/* Drag handle strip — hovering reveals it; clicking selects Resizable */}
+      <div
+        ref={(r) => { if (r) connect(drag(r)); }}
+        className={cn(
+          "flex-shrink-0 cursor-move select-none bg-muted/20 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100",
+          isVertical ? "h-4 w-full" : "w-4 h-full",
+        )}
+      >
+        <span className="text-[9px] text-muted-foreground">⠿</span>
+      </div>
       {meta.panels.map((panel, idx) => (
         <div
           key={panel.key}
@@ -121,14 +130,15 @@ export const CraftResizable: UserComponent<CraftResizableProps> = ({
         >
           <div className="flex-1 overflow-auto">
             <Element id={`panel_${panel.key}`} is={ResizablePanelSlot} canvas>
-              <Element is={CraftContainer} />
+              <Element is={CraftContainer} canvas />
             </Element>
           </div>
           {/* Visual handle between panels */}
           {idx < meta.panels.length - 1 && (
             <div
               className={cn(
-                "flex-shrink-0 bg-border flex items-center justify-center",
+                "flex-shrink-0 flex items-center justify-center",
+                separatorColor || "bg-border",
                 isVertical ? "h-[4px] w-full" : "w-[4px] h-full",
               )}
             >
@@ -164,6 +174,7 @@ CraftResizable.craft = {
     panelMeta: DEFAULT_PANEL_META_JSON,
     withHandle: true,
     borderColor: "",
+    separatorColor: "",
     borderRadius: "rounded-lg",
     shadow: "",
     className: "",

@@ -427,7 +427,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", linkedMocPath: "" },
   CraftContainer: {
     display: "flex", flexDirection: "column", justifyContent: "start",
-    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "",
+    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
   },
   CraftDiv: { contextMenuMocPath: "" },
   // Phase 1
@@ -663,6 +663,11 @@ export function craftStateToTsx(
         const contentSlotId = node.linkedNodes?.content;
         if (contentSlotId) collectImports(contentSlotId);
       }
+      return;
+    }
+
+    // CraftContainer: children are not rendered when linkedMocPath is set
+    if (resolvedName === "CraftContainer" && (node.props?.linkedMocPath as string)) {
       return;
     }
 
@@ -1058,6 +1063,16 @@ export function craftStateToTsx(
     // Resizable special case: render as LinkedNodes resizable panels
     if (resolvedName === "CraftResizable") {
       return `${mocComments}\n${renderResizable(node, craftState, indent, renderNode)}`;
+    }
+
+    // CraftContainer with linkedMocPath: render as div with linked comment (no children)
+    if (resolvedName === "CraftContainer") {
+      const linkedMocPath = (node.props?.linkedMocPath as string) || "";
+      if (linkedMocPath) {
+        rendered = `${mocComments}\n${pad}<div${classNameAttr}${styleAttr}>\n${pad}  {/* linked: ${escapeJsx(linkedMocPath)} */}\n${pad}</div>`;
+        rendered = wrapWithContextMenu(rendered, node.props, pad);
+        return rendered;
+      }
     }
 
     // ToggleGroup special case: render items as ToggleGroupItem children
