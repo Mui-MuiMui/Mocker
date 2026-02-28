@@ -23,6 +23,7 @@ export const ResizablePanelSlot: UserComponent<{ children?: ReactNode }> = ({ ch
 
 ResizablePanelSlot.craft = {
   displayName: "ResizablePanelSlot",
+  custom: { noResize: true },
   rules: {
     canDrag: () => false,
     canDrop: () => true,
