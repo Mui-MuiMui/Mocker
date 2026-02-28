@@ -64,6 +64,11 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
       className={cn("relative", !widthControlled && !heightControlled && "w-full", className)}
       style={computedStyle}
     >
+      {/* 選択タブ: 子要素がフルサイズでも AspectRatio を選択可能にする。
+          aspect-ratio の計算対象外（絶対配置で上方に突出）。 */}
+      <div className="absolute -top-5 left-0 z-10 flex h-5 cursor-default select-none items-center gap-1 rounded-t-sm border border-border bg-background px-1.5 text-[10px] text-muted-foreground whitespace-nowrap">
+        AspectRatio
+      </div>
       {children ?? (
         <div className="flex h-full min-h-[60px] items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30 text-xs text-muted-foreground">
           コンポーネントをドロップ
