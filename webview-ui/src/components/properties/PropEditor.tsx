@@ -373,6 +373,52 @@ export function PropEditor() {
       );
     }
 
+    // Custom UI for ratio (AspectRatio)
+    if (key === "ratio") {
+      const currentValue = typeof value === "number" ? value : parseFloat(String(value ?? "1.7778"));
+      const RATIO_PRESETS: { label: string; value: number }[] = [
+        { label: "16:9", value: 16 / 9 },
+        { label: "4:3", value: 4 / 3 },
+        { label: "1:1", value: 1 },
+        { label: "3:2", value: 3 / 2 },
+        { label: "2:1", value: 2 },
+        { label: "3:4", value: 3 / 4 },
+        { label: "9:16", value: 9 / 16 },
+      ];
+      const matchesPreset = (v: number) => Math.abs(currentValue - v) < 0.001;
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          <div className="flex flex-wrap gap-1">
+            {RATIO_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => handlePropChange(key, preset.value)}
+                className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                  matchesPreset(preset.value)
+                    ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                    : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="number"
+            value={currentValue}
+            step={0.01}
+            min={0.01}
+            onChange={(e) => handlePropChange(key, Number(e.target.value))}
+            className={`${INPUT_CLASS} w-full`}
+          />
+        </div>
+      );
+    }
+
     // Custom UI for icon (combobox with all Lucide icons)
     if (key === "icon") {
       return (

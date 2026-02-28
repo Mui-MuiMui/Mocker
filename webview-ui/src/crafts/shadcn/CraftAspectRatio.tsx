@@ -28,13 +28,15 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
       className={cn("relative w-full", className)}
       style={{
         width: width !== "auto" ? width : undefined,
+        aspectRatio: height === "auto" ? ratio : undefined,
         height: height !== "auto" ? height : undefined,
-        paddingBottom: height === "auto" ? `${(1 / ratio) * 100}%` : undefined,
       }}
     >
-      <div className="absolute inset-0 flex items-center justify-center rounded-md bg-muted text-muted-foreground text-sm">
-        {children || `${ratio.toFixed(2)} ratio`}
-      </div>
+      {children ?? (
+        <div className="flex h-full min-h-[60px] items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30 text-xs text-muted-foreground">
+          コンポーネントをドロップ
+        </div>
+      )}
     </div>
   );
 };
@@ -42,7 +44,7 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
 CraftAspectRatio.craft = {
   displayName: "AspectRatio",
   props: {
-    ratio: 1.78,
+    ratio: 16 / 9,
     width: "auto",
     height: "auto",
     className: "",
