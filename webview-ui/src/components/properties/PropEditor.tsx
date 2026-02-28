@@ -4,6 +4,7 @@ import { getVsCodeApi } from "../../utils/vscodeApi";
 import { IconCombobox } from "./IconCombobox";
 import { TableMetaEditor } from "./TableMetaEditor";
 import { TabMetaEditor } from "./TabMetaEditor";
+import { ResizableMetaEditor } from "./ResizableMetaEditor";
 import { useEditorStore } from "../../stores/editorStore";
 
 /** Mapping of property names to their allowed values (select options). */
@@ -59,8 +60,10 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     variant: ["default", "card"],
   },
   Resizable: {
-    direction: ["horizontal", "vertical"],
+    borderRadius: ["", "rounded", "rounded-md", "rounded-lg", "rounded-xl"],
+    shadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg"],
   },
+  ResizablePanelSlot: {},
   Table: {
     borderWidth: ["0", "1", "2", "4"],
   },
@@ -343,6 +346,17 @@ export function PropEditor() {
     if (key === "tabMeta" && selectedNodeId) {
       return (
         <TabMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for panelMeta (resizable panel structure editor)
+    if (key === "panelMeta" && selectedNodeId) {
+      return (
+        <ResizableMetaEditor
           key={key}
           value={String(value ?? "")}
           selectedNodeId={selectedNodeId}

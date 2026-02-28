@@ -1136,9 +1136,19 @@ export function Calendar(props: any) {
 
   resizable: `import { cn } from "@/components/ui/_cn";
 export function ResizablePanelGroup(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("flex rounded-lg border", className);
-  return <div className={cls} {...rest}>{children}</div>;
+  const { className = "", children, direction = "horizontal", ...rest } = props;
+  const cls = cn("flex overflow-hidden", direction === "vertical" ? "flex-col" : "flex-row", className);
+  return <div className={cls} style={{ height: "100%" }} {...rest}>{children}</div>;
+}
+export function ResizablePanel(props: any) {
+  const { className = "", children, defaultSize = 50, ...rest } = props;
+  return <div className={cn("overflow-auto", className)} style={{ flex: "0 0 " + defaultSize + "%" }} {...rest}>{children}</div>;
+}
+export function ResizableHandle(props: any) {
+  const { className = "", withHandle = false, ...rest } = props;
+  return <div className={cn("bg-border flex-shrink-0 flex items-center justify-center", className)} style={{ width: "4px", cursor: "col-resize" }} {...rest}>
+    {withHandle && <div style={{ width: "3px", height: "24px", borderRadius: "2px", background: "hsl(var(--border))", opacity: 0.7 }} />}
+  </div>;
 }`,
 
   carousel: `import { cn } from "@/components/ui/_cn";

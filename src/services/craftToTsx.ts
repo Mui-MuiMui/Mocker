@@ -279,7 +279,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "ResizablePanelGroup",
     importFrom: "@/components/ui/resizable",
     importName: "ResizablePanelGroup",
-    propsMap: ["direction", "className"],
+    propsMap: ["className"],
     isContainer: false,
   },
   CraftCarousel: {
@@ -452,7 +452,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   // Phase 2
   CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
   CraftCalendar: {},
-  CraftResizable: { direction: "horizontal" },
+  CraftResizable: { panelMeta: '{"direction":"horizontal","nextKey":2,"panels":[{"key":0,"size":50},{"key":1,"size":50}]}', withHandle: true },
   CraftCarousel: { items: "Slide 1,Slide 2,Slide 3" },
   CraftChart: { chartType: "bar" },
   CraftForm: {},
@@ -638,6 +638,16 @@ export function craftStateToTsx(
       } catch {
         // ignore parse errors
       }
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
+    // CraftResizable: add panel sub-component imports and traverse linkedNodes
+    if (resolvedName === "CraftResizable") {
+      addImport("@/components/ui/resizable", "ResizablePanel");
+      addImport("@/components/ui/resizable", "ResizableHandle");
       for (const linkedId of Object.values(node.linkedNodes || {})) {
         collectImports(linkedId);
       }
@@ -1043,6 +1053,11 @@ export function craftStateToTsx(
     // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
       return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
+    }
+
+    // Resizable special case: render as LinkedNodes resizable panels
+    if (resolvedName === "CraftResizable") {
+      return `${mocComments}\n${renderResizable(node, craftState, indent, renderNode)}`;
     }
 
     // ToggleGroup special case: render items as ToggleGroupItem children
@@ -1527,6 +1542,59 @@ function renderTabs(
   }
 
   lines.push(`${pad}</Tabs>`);
+  return lines.join("\n");
+}
+
+function renderResizable(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  // Parse panelMeta
+  let direction: "horizontal" | "vertical" = "horizontal";
+  let panels: Array<{ key: number; size: number }> = [{ key: 0, size: 50 }, { key: 1, size: 50 }];
+  try {
+    const meta = JSON.parse((node.props?.panelMeta as string) || "{}");
+    if (meta.direction === "vertical") direction = "vertical";
+    if (Array.isArray(meta.panels)) panels = meta.panels;
+  } catch {
+    // use defaults
+  }
+
+  const withHandle = node.props?.withHandle !== false;
+  const userClassName = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  const dirAttr = direction === "vertical" ? ` direction="vertical"` : ` direction="horizontal"`;
+  const classAttr = userClassName ? ` className="${escapeAttr(userClassName)}"` : "";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<ResizablePanelGroup${dirAttr}${classAttr}${styleAttr}>`);
+
+  panels.forEach((panel, idx) => {
+    const slotId = node.linkedNodes?.[`panel_${panel.key}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 2)).filter(Boolean)
+      : [];
+
+    if (slotChildren.length > 0) {
+      lines.push(`${pad}  <ResizablePanel defaultSize={${panel.size}}>`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}  </ResizablePanel>`);
+    } else {
+      lines.push(`${pad}  <ResizablePanel defaultSize={${panel.size}} />`);
+    }
+
+    if (idx < panels.length - 1) {
+      lines.push(`${pad}  <ResizableHandle${withHandle ? " withHandle" : ""} />`);
+    }
+  });
+
+  lines.push(`${pad}</ResizablePanelGroup>`);
   return lines.join("\n");
 }
 

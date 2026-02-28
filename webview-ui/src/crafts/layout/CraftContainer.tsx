@@ -8,6 +8,7 @@ interface CraftContainerProps {
   alignItems?: "start" | "center" | "end" | "stretch" | "baseline";
   gap?: string;
   gridCols?: number;
+  linkedMocPath?: string;
   contextMenuMocPath?: string;
   width?: string;
   height?: string;
@@ -70,6 +71,7 @@ export const CraftContainer: UserComponent<CraftContainerProps> = ({
   alignItems = "stretch",
   gap = "4",
   gridCols = 3,
+  linkedMocPath = "",
   contextMenuMocPath = "",
   width = "auto",
   height = "auto",
@@ -96,9 +98,22 @@ export const CraftContainer: UserComponent<CraftContainerProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn("min-h-[60px] p-4", layoutClasses, contextMenuMocPath && "ring-1 ring-dashed ring-muted-foreground/30", className)}
+      className={cn(
+        "relative min-h-[60px] p-4",
+        layoutClasses,
+        (linkedMocPath || contextMenuMocPath) && "ring-1 ring-dashed ring-muted-foreground/30",
+        className,
+      )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
+      {linkedMocPath && (
+        <div className="absolute top-1 right-1 opacity-40 pointer-events-none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </div>
+      )}
       {children}
     </div>
   );
@@ -113,6 +128,7 @@ CraftContainer.craft = {
     alignItems: "stretch",
     gap: "4",
     gridCols: 3,
+    linkedMocPath: "",
     contextMenuMocPath: "",
     width: "auto",
     height: "auto",

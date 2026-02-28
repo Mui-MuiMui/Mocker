@@ -34,7 +34,7 @@ import { CraftToggleGroup } from "./shadcn/CraftToggleGroup";
 import { CraftSelect } from "./shadcn/CraftSelect";
 import { CraftCombobox } from "./shadcn/CraftCombobox";
 import { CraftCalendar } from "./shadcn/CraftCalendar";
-import { CraftResizable } from "./shadcn/CraftResizable";
+import { CraftResizable, ResizablePanelSlot } from "./shadcn/CraftResizable";
 import { CraftCarousel } from "./shadcn/CraftCarousel";
 import { CraftChart } from "./shadcn/CraftChart";
 import { CraftForm } from "./shadcn/CraftForm";
@@ -94,6 +94,7 @@ export const resolvers = {
   CraftCombobox,
   CraftCalendar,
   CraftResizable,
+  ResizablePanelSlot,
   CraftCarousel,
   CraftChart,
   CraftForm,
@@ -417,7 +418,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "GripVertical",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftCarousel",
