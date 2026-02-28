@@ -20,12 +20,10 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
   const { id, connectors: { connect, drag } } = useNode();
   const { actions } = useEditor();
 
-  // width が主: width が明示的に設定されている
   const widthControlled = width !== "auto";
-  // height が主: width は auto、height が明示的に設定されている
   const heightControlled = !widthControlled && height !== "auto";
 
-  // コーナードラッグ時に RenderNode が両方を commit する場合、width を主にして height をリセット
+  // コーナードラッグ後に両方が設定された場合、width を主として height をリセット
   useEffect(() => {
     if (widthControlled && height !== "auto") {
       actions.setProp(id, (p: Record<string, unknown>) => {
@@ -34,21 +32,37 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
     }
   }, [widthControlled, height, id, actions]);
 
+  // CSS aspect-ratio は flex の align-items:stretch で上書きされるため
+  // calc() で明示的に他方の寸法を計算する。
+  // - widthControlled: height = width * (1/ratio)
+  // - heightControlled: width = height * ratio
+  // - default: aspect-ratio CSS + align-self:flex-start で flex stretch を回避
+  const computedStyle: React.CSSProperties = widthControlled
+    ? {
+        width,
+        height: `calc(${width} * ${1 / ratio})`,
+        alignSelf: "flex-start",
+      }
+    : heightControlled
+      ? {
+          height,
+          width: `calc(${height} * ${ratio})`,
+          alignSelf: "flex-start",
+        }
+      : {
+          // デフォルト: w-full + aspect-ratio CSS
+          aspectRatio: ratio,
+          alignSelf: "flex-start",
+        };
+
   return (
     <div
       ref={(ref) => { if (ref) connect(drag(ref)); }}
-      // デフォルト（両方 auto）のみ w-full でコンテナを埋める
       className={cn("relative", !widthControlled && !heightControlled && "w-full", className)}
-      style={{
-        width: widthControlled ? width : undefined,
-        // heightControlled の場合のみ明示的な height を適用。
-        // それ以外は "auto" を inline style で明示し、RenderNode の直接 DOM 操作を上書き。
-        height: heightControlled ? height : "auto",
-        aspectRatio: ratio,
-      }}
+      style={computedStyle}
     >
       {children ?? (
-        <div className="flex min-h-[60px] items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30 text-xs text-muted-foreground">
+        <div className="flex h-full min-h-[60px] items-center justify-center rounded-md border-2 border-dashed border-muted-foreground/30 text-xs text-muted-foreground">
           コンポーネントをドロップ
         </div>
       )}

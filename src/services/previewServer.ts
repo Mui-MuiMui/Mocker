@@ -735,8 +735,15 @@ export function Alert(props: any) {
 
   "aspect-ratio": `import { cn } from "@/components/ui/_cn";
 export function AspectRatio(props: any) {
-  const { className = "", ratio = 16/9, children, ...rest } = props;
-  return <div className={cn("relative w-full", className)} style={{ paddingBottom: \`\${(1/ratio)*100}%\` }} {...rest}><div className="absolute inset-0">{children}</div></div>;
+  const { className = "", ratio = 16/9, width, height, children, ...rest } = props;
+  const widthControlled = width && width !== "auto";
+  const heightControlled = !widthControlled && height && height !== "auto";
+  const style = widthControlled
+    ? { width, height: \`calc(\${width} * \${1 / ratio})\`, alignSelf: "flex-start" }
+    : heightControlled
+    ? { height, width: \`calc(\${height} * \${ratio})\`, alignSelf: "flex-start" }
+    : { aspectRatio: ratio, alignSelf: "flex-start" };
+  return <div className={cn("relative", !widthControlled && !heightControlled && "w-full", className)} style={style} {...rest}>{children}</div>;
 }`,
 
   avatar: `import { cn } from "@/components/ui/_cn";
