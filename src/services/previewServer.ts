@@ -735,7 +735,7 @@ export function Alert(props: any) {
 
   "aspect-ratio": `import { cn } from "@/components/ui/_cn";
 export function AspectRatio(props: any) {
-  const { className = "", ratio = 16/9, width, height, children, ...rest } = props;
+  const { className = "", ratio = 16/9, width, height, children, style: _style, ...rest } = props;
   const widthControlled = width && width !== "auto";
   const heightControlled = !widthControlled && height && height !== "auto";
   const style = widthControlled
