@@ -32,25 +32,26 @@ export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
     }
   }, [widthControlled, height, id, actions]);
 
-  // CSS aspect-ratio は flex の align-items:stretch で上書きされるため
-  // calc() で明示的に他方の寸法を計算する。
-  // - widthControlled: height = width * (1/ratio)
-  // - heightControlled: width = height * ratio
-  // - default: aspect-ratio CSS + align-self:flex-start で flex stretch を回避
+  // CSS aspect-ratio を常に使用してドラッグ中も動的に比率を維持する。
+  // align-self: flex-start で flex コンテナの align-items:stretch による
+  // height 上書きを回避する。
+  //
+  // - widthControlled: width 明示 + height:auto → aspect-ratio が高さを計算
+  // - heightControlled: height 明示 + width はブラウザが aspect-ratio から計算
+  // - default: w-full で幅を確保し aspect-ratio が高さを計算
   const computedStyle: React.CSSProperties = widthControlled
     ? {
         width,
-        height: `calc(${width} * ${1 / ratio})`,
+        aspectRatio: ratio,
         alignSelf: "flex-start",
       }
     : heightControlled
       ? {
           height,
-          width: `calc(${height} * ${ratio})`,
+          aspectRatio: ratio,
           alignSelf: "flex-start",
         }
       : {
-          // デフォルト: w-full + aspect-ratio CSS
           aspectRatio: ratio,
           alignSelf: "flex-start",
         };

@@ -139,7 +139,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "AspectRatio",
     importFrom: "@/components/ui/aspect-ratio",
     importName: "AspectRatio",
-    propsMap: ["ratio", "className"],
+    propsMap: ["ratio", "width", "height", "className"],
     isContainer: true,
   },
   CraftAvatar: {
@@ -433,7 +433,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   // Phase 1
   CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single", linkedMocPaths: "" },
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default", icon: "AlertCircle" },
-  CraftAspectRatio: { ratio: 1.78 },
+  CraftAspectRatio: { ratio: 1.78, width: "auto", height: "auto" },
   CraftAvatar: { src: "", fallback: "AB" },
   CraftBreadcrumb: { items: "Home,Products,Current" },
   CraftCheckbox: { label: "Accept terms", checked: false, disabled: false, tooltipText: "", tooltipSide: "" },
