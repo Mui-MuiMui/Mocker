@@ -1,38 +1,49 @@
-import { useNode, type UserComponent } from "@craftjs/core";
+import { useEffect } from "react";
+import { useNode, useEditor, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 
 interface CraftAspectRatioProps {
   ratio?: number;
   width?: string;
+  height?: string;
   className?: string;
   children?: React.ReactNode;
-  /** RenderNode がリサイズ時に比率を維持するために使用 (常に true) */
-  keepAspectRatio?: boolean;
 }
 
 export const CraftAspectRatio: UserComponent<CraftAspectRatioProps> = ({
   ratio = 16 / 9,
   width = "auto",
+  height = "auto",
   className = "",
   children,
 }) => {
-  const {
-    connectors: { connect, drag },
-  } = useNode();
+  const { id, connectors: { connect, drag } } = useNode();
+  const { actions } = useEditor();
+
+  // width が主: width が明示的に設定されている
+  const widthControlled = width !== "auto";
+  // height が主: width は auto、height が明示的に設定されている
+  const heightControlled = !widthControlled && height !== "auto";
+
+  // コーナードラッグ時に RenderNode が両方を commit する場合、width を主にして height をリセット
+  useEffect(() => {
+    if (widthControlled && height !== "auto") {
+      actions.setProp(id, (p: Record<string, unknown>) => {
+        p.height = "auto";
+      });
+    }
+  }, [widthControlled, height, id, actions]);
 
   return (
     <div
-      ref={(ref) => {
-        if (ref) connect(drag(ref));
-      }}
-      // w-full は width="auto" の時のみ適用。明示的な width がある場合は inline style が制御する
-      className={cn("relative", width === "auto" && "w-full", className)}
+      ref={(ref) => { if (ref) connect(drag(ref)); }}
+      // デフォルト（両方 auto）のみ w-full でコンテナを埋める
+      className={cn("relative", !widthControlled && !heightControlled && "w-full", className)}
       style={{
-        width: width !== "auto" ? width : undefined,
-        // height は常に "auto" にして CSS aspect-ratio が機能するようにする。
-        // RenderNode がドラッグ中に dom.style.height を直接書き換えても、
-        // React の再レンダリング時に "auto" で上書きされる。
-        height: "auto",
+        width: widthControlled ? width : undefined,
+        // heightControlled の場合のみ明示的な height を適用。
+        // それ以外は "auto" を inline style で明示し、RenderNode の直接 DOM 操作を上書き。
+        height: heightControlled ? height : "auto",
         aspectRatio: ratio,
       }}
     >
@@ -50,9 +61,8 @@ CraftAspectRatio.craft = {
   props: {
     ratio: 16 / 9,
     width: "auto",
+    height: "auto",
     className: "",
-    // RenderNode がこの prop を読んでリサイズ時に比率を維持する
-    keepAspectRatio: true,
   },
   rules: {
     canDrag: () => true,

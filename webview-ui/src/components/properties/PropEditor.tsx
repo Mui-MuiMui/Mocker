@@ -221,8 +221,8 @@ const ABSOLUTE_DEFAULTS: Record<string, unknown> = {
  * 共通グループ・コンポーネントグループの両方から除外される。
  */
 const COMPONENT_EXCLUDED_PROPS: Record<string, Set<string>> = {
-  // AspectRatio: height は CSS aspect-ratio で制御、keepAspectRatio は内部用
-  AspectRatio: new Set(["height", "keepAspectRatio"]),
+  // AspectRatio: keepAspectRatio は RenderNode 内部用、ユーザーには非表示
+  AspectRatio: new Set(["keepAspectRatio"]),
 };
 
 export function PropEditor() {
@@ -294,6 +294,11 @@ export function PropEditor() {
   const handlePropChange = (key: string, value: unknown) => {
     actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
       props[key] = value;
+      // AspectRatio: width/height の片方を手打ちしたら、もう片方を "auto" にリセット
+      if (componentName === "AspectRatio") {
+        if (key === "width" && value !== "auto") props.height = "auto";
+        if (key === "height" && value !== "auto") props.width = "auto";
+      }
     });
   };
 
