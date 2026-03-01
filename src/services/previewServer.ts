@@ -631,7 +631,7 @@ export function Button(props: any) {
       <span className="absolute right-2 pointer-events-none opacity-50">{icons}</span>
     </div>;
   }
-  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
+  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
   return <button className={cls} role={role} style={style} {...rest}>{children}</button>;
 }`,
 
@@ -651,14 +651,14 @@ export function Card(props: any) {
 
   label: `import { cn } from "@/components/ui/_cn";
 export function Label(props: any) {
-  const { className = "", children, ...rest } = props;
+  const { className = "", style, children, ...rest } = props;
   const cls = cn("text-sm font-medium leading-none", className);
-  return <label className={cls} {...rest}>{children}</label>;
+  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</label>;
 }`,
 
   badge: `import { cn } from "@/components/ui/_cn";
 export function Badge(props: any) {
-  const { className = "", variant = "default", children, ...rest } = props;
+  const { className = "", variant = "default", style, children, ...rest } = props;
   const v: Record<string, string> = {
     default: "border-transparent bg-primary text-primary-foreground shadow",
     secondary: "border-transparent bg-secondary text-secondary-foreground",
@@ -666,7 +666,7 @@ export function Badge(props: any) {
     outline: "text-foreground",
   };
   const cls = cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors", v[variant] || v.default, className);
-  return <span className={cls} {...rest}>{children}</span>;
+  return <span className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</span>;
 }`,
 
   separator: `import { cn } from "@/components/ui/_cn";
@@ -800,7 +800,7 @@ export function Checkbox(props: any) {
       >
         {checked && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M20 6 9 17l-5-5"/></svg>}
       </span>
-      {children && <span className="text-sm font-medium leading-none select-none">{children}</span>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ whiteSpace: "pre-line" }}>{children}</span>}
     </label>
   );
 }`,
@@ -1026,7 +1026,7 @@ export function Toggle(props: any) {
     lg: "h-10 px-3 min-w-10",
   };
   const IconComponent = icon ? (Icons as any)[icon] : null;
-  const cls = cn("inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", s[size] || s.default, v[variant] || v.default, className);
+  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", s[size] || s.default, v[variant] || v.default, className);
   return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-toggle-pressed={pressed || undefined} data-disabled={disabled || undefined} disabled={disabled} onClick={() => setPressed((p: boolean) => !p)} className={cls} {...rest}>{IconComponent && <IconComponent className="h-4 w-4" />}{children}</button>;
 }`,
 

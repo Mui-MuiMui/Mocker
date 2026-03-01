@@ -888,7 +888,10 @@ export function craftStateToTsx(
     const classNameAttr = combinedClassName ? ` className="${combinedClassName}"` : "";
 
     // Build dimension styles
-    const styleAttr = buildStyleAttr(node.props);
+    const styleAttr = buildStyleAttr(
+      node.props,
+      resolvedName === "CraftText" ? { whiteSpace: "pre-line" } : undefined,
+    );
 
     const children = node.nodes || [];
     const textContent = mapping.textProp ? (node.props?.[mapping.textProp] as string) : undefined;
@@ -916,9 +919,9 @@ export function craftStateToTsx(
       const cardBody = [];
       if (title) {
         cardBody.push(`${pad}    <div className="p-6">`);
-        cardBody.push(`${pad}      <h3 className="text-lg font-semibold">${escapeJsx(title)}</h3>`);
+        cardBody.push(`${pad}      <h3 className="text-lg font-semibold whitespace-pre-line">${escapeJsx(title)}</h3>`);
         if (desc) {
-          cardBody.push(`${pad}      <p className="text-sm text-muted-foreground">${escapeJsx(desc)}</p>`);
+          cardBody.push(`${pad}      <p className="text-sm text-muted-foreground whitespace-pre-line">${escapeJsx(desc)}</p>`);
         }
         cardBody.push(`${pad}    </div>`);
       }
@@ -949,10 +952,10 @@ export function craftStateToTsx(
       const alertBody: string[] = [];
       alertBody.push(`${pad}  <${icon} className="h-4 w-4" />`);
       if (title) {
-        alertBody.push(`${pad}  <h5 className="mb-1 font-medium leading-none tracking-tight">${escapeJsx(title)}</h5>`);
+        alertBody.push(`${pad}  <h5 className="mb-1 font-medium leading-none tracking-tight whitespace-pre-line">${escapeJsx(title)}</h5>`);
       }
       if (desc) {
-        alertBody.push(`${pad}  <div className="text-sm [&_p]:leading-relaxed">${escapeJsx(desc)}</div>`);
+        alertBody.push(`${pad}  <div className="text-sm [&_p]:leading-relaxed whitespace-pre-line">${escapeJsx(desc)}</div>`);
       }
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>\n${alertBody.join("\n")}\n${pad}</${tag}>`;
       return rendered;
@@ -1284,13 +1287,16 @@ function normalizeCssSize(v: string | undefined): string | undefined {
   return /^\d+(\.\d+)?$/.test(v) ? v + "px" : v;
 }
 
-function buildStyleAttr(props: Record<string, unknown>): string {
+function buildStyleAttr(props: Record<string, unknown>, extraStyles?: Record<string, string>): string {
   const w = normalizeCssSize(props?.width as string | undefined);
   const h = normalizeCssSize(props?.height as string | undefined);
   const objectFit = props?.objectFit as string | undefined;
   const top = props?.top as string | undefined;
   const left = props?.left as string | undefined;
   const parts: string[] = [];
+  if (extraStyles) {
+    for (const [k, v] of Object.entries(extraStyles)) parts.push(`${k}: "${v}"`);
+  }
   if (w && w !== "auto") parts.push(`width: "${w}"`);
   if (h && h !== "auto") parts.push(`height: "${h}"`);
   if (objectFit && objectFit !== "cover") parts.push(`objectFit: "${objectFit}"`);
