@@ -47,7 +47,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Resizable    | Implemented | [x]       |                                        |
 | Scroll Area  | Implemented | [x]       |                                        |
 | Aspect Ratio | Implemented | [x]       |                                        |
-| Separator    | Implemented | [ ]       |                                        |
+| Separator    | Implemented | [x]       |                                        |
 | Sidebar      | TBD         | [ ]       |                                        |
 | Item         | TBD         | [ ]       | Container で代用可能かも。すみわけ不明 |
 
@@ -58,8 +58,8 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Table      | Implemented | [x]       |                                                              |
 | Data Table | Planned     | [ ]       | Table の高機能版（ソート・フィルタ等）                       |
 | Badge      | Implemented | [x]       |                                                              |
-| Avatar     | Implemented | [ ]       |                                                              |
-| Calendar   | Implemented | [ ]       |                                                              |
+| Avatar     | Implemented | [x]       |                                                              |
+| Calendar   | Implemented | [x]       |                                                              |
 | Carousel   | Implemented | [ ]       |                                                              |
 | Chart      | Implemented | [ ]       |                                                              |
 | Progress   | Implemented | [ ]       |                                                              |
@@ -79,7 +79,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Sheet         | Implemented | [x]       |                                            |
 | Drawer        | Implemented | [x]       |                                            |
 | Dropdown Menu | Implemented | [ ]       |                                            |
-| Context Menu  | Implemented | [ ]       |                                            |
+| Context Menu  | Implemented | [x]       | menuData JSON ベース。contextMenuMocPath でコンテナに紐づけ可能 |
 | Popover       | Implemented | [x]       |                                            |
 | Hover Card    | Implemented | [ ]       |                                            |
 | Tooltip       | Implemented | [x]       |                                            |
@@ -91,8 +91,8 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 | Component       | Status      | Confirmed | Notes |
 | --------------- | ----------- | --------- | ----- |
-| Navigation Menu | Implemented | [ ]       |       |
-| Menubar         | Implemented | [ ]       |       |
+| Navigation Menu | Implemented | [x]       |       |
+| Menubar         | Implemented | [x]       |       |
 | Breadcrumb      | Implemented | [ ]       |       |
 | Pagination      | Implemented | [ ]       |       |
 
@@ -104,14 +104,15 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 ### Utility
 
-| Component | Status      | Confirmed | Notes                |
-| --------- | ----------- | --------- | -------------------- |
-| Direction | Not Planned | [x]       | RTL/LTR 制御。後回し |
+| Component   | Status      | Confirmed | Notes                |
+| ----------- | ----------- | --------- | -------------------- |
+| Direction   | Not Planned | [x]       | RTL/LTR 制御。後回し |
+| ContextMenu | Not Planned | [x]       | Overlay/Feedback の Context Menu として実装済み |
 
 ## Summary
 
-- **Confirmed**: 33
+- **Confirmed**: 35
 - **Implemented**: 45
-- **Planned**: 2 (Native Select, Date Picker)
+- **Planned**: 1 (Date Picker)
 - **TBD**: 7 (Button Group, Input Group, Input OTP, Sidebar, Typography, Kbd, Empty, Spinner, Item)
-- **Not Planned**: 4 (Toast, Field, Direction)
+- **Not Planned**: 5 (Toast, Field, Direction, Native Select, ContextMenu in Utility)
