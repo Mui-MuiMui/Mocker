@@ -296,12 +296,12 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
       <div className={cn("overflow-auto rounded-md border", borderCls)}>
         <table className="min-w-full caption-bottom border-collapse text-sm">
           <thead
-            className={cn("border-b", headerBgClass || "bg-muted/50", headerBorderClass)}
+            className={cn(headerBgClass || "bg-muted/50")}
             style={headerStyle}
           >
             <tr>
               {selectable && (
-                <th className={cn("w-10 px-2 py-2 text-left", headerTextClass)} style={{ width: 40 }}>
+                <th className={cn("w-10 px-2 py-2 text-left border-b", headerTextClass, headerBorderClass)} style={{ width: 40 }}>
                   <input
                     type="checkbox"
                     checked={displayRows.length > 0 && selectedRows.size === displayRows.length}
@@ -320,8 +320,9 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                   <th
                     key={col.key}
                     className={cn(
-                      "px-3 py-2 text-left text-xs font-medium",
+                      "px-3 py-2 text-left text-xs font-medium border-b",
                       headerTextClass || "text-muted-foreground",
+                      headerBorderClass,
                       col.sortable && !enabled && cn(
                         "cursor-pointer select-none",
                         headerHoverTextClass ? `hover:${headerHoverTextClass}` : "hover:text-foreground",
@@ -377,6 +378,7 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                   key={rowIdx}
                   className={cn(
                     "border-b transition-colors",
+                    borderCls,
                     !enabled && hoverRowClass ? `hover:${hoverRowClass}` : !enabled ? "hover:bg-muted/50" : "",
                     isSelected && (selectedRowClass || "bg-muted"),
                   )}

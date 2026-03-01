@@ -1786,13 +1786,13 @@ export function DataTable(props) {
     </div>}
     <div className={cn("overflow-auto rounded-md border", borderCls)}>
       <table className="min-w-full caption-bottom border-collapse text-sm">
-        <thead className={cn("border-b", headerBgClass || "bg-muted/50", headerBorderClass)} style={headerSt}>
+        <thead className={cn(headerBgClass || "bg-muted/50")} style={headerSt}>
           <tr>
-            {selectable && <th className={cn("w-10 px-2 py-2 text-left", headerTextClass)} style={{ width: 40 }}><input type="checkbox" checked={displayRows.length > 0 && selectedRows.size === displayRows.length} onChange={() => selectedRows.size === displayRows.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(displayRows.map((_, i) => i)))} /></th>}
+            {selectable && <th className={cn("w-10 px-2 py-2 text-left border-b", headerTextClass, headerBorderClass)} style={{ width: 40 }}><input type="checkbox" checked={displayRows.length > 0 && selectedRows.size === displayRows.length} onChange={() => selectedRows.size === displayRows.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(displayRows.map((_, i) => i)))} /></th>}
             {visibleCols.map((col, ci) => {
               const key = col.id ?? col.accessorKey ?? String(ci);
               const isSorted = sortCol === key;
-              return <th key={key} className={cn("px-3 py-2 text-left text-xs font-medium", headerTextClass || "text-muted-foreground", col.enableSorting && \`cursor-pointer select-none \${headerHoverTextClass ? \`hover:\${headerHoverTextClass}\` : "hover:text-foreground"}\`)} style={{ ...(col.size ? { width: col.size } : {}), ...getPinnedStyle(ci) }} onClick={() => col.enableSorting && handleSort(key)}>
+              return <th key={key} className={cn("px-3 py-2 text-left text-xs font-medium border-b", headerTextClass || "text-muted-foreground", headerBorderClass, col.enableSorting && \`cursor-pointer select-none \${headerHoverTextClass ? \`hover:\${headerHoverTextClass}\` : "hover:text-foreground"}\`)} style={{ ...(col.size ? { width: col.size } : {}), ...getPinnedStyle(ci) }} onClick={() => col.enableSorting && handleSort(key)}>
                 <div className="flex items-center gap-1">
                   <span>{getHeader(col)}</span>
                   {col.enableSorting && <span className="text-muted-foreground/60">{isSorted ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>}
@@ -1806,7 +1806,7 @@ export function DataTable(props) {
         <tbody>
           {displayRows.map((row, ri) => {
             const isSelected = selectedRows.has(ri);
-            return <tr key={ri} className={cn("border-b transition-colors", hoverRowClass ? \`hover:\${hoverRowClass}\` : "hover:bg-muted/50", isSelected && (selectedRowClass || "bg-muted"))}>
+            return <tr key={ri} className={cn("border-b transition-colors", borderCls, hoverRowClass ? \`hover:\${hoverRowClass}\` : "hover:bg-muted/50", isSelected && (selectedRowClass || "bg-muted"))}>
               {selectable && <td className="w-10 px-2 py-2" style={{ width: 40 }}><input type="checkbox" checked={isSelected} onChange={() => { const next = new Set(selectedRows); next.has(ri) ? next.delete(ri) : next.add(ri); setSelectedRows(next); }} /></td>}
               {visibleCols.map((col, ci) => {
                 const key = col.id ?? col.accessorKey ?? String(ci);

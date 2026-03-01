@@ -1708,6 +1708,10 @@ function renderDataTable(
   if (headerHoverTextClass) dtProps.push(`headerHoverTextClass="${escapeAttr(headerHoverTextClass)}"`);
   if (headerBorderClass) dtProps.push(`headerBorderClass="${escapeAttr(headerBorderClass)}"`);
   if (tableBorderClass) dtProps.push(`tableBorderClass="${escapeAttr(tableBorderClass)}"`);
+  const nodeWidth = (node.props?.width as string) || "";
+  const nodeHeight = (node.props?.height as string) || "";
+  if (nodeWidth && nodeWidth !== "auto") dtProps.push(`width="${escapeAttr(nodeWidth)}"`);
+  if (nodeHeight && nodeHeight !== "auto") dtProps.push(`height="${escapeAttr(nodeHeight)}"`);
 
   lines.push(`${pad}<DataTable`);
   for (const p of dtProps) {
