@@ -1,4 +1,4 @@
-import { useNode, type UserComponent } from "@craftjs/core";
+import { useNode, useEditor, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 
 interface CraftTextareaProps {
@@ -27,6 +27,7 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
   const {
     connectors: { connect, drag },
   } = useNode();
+  const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
 
   return (
     <div
@@ -39,6 +40,7 @@ export const CraftTextarea: UserComponent<CraftTextareaProps> = ({
         placeholder={placeholder}
         rows={rows}
         disabled={disabled}
+        style={{ pointerEvents: enabled ? "none" : undefined }}
         className={cn(
           "flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
           height !== "auto" && "h-full",

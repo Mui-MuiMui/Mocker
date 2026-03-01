@@ -139,14 +139,14 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "AspectRatio",
     importFrom: "@/components/ui/aspect-ratio",
     importName: "AspectRatio",
-    propsMap: ["ratio", "className"],
+    propsMap: ["ratio", "width", "height", "className"],
     isContainer: true,
   },
   CraftAvatar: {
     tag: "Avatar",
     importFrom: "@/components/ui/avatar",
     importName: "Avatar",
-    propsMap: ["className"],
+    propsMap: ["src", "fallback", "size", "className", "tooltipText", "tooltipSide"],
     isContainer: false,
   },
   CraftBreadcrumb: {
@@ -181,12 +181,30 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: true,
   },
+  NavMenuSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   CraftPagination: {
-    tag: "Pagination",
-    importFrom: "@/components/ui/pagination",
-    importName: "Pagination",
+    tag: "nav",
     propsMap: ["className"],
     isContainer: false,
+  },
+  CraftDatePicker: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  CraftDataTable: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: false,
+  },
+  DataTableSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
   },
   CraftProgress: {
     tag: "Progress",
@@ -272,14 +290,14 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Calendar",
     importFrom: "@/components/ui/calendar",
     importName: "Calendar",
-    propsMap: ["className"],
+    propsMap: ["className", "todayBgClass", "todayTextClass"],
     isContainer: false,
   },
   CraftResizable: {
     tag: "ResizablePanelGroup",
     importFrom: "@/components/ui/resizable",
     importName: "ResizablePanelGroup",
-    propsMap: ["direction", "className"],
+    propsMap: ["className"],
     isContainer: false,
   },
   CraftCarousel: {
@@ -362,7 +380,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
   CraftNavigationMenu: {
     tag: "nav",
     propsMap: ["className"],
-    isContainer: false,
+    isContainer: true,
   },
   CraftMenubar: {
     tag: "div",
@@ -411,7 +429,35 @@ const OVERLAY_IMPORTS: Record<string, { from: string; names: string[] }> = {
 
 const TOOLTIP_IMPORT = { from: "@/components/ui/tooltip", names: ["TooltipProvider", "Tooltip", "TooltipTrigger", "TooltipContent"] };
 
-const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["ContextMenu", "ContextMenuTrigger", "ContextMenuContent"] };
+const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["ContextMenu", "ContextMenuTrigger", "ContextMenuContent", "ContextMenuItem", "ContextMenuCheckboxItem", "ContextMenuSeparator", "ContextMenuLabel"] };
+
+const PAGINATION_IMPORT = {
+  from: "@/components/ui/pagination",
+  names: ["Pagination", "PaginationContent", "PaginationItem", "PaginationLink", "PaginationPrevious", "PaginationNext"],
+};
+
+const DATE_PICKER_IMPORT = {
+  from: "@/components/ui/date-picker",
+  names: ["DatePicker"],
+};
+
+const DATA_TABLE_IMPORT = {
+  from: "@/components/ui/data-table",
+  names: ["DataTable"],
+};
+
+/** Default ContextMenu data (matches DEFAULT_CONTEXTMENU_DATA in CraftContextMenu.tsx) */
+const DEFAULT_CONTEXTMENU_DATA_STR = JSON.stringify([
+  { label: "", items: [{ type: "item", label: "Open", shortcut: "Ctrl+O" }, { type: "item", label: "Edit" }, { type: "separator" }, { type: "checkbox", label: "Show Details", checked: false }, { type: "separator" }, { type: "item", label: "Delete" }] },
+]);
+
+/** Default Menubar data (matches DEFAULT_MENUBAR_DATA in CraftMenubar.tsx) */
+const DEFAULT_MENUBAR_DATA_STR = JSON.stringify([
+  { label: "File", items: [{ type: "item", label: "New File", shortcut: "Ctrl+N" }, { type: "item", label: "Open...", shortcut: "Ctrl+O" }, { type: "separator" }, { type: "checkbox", label: "Auto Save", checked: false }, { type: "separator" }, { type: "item", label: "Exit" }] },
+  { label: "Edit", items: [{ type: "item", label: "Undo", shortcut: "Ctrl+Z" }, { type: "item", label: "Redo", shortcut: "Ctrl+Y" }, { type: "separator" }, { type: "item", label: "Cut", shortcut: "Ctrl+X" }, { type: "item", label: "Copy", shortcut: "Ctrl+C" }, { type: "item", label: "Paste", shortcut: "Ctrl+V" }] },
+  { label: "View", items: [{ type: "checkbox", label: "Word Wrap", checked: false }, { type: "separator" }, { type: "item", label: "Zoom In", shortcut: "Ctrl++" }, { type: "item", label: "Zoom Out", shortcut: "Ctrl+-" }] },
+  { label: "Help", items: [{ type: "item", label: "Documentation" }, { type: "item", label: "About" }] },
+]);
 
 /** Default prop values to omit from generated TSX */
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
@@ -427,14 +473,14 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", linkedMocPath: "" },
   CraftContainer: {
     display: "flex", flexDirection: "column", justifyContent: "start",
-    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "",
+    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
   },
   CraftDiv: { contextMenuMocPath: "" },
   // Phase 1
   CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single", linkedMocPaths: "" },
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default", icon: "AlertCircle" },
-  CraftAspectRatio: { ratio: 1.78 },
-  CraftAvatar: { src: "", fallback: "AB" },
+  CraftAspectRatio: { ratio: 1.78, width: "auto", height: "auto" },
+  CraftAvatar: { src: "", fallback: "AB", size: "default", width: "auto", height: "auto", tooltipText: "", tooltipSide: "" },
   CraftBreadcrumb: { items: "Home,Products,Current" },
   CraftCheckbox: { label: "Accept terms", checked: false, disabled: false, tooltipText: "", tooltipSide: "" },
   CraftCollapsible: { open: false, triggerStyle: "chevron", linkedMocPath: "" },
@@ -451,8 +497,13 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single", variant: "default", size: "default", disabled: false, gap: "1", orientation: "horizontal", tooltipText: "", tooltipSide: "", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "" },
   // Phase 2
   CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
-  CraftCalendar: {},
-  CraftResizable: { direction: "horizontal" },
+  CraftCalendar: { todayBgClass: "", todayTextClass: "" },
+  CraftDatePicker: { mode: "date", dateFormat: "yyyy/MM/dd", placeholder: "日付を選択...", editable: false, disabled: false,
+    calendarBorderClass: "", calendarShadowClass: "", todayBgClass: "", todayTextClass: "", todayBorderClass: "", todayShadowClass: "",
+    selectedBgClass: "", selectedTextClass: "", selectedBorderClass: "", selectedShadowClass: "", buttonBgClass: "", hoverBgClass: "" },
+  CraftDataTable: { filterType: "none", pageable: false, pageSize: "10", selectable: false, columnToggle: false, stickyHeader: false, pinnedLeft: "0",
+    headerBgClass: "", hoverRowClass: "", selectedRowClass: "", headerTextClass: "", headerHoverTextClass: "", headerBorderClass: "", tableBorderClass: "" },
+  CraftResizable: { panelMeta: '{"direction":"horizontal","nextKey":2,"panels":[{"key":0,"size":50},{"key":1,"size":50}]}', withHandle: true },
   CraftCarousel: { items: "Slide 1,Slide 2,Slide 3" },
   CraftChart: { chartType: "bar" },
   CraftForm: {},
@@ -462,11 +513,11 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftSheet: { triggerText: "Open Sheet", side: "right", linkedMocPath: "" },
   CraftDrawer: { triggerText: "Open Drawer", linkedMocPath: "" },
   CraftDropdownMenu: { triggerText: "Open Menu", linkedMocPath: "" },
-  CraftContextMenu: { linkedMocPath: "" },
+  CraftContextMenu: { menuData: DEFAULT_CONTEXTMENU_DATA_STR },
   CraftPopover: { triggerText: "Open Popover", linkedMocPath: "" },
   CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "" },
-  CraftNavigationMenu: { items: "Home,About,Services,Contact", linkedMocPath: "" },
-  CraftMenubar: { items: "File,Edit,View,Help", linkedMocPath: "" },
+  CraftNavigationMenu: {},
+  CraftMenubar: { menuData: DEFAULT_MENUBAR_DATA_STR },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
   CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
@@ -609,6 +660,37 @@ export function craftStateToTsx(
       }
     }
 
+    // CraftContextMenu: exports <ContextMenuContent> + item-level components
+    if (resolvedName === "CraftContextMenu") {
+      for (const name of ["ContextMenuContent", "ContextMenuItem", "ContextMenuCheckboxItem", "ContextMenuSeparator", "ContextMenuLabel"]) {
+        addImport(CONTEXT_MENU_IMPORT.from, name);
+      }
+      return;
+    }
+
+    // CraftPagination: add pagination sub-component imports
+    if (resolvedName === "CraftPagination") {
+      for (const name of PAGINATION_IMPORT.names) {
+        addImport(PAGINATION_IMPORT.from, name);
+      }
+      return;
+    }
+
+    // CraftDatePicker: add date-picker import
+    if (resolvedName === "CraftDatePicker") {
+      addImport(DATE_PICKER_IMPORT.from, "DatePicker");
+      return;
+    }
+
+    // CraftDataTable: add data-table import and traverse slot linkedNodes
+    if (resolvedName === "CraftDataTable") {
+      addImport(DATA_TABLE_IMPORT.from, "DataTable");
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftTable: add table sub-component imports and traverse cell slot linkedNodes
     if (resolvedName === "CraftTable") {
       addImport("@/components/ui/table", "TableHeader");
@@ -644,6 +726,25 @@ export function craftStateToTsx(
       return;
     }
 
+    // CraftNavigationMenu: traverse linkedNodes (slot children)
+    if (resolvedName === "CraftNavigationMenu") {
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
+    // CraftResizable: add panel sub-component imports and traverse linkedNodes
+    if (resolvedName === "CraftResizable") {
+      addImport("@/components/ui/resizable", "ResizablePanelGroup");
+      addImport("@/components/ui/resizable", "ResizablePanel");
+      addImport("@/components/ui/resizable", "ResizableHandle");
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftCollapsible: content slot is only rendered when linkedMocPath is not set
     if (resolvedName === "CraftCollapsible") {
       const hasLinkedMoc = !!(node.props?.linkedMocPath as string);
@@ -653,6 +754,11 @@ export function craftStateToTsx(
         const contentSlotId = node.linkedNodes?.content;
         if (contentSlotId) collectImports(contentSlotId);
       }
+      return;
+    }
+
+    // CraftContainer: children are not rendered when linkedMocPath is set
+    if (resolvedName === "CraftContainer" && (node.props?.linkedMocPath as string)) {
       return;
     }
 
@@ -706,7 +812,7 @@ export function craftStateToTsx(
       rendered,
       `${pad}    </TooltipTrigger>`,
       `${pad}    <TooltipContent${sideAttr}>`,
-      `${pad}      <p>${escapeJsx(tooltipText)}</p>`,
+      `${pad}      <p className="whitespace-pre-wrap">${tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
       `${pad}    </TooltipContent>`,
       `${pad}  </Tooltip>`,
       `${pad}</TooltipProvider>`,
@@ -817,15 +923,15 @@ export function craftStateToTsx(
     const contextMenuMocPath = props?.contextMenuMocPath as string | undefined;
     if (!contextMenuMocPath) return rendered;
 
+    // The linked .moc (CraftContextMenu) exports <ContextMenuContent> itself,
+    // so we place the linked placeholder directly at the ContextMenu level.
     const contentComment = `{/* linked: ${escapeJsx(contextMenuMocPath)} */}`;
     return [
       `${pad}<ContextMenu>`,
       `${pad}  <ContextMenuTrigger asChild>`,
       rendered,
       `${pad}  </ContextMenuTrigger>`,
-      `${pad}  <ContextMenuContent>`,
-      `${pad}    ${contentComment}`,
-      `${pad}  </ContextMenuContent>`,
+      `${pad}  ${contentComment}`,
       `${pad}</ContextMenu>`,
     ].join("\n");
   }
@@ -872,7 +978,10 @@ export function craftStateToTsx(
     const classNameAttr = combinedClassName ? ` className="${combinedClassName}"` : "";
 
     // Build dimension styles
-    const styleAttr = buildStyleAttr(node.props);
+    const styleAttr = buildStyleAttr(
+      node.props,
+      resolvedName === "CraftText" ? { whiteSpace: "pre-line" } : undefined,
+    );
 
     const children = node.nodes || [];
     const textContent = mapping.textProp ? (node.props?.[mapping.textProp] as string) : undefined;
@@ -899,10 +1008,12 @@ export function craftStateToTsx(
       const innerChildren = children.map((id) => renderNode(id, indent + 2)).filter(Boolean);
       const cardBody = [];
       if (title) {
+        const escapedTitle = title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
+        const escapedDesc = desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
         cardBody.push(`${pad}    <div className="p-6">`);
-        cardBody.push(`${pad}      <h3 className="text-lg font-semibold">${escapeJsx(title)}</h3>`);
+        cardBody.push(`${pad}      <h3 className="text-lg font-semibold whitespace-pre-line">${escapedTitle}</h3>`);
         if (desc) {
-          cardBody.push(`${pad}      <p className="text-sm text-muted-foreground">${escapeJsx(desc)}</p>`);
+          cardBody.push(`${pad}      <p className="text-sm text-muted-foreground whitespace-pre-line">${escapedDesc}</p>`);
         }
         cardBody.push(`${pad}    </div>`);
       }
@@ -933,10 +1044,12 @@ export function craftStateToTsx(
       const alertBody: string[] = [];
       alertBody.push(`${pad}  <${icon} className="h-4 w-4" />`);
       if (title) {
-        alertBody.push(`${pad}  <h5 className="mb-1 font-medium leading-none tracking-tight">${escapeJsx(title)}</h5>`);
+        const escapedTitle = title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
+        alertBody.push(`${pad}  <h5 className="mb-1 font-medium leading-none tracking-tight whitespace-pre-line">${escapedTitle}</h5>`);
       }
       if (desc) {
-        alertBody.push(`${pad}  <div className="text-sm [&_p]:leading-relaxed">${escapeJsx(desc)}</div>`);
+        const escapedDesc = desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
+        alertBody.push(`${pad}  <div className="text-sm [&_p]:leading-relaxed whitespace-pre-line">${escapedDesc}</div>`);
       }
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>\n${alertBody.join("\n")}\n${pad}</${tag}>`;
       return rendered;
@@ -1040,9 +1153,54 @@ export function craftStateToTsx(
       return `${mocComments}\n${renderTabs(node, craftState, indent, renderNode)}`;
     }
 
+    // NavigationMenu special case: render nav bar with hover dropdown slots
+    if (resolvedName === "CraftNavigationMenu") {
+      return `${mocComments}\n${renderNavigationMenu(node, craftState, indent, renderNode)}`;
+    }
+
+    // Menubar special case: render from JSON menuData
+    if (resolvedName === "CraftMenubar") {
+      return `${mocComments}\n${renderMenubar(node, indent)}`;
+    }
+
+    // ContextMenu special case: render from JSON menuData
+    if (resolvedName === "CraftContextMenu") {
+      return `${mocComments}\n${renderContextMenu(node, indent)}`;
+    }
+
+    // Pagination special case: render full pagination structure
+    if (resolvedName === "CraftPagination") {
+      return `${mocComments}\n${renderPagination(node, indent)}`;
+    }
+
+    // DatePicker special case
+    if (resolvedName === "CraftDatePicker") {
+      return `${mocComments}\n${renderDatePicker(node, indent)}`;
+    }
+
+    // DataTable special case
+    if (resolvedName === "CraftDataTable") {
+      return `${mocComments}\n${renderDataTable(node, craftState, indent, renderNode)}`;
+    }
+
     // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
       return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
+    }
+
+    // Resizable special case: render as LinkedNodes resizable panels
+    if (resolvedName === "CraftResizable") {
+      return `${mocComments}\n${renderResizable(node, craftState, indent, renderNode)}`;
+    }
+
+    // CraftContainer with linkedMocPath: render as div with linked comment (no children)
+    if (resolvedName === "CraftContainer") {
+      const linkedMocPath = (node.props?.linkedMocPath as string) || "";
+      if (linkedMocPath) {
+        rendered = `${mocComments}\n${pad}<div${classNameAttr}${styleAttr}>\n${pad}  {/* linked: ${escapeJsx(linkedMocPath)} */}\n${pad}</div>`;
+        rendered = wrapWithContextMenu(rendered, node.props, pad);
+        return rendered;
+      }
     }
 
     // ToggleGroup special case: render items as ToggleGroupItem children
@@ -1092,7 +1250,7 @@ export function craftStateToTsx(
       const renderedChildren = children
         .map((id) => renderNode(id, indent + 1))
         .filter(Boolean);
-      rendered = `${mocComments}\n${pad}<${tag}${classNameAttr}${styleAttr}>\n${renderedChildren.join("\n")}\n${pad}</${tag}>`;
+      rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>\n${renderedChildren.join("\n")}\n${pad}</${tag}>`;
       rendered = wrapWithContextMenu(rendered, node.props, pad);
       return rendered;
     }
@@ -1131,7 +1289,7 @@ export function craftStateToTsx(
 
     // Empty container
     if (mapping.isContainer) {
-      rendered = `${mocComments}\n${pad}<${tag}${classNameAttr}${styleAttr} />`;
+      rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
       rendered = wrapWithContextMenu(rendered, node.props, pad);
       return rendered;
     }
@@ -1142,7 +1300,7 @@ export function craftStateToTsx(
       rendered = wrapWithOverlay(rendered, node.props, pad);
       rendered = wrapWithTooltip(rendered, node.props, pad);
     }
-    if (resolvedName === "CraftSwitch") {
+    if (resolvedName === "CraftSwitch" || resolvedName === "CraftAvatar") {
       rendered = wrapWithTooltip(rendered, node.props, pad);
     }
     return rendered;
@@ -1253,13 +1411,16 @@ function normalizeCssSize(v: string | undefined): string | undefined {
   return /^\d+(\.\d+)?$/.test(v) ? v + "px" : v;
 }
 
-function buildStyleAttr(props: Record<string, unknown>): string {
+function buildStyleAttr(props: Record<string, unknown>, extraStyles?: Record<string, string>): string {
   const w = normalizeCssSize(props?.width as string | undefined);
   const h = normalizeCssSize(props?.height as string | undefined);
   const objectFit = props?.objectFit as string | undefined;
   const top = props?.top as string | undefined;
   const left = props?.left as string | undefined;
   const parts: string[] = [];
+  if (extraStyles) {
+    for (const [k, v] of Object.entries(extraStyles)) parts.push(`${k}: "${v}"`);
+  }
   if (w && w !== "auto") parts.push(`width: "${w}"`);
   if (h && h !== "auto") parts.push(`height: "${h}"`);
   if (objectFit && objectFit !== "cover") parts.push(`objectFit: "${objectFit}"`);
@@ -1424,6 +1585,515 @@ function renderTable(
   return lines.join("\n");
 }
 
+function renderDataTable(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  // Parse column defs
+  let cols: Array<{ key: string; label?: string; type?: string; sortable?: boolean; width?: string }> = [];
+  try {
+    const rawDefs = (node.props?.columnDefs as string) || "";
+    const parsed = JSON.parse(rawDefs);
+    if (Array.isArray(parsed)) cols = parsed;
+  } catch {
+    cols = [
+      { key: "name", label: "Name", sortable: true },
+      { key: "status", label: "Status", sortable: true },
+      { key: "email", label: "Email" },
+      { key: "actions", type: "actions" },
+    ];
+  }
+
+  // Parse CSV data
+  let dataRows: Array<Record<string, string>> = [];
+  try {
+    const rawCsv = (node.props?.csvData as string) || "";
+    const lines = rawCsv.trim().split("\n");
+    if (lines.length >= 2) {
+      const headers = lines[0].split(",").map((h) => h.trim());
+      dataRows = lines.slice(1).map((line) => {
+        const vals = line.split(",").map((v) => v.trim());
+        const row: Record<string, string> = {};
+        headers.forEach((h, i) => { row[h] = vals[i] ?? ""; });
+        return row;
+      });
+    }
+  } catch {
+    // leave empty
+  }
+
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+  const classNameAttr = className ? ` className="${escapeAttr(className)}"` : "";
+
+  const filterType = (node.props?.filterType as string) || "none";
+  const pageable = !!(node.props?.pageable);
+  const pageSize = parseInt((node.props?.pageSize as string) || "10") || 10;
+  const selectable = !!(node.props?.selectable);
+  const columnToggle = !!(node.props?.columnToggle);
+  const stickyHeader = !!(node.props?.stickyHeader);
+  const pinnedLeft = parseInt((node.props?.pinnedLeft as string) || "0") || 0;
+
+  const lines: string[] = [];
+
+  // Generate columns array inline
+  const colItems: string[] = [];
+  for (const col of cols) {
+    if (col.type === "actions") {
+      let buttonsJsx: string;
+      const actionButtons = (col as { actionButtons?: Array<{ label?: string; className?: string }> }).actionButtons;
+      if (actionButtons && actionButtons.length > 0) {
+        const btns = actionButtons.map((btn) => {
+          const btnClassName = `inline-flex items-center rounded px-2 py-1 text-xs${btn.className ? ` ${btn.className}` : " hover:bg-accent"}`;
+          return `<button type="button" className="${escapeAttr(btnClassName)}">${escapeJsString(btn.label || "···")}</button>`;
+        });
+        buttonsJsx = `<div className="flex items-center gap-1">${btns.join("")}</div>`;
+      } else {
+        buttonsJsx = `<button type="button" className="h-8 w-8 rounded-md hover:bg-accent">···</button>`;
+      }
+      colItems.push(
+        `{ id: "${escapeJsString(col.key)}", header: "${escapeJsString(col.label ?? "")}", cell: () => ${buttonsJsx} }`,
+      );
+    } else if (col.type === "slot") {
+      // Resolve slot children from linkedNodes
+      const slotNodeId = node.linkedNodes?.[`dt_slot_${col.key}`];
+      const slotNode = slotNodeId ? craftState[slotNodeId] : null;
+      const slotChildren = (slotNode?.nodes || []).map((childId) => renderNodeFn(childId, 0)).filter(Boolean);
+      const slotContent = slotChildren.length > 0
+        ? slotChildren.join(" ")
+        : `{/* slot: ${escapeJsString(col.key)} */}`;
+      colItems.push(
+        `{ id: "${escapeJsString(col.key)}", header: "${escapeJsString(col.label ?? col.key)}", cell: () => <div className="min-h-[32px] flex items-center">${slotContent}</div> }`,
+      );
+    } else {
+      const parts: string[] = [`accessorKey: "${escapeJsString(col.key)}"`, `header: "${escapeJsString(col.label ?? col.key)}"`];
+      if (col.sortable) parts.push("enableSorting: true");
+      if (col.width) {
+        const numVal = parseInt(String(col.width));
+        if (!isNaN(numVal) && !String(col.width).includes("%")) {
+          parts.push(`size: ${numVal}`);
+        }
+      }
+      colItems.push(`{ ${parts.join(", ")} }`);
+    }
+  }
+
+  // Build prop attributes for DataTable
+  const dtProps: string[] = [];
+  dtProps.push(`columns={[${colItems.join(", ")}]}`);
+  dtProps.push(`data={[${dataRows.map((row) => `{ ${Object.entries(row).map(([k, v]) => `${k}: "${escapeJsString(v)}"`).join(", ")} }`).join(", ")}]}`);
+  if (filterType !== "none") dtProps.push(`filterType="${filterType}"`);
+  if (pageable) dtProps.push("pageable");
+  if (pageable && pageSize !== 10) dtProps.push(`pageSize={${pageSize}}`);
+  if (selectable) dtProps.push("selectable");
+  if (columnToggle) dtProps.push("columnToggle");
+  if (stickyHeader) dtProps.push("stickyHeader");
+  if (pinnedLeft > 0) dtProps.push(`pinnedLeft={${pinnedLeft}}`);
+
+  const headerBgClass = (node.props?.headerBgClass as string) || "";
+  const hoverRowClass = (node.props?.hoverRowClass as string) || "";
+  const selectedRowClass = (node.props?.selectedRowClass as string) || "";
+  const headerTextClass = (node.props?.headerTextClass as string) || "";
+  const headerHoverTextClass = (node.props?.headerHoverTextClass as string) || "";
+  const headerBorderClass = (node.props?.headerBorderClass as string) || "";
+  const tableBorderClass = (node.props?.tableBorderClass as string) || "";
+  const sortIconClass = (node.props?.sortIconClass as string) || "";
+  const filterIconClass = (node.props?.filterIconClass as string) || "";
+  if (headerBgClass) dtProps.push(`headerBgClass="${escapeAttr(headerBgClass)}"`);
+  if (hoverRowClass) dtProps.push(`hoverRowClass="${escapeAttr(hoverRowClass)}"`);
+  if (selectedRowClass) dtProps.push(`selectedRowClass="${escapeAttr(selectedRowClass)}"`);
+  if (headerTextClass) dtProps.push(`headerTextClass="${escapeAttr(headerTextClass)}"`);
+  if (headerHoverTextClass) dtProps.push(`headerHoverTextClass="${escapeAttr(headerHoverTextClass)}"`);
+  if (headerBorderClass) dtProps.push(`headerBorderClass="${escapeAttr(headerBorderClass)}"`);
+  if (tableBorderClass) dtProps.push(`tableBorderClass="${escapeAttr(tableBorderClass)}"`);
+  if (sortIconClass) dtProps.push(`sortIconClass="${escapeAttr(sortIconClass)}"`);
+  if (filterIconClass) dtProps.push(`filterIconClass="${escapeAttr(filterIconClass)}"`);
+  const nodeWidth = (node.props?.width as string) || "";
+  const nodeHeight = (node.props?.height as string) || "";
+  if (nodeWidth && nodeWidth !== "auto") dtProps.push(`width="${escapeAttr(nodeWidth)}"`);
+  if (nodeHeight && nodeHeight !== "auto") dtProps.push(`height="${escapeAttr(nodeHeight)}"`);
+
+  lines.push(`${pad}<DataTable`);
+  for (const p of dtProps) {
+    lines.push(`${pad}  ${p}`);
+  }
+  if (className) lines.push(`${pad}  ${classNameAttr.trim()}`);
+  if (styleAttr) lines.push(`${pad}  ${styleAttr.trim()}`);
+  lines.push(`${pad}/>`);
+
+  return lines.join("\n");
+}
+
+function renderNavigationMenu(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+  const items = ((node.props?.items as string) || "Getting Started,Components,Documentation")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+  const navCls = ["relative flex items-center", className].filter(Boolean).join(" ");
+
+  const buttonBgClass = (node.props?.buttonBgClass as string) || "";
+  const hoverBgClass = (node.props?.hoverBgClass as string) || "";
+  const hoverTextClass = (node.props?.hoverTextClass as string) || "";
+  const buttonBorderClass = (node.props?.buttonBorderClass as string) || "";
+  const buttonBorderWidth = (node.props?.buttonBorderWidth as string) || "";
+  const buttonShadowClass = (node.props?.buttonShadowClass as string) || "";
+  const btnBwClass = buttonBorderWidth === "0" ? "border-0"
+    : buttonBorderWidth === "2" ? "border-2"
+    : buttonBorderWidth === "4" ? "border-4"
+    : buttonBorderWidth === "8" ? "border-8"
+    : buttonBorderWidth === "1" ? "border"
+    : "";
+
+  const btnCls = [
+    "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none",
+    buttonBgClass || "bg-background",
+    btnBwClass,
+    buttonBorderClass,
+    buttonShadowClass,
+    hoverBgClass ? `hover:${hoverBgClass}` : "hover:bg-accent",
+    hoverTextClass ? `hover:${hoverTextClass}` : "hover:text-accent-foreground",
+  ].filter(Boolean).join(" ");
+
+  const lines: string[] = [];
+  lines.push(`${pad}<nav className="${escapeAttr(navCls)}"${styleAttr}>`);
+  lines.push(`${pad}  <ul className="flex list-none items-center gap-1">`);
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const slotId = node.linkedNodes?.[`menu_${i}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 5)).filter(Boolean)
+      : [];
+
+    lines.push(`${pad}    <li className="relative group">`);
+    lines.push(`${pad}      <button className="${escapeAttr(btnCls)}">`);
+    lines.push(`${pad}        ${escapeJsx(item)}`);
+    lines.push(`${pad}        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3 opacity-50"><path d="m6 9 6 6 6-6" /></svg>`);
+    lines.push(`${pad}      </button>`);
+    if (slotChildren.length > 0) {
+      lines.push(`${pad}      <div className="hidden group-hover:block absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-2">`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}      </div>`);
+    } else {
+      lines.push(`${pad}      <div className="hidden group-hover:block absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-2 min-w-[160px] min-h-[60px]" />`);
+    }
+    lines.push(`${pad}    </li>`);
+  }
+
+  lines.push(`${pad}  </ul>`);
+  lines.push(`${pad}</nav>`);
+
+  return lines.join("\n");
+}
+
+interface MenuItemDef {
+  type: "item" | "checkbox" | "separator";
+  label?: string;
+  shortcut?: string;
+  checked?: boolean;
+}
+
+interface TopLevelMenuDef {
+  label: string;
+  items: MenuItemDef[];
+}
+
+function renderContextMenu(node: CraftNodeData, indent: number): string {
+  const pad = "  ".repeat(indent);
+  let menus: TopLevelMenuDef[] = [];
+  try {
+    const parsed = JSON.parse((node.props?.menuData as string) || "[]");
+    if (Array.isArray(parsed)) menus = parsed as TopLevelMenuDef[];
+  } catch {
+    menus = [];
+  }
+
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  // Panel styling
+  const panelBgClass = (node.props?.panelBgClass as string) || "";
+  const panelTextClass = (node.props?.panelTextClass as string) || "";
+  const panelBorderClass = (node.props?.panelBorderClass as string) || "";
+  const panelBorderWidth = (node.props?.panelBorderWidth as string) || "";
+  const panelShadowClass = (node.props?.panelShadowClass as string) || "";
+  const hoverBgClass = (node.props?.hoverBgClass as string) || "";
+  const hoverTextClass = (node.props?.hoverTextClass as string) || "";
+  const shortcutTextClass = (node.props?.shortcutTextClass as string) || "";
+  const shortcutCls = shortcutTextClass || "text-muted-foreground";
+
+  // Item hover className: use custom classes if set, otherwise rely on shadcn/ui defaults
+  const itemHoverCls = [
+    hoverBgClass ? `hover:${hoverBgClass}` : "",
+    hoverTextClass ? `hover:${hoverTextClass}` : "",
+  ].filter(Boolean).join(" ");
+  const itemClassAttr = itemHoverCls ? ` className="${escapeAttr(itemHoverCls)}"` : "";
+
+  const panelBwClass = panelBorderWidth === "0" ? "border-0"
+    : panelBorderWidth === "2" ? "border-2"
+    : panelBorderWidth === "4" ? "border-4"
+    : panelBorderWidth === "8" ? "border-8"
+    : panelBorderWidth === "1" ? "border" : "border";
+
+  const panelCls = [
+    "rounded-md p-1",
+    panelBgClass || "bg-popover",
+    panelBwClass,
+    panelBorderClass,
+    panelShadowClass || "shadow-md",
+    panelTextClass,
+    className,
+  ].filter(Boolean).join(" ");
+
+  // CraftContextMenu renders as <ContextMenuContent> so that:
+  //   - standalone preview: fallback renders as a static panel (no parent Ctx)
+  //   - contextMenuMocPath usage: the linked .moc IS the <ContextMenuContent>
+  //     (wrapWithContextMenu places the linked placeholder directly at ContextMenu level)
+  const lines: string[] = [];
+  lines.push(`${pad}<ContextMenuContent className="${escapeAttr(panelCls)}"${styleAttr}>`);
+
+  for (let sectionIdx = 0; sectionIdx < menus.length; sectionIdx++) {
+    const menu = menus[sectionIdx];
+    if (sectionIdx > 0) {
+      lines.push(`${pad}  <ContextMenuSeparator />`);
+    }
+    if (menu.label) {
+      lines.push(`${pad}  <ContextMenuLabel>${escapeJsx(menu.label)}</ContextMenuLabel>`);
+    }
+    for (const item of (menu.items || [])) {
+      if (item.type === "separator") {
+        lines.push(`${pad}  <ContextMenuSeparator />`);
+      } else if (item.type === "checkbox") {
+        const checkedAttr = item.checked ? " checked" : "";
+        lines.push(`${pad}  <ContextMenuCheckboxItem${checkedAttr}${itemClassAttr}>`);
+        lines.push(`${pad}    ${escapeJsx(item.label || "")}`);
+        if (item.shortcut) lines.push(`${pad}    <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}  </ContextMenuCheckboxItem>`);
+      } else {
+        lines.push(`${pad}  <ContextMenuItem${itemClassAttr}>`);
+        lines.push(`${pad}    ${escapeJsx(item.label || "")}`);
+        if (item.shortcut) lines.push(`${pad}    <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}  </ContextMenuItem>`);
+      }
+    }
+  }
+
+  lines.push(`${pad}</ContextMenuContent>`);
+  return lines.join("\n");
+}
+
+function renderPagination(node: CraftNodeData, indent: number): string {
+  const pad = "  ".repeat(indent);
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+  const totalPages = (node.props?.totalPages as number) || 5;
+  const currentPage = (node.props?.currentPage as number) || 1;
+
+  const hoverBgClass = (node.props?.hoverBgClass as string) || "";
+  const hoverTextClass = (node.props?.hoverTextClass as string) || "";
+  const activeBgClass = (node.props?.activeBgClass as string) || "";
+  const activeTextClass = (node.props?.activeTextClass as string) || "";
+  const activeBorderClass = (node.props?.activeBorderClass as string) || "";
+  const activeBorderWidth = (node.props?.activeBorderWidth as string) || "";
+  const activeShadowClass = (node.props?.activeShadowClass as string) || "";
+
+  const activeBwClass = activeBorderWidth === "0" ? "border-0"
+    : activeBorderWidth === "2" ? "border-2"
+    : activeBorderWidth === "4" ? "border-4"
+    : activeBorderWidth === "8" ? "border-8"
+    : activeBorderWidth === "1" ? "border" : "border";
+
+  const activeCls = [
+    activeBwClass,
+    activeBorderClass || "border-input",
+    activeBgClass || "bg-background",
+    activeShadowClass || "shadow-sm",
+    activeTextClass,
+  ].filter(Boolean).join(" ");
+
+  const itemHoverCls = [
+    hoverBgClass ? `hover:${hoverBgClass}` : "",
+    hoverTextClass ? `hover:${hoverTextClass}` : "",
+  ].filter(Boolean).join(" ") || "hover:bg-accent hover:text-accent-foreground";
+
+  const navCls = ["flex w-full", className].filter(Boolean).join(" ");
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Pagination className="${escapeAttr(navCls)}"${styleAttr}>`);
+  lines.push(`${pad}  <PaginationContent>`);
+
+  lines.push(`${pad}    <PaginationItem>`);
+  lines.push(`${pad}      <PaginationPrevious href="#" className="${escapeAttr(itemHoverCls)}" />`);
+  lines.push(`${pad}    </PaginationItem>`);
+
+  for (let page = 1; page <= totalPages; page++) {
+    if (page === currentPage) {
+      lines.push(`${pad}    <PaginationItem>`);
+      lines.push(`${pad}      <PaginationLink href="#" isActive className="${escapeAttr(activeCls)}">`);
+      lines.push(`${pad}        ${page}`);
+      lines.push(`${pad}      </PaginationLink>`);
+      lines.push(`${pad}    </PaginationItem>`);
+    } else {
+      lines.push(`${pad}    <PaginationItem>`);
+      lines.push(`${pad}      <PaginationLink href="#" className="${escapeAttr(itemHoverCls)}">`);
+      lines.push(`${pad}        ${page}`);
+      lines.push(`${pad}      </PaginationLink>`);
+      lines.push(`${pad}    </PaginationItem>`);
+    }
+  }
+
+  lines.push(`${pad}    <PaginationItem>`);
+  lines.push(`${pad}      <PaginationNext href="#" className="${escapeAttr(itemHoverCls)}" />`);
+  lines.push(`${pad}    </PaginationItem>`);
+
+  lines.push(`${pad}  </PaginationContent>`);
+  lines.push(`${pad}</Pagination>`);
+  return lines.join("\n");
+}
+
+function renderDatePicker(node: CraftNodeData, indent: number): string {
+  const pad = "  ".repeat(indent);
+
+  const props: string[] = [];
+
+  const mode = (node.props?.mode as string) || "date";
+  if (mode !== "date") props.push(`mode="${escapeAttr(mode)}"`);
+
+  const dateFormat = (node.props?.dateFormat as string) || "yyyy/MM/dd";
+  if (dateFormat !== "yyyy/MM/dd") props.push(`dateFormat="${escapeAttr(dateFormat)}"`);
+
+  const placeholder = (node.props?.placeholder as string) || "";
+  if (placeholder) props.push(`placeholder="${escapeAttr(placeholder)}"`);
+
+  if (node.props?.editable) props.push(`editable`);
+  if (node.props?.disabled) props.push(`disabled`);
+
+  // width/height を style ではなく explicit prop として渡す（fallback が style を除外するため）
+  const w = normalizeCssSize(node.props?.width as string | undefined);
+  if (w && w !== "auto") props.push(`width="${escapeAttr(w)}"`);
+
+  const h = normalizeCssSize(node.props?.height as string | undefined);
+  if (h && h !== "auto") props.push(`height="${escapeAttr(h)}"`);
+
+  const className = (node.props?.className as string) || "";
+  if (className) props.push(`className="${escapeAttr(className)}"`);
+
+  const stylingProps = [
+    "calendarBorderClass", "calendarShadowClass",
+    "todayBgClass", "todayTextClass", "todayBorderClass", "todayShadowClass",
+    "selectedBgClass", "selectedTextClass", "selectedBorderClass", "selectedShadowClass",
+    "buttonBgClass", "hoverBgClass",
+  ];
+  for (const key of stylingProps) {
+    const val = (node.props?.[key] as string) || "";
+    if (val) props.push(`${key}="${escapeAttr(val)}"`);
+  }
+
+  const propsStr = props.length > 0 ? " " + props.join(" ") : "";
+  return `${pad}<DatePicker${propsStr} />`;
+}
+
+function renderMenubar(node: CraftNodeData, indent: number): string {
+  const pad = "  ".repeat(indent);
+  let menus: TopLevelMenuDef[] = [];
+  try {
+    const parsed = JSON.parse((node.props?.menuData as string) || "[]");
+    if (Array.isArray(parsed)) menus = parsed as TopLevelMenuDef[];
+  } catch {
+    menus = [];
+  }
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+  const barCls = ["flex h-9 items-center space-x-1 rounded-md border bg-background p-1", className]
+    .filter(Boolean).join(" ");
+
+  // Button styling
+  const buttonBgClass = (node.props?.buttonBgClass as string) || "";
+  const buttonTextClass = (node.props?.buttonTextClass as string) || "";
+  const buttonBorderClass = (node.props?.buttonBorderClass as string) || "";
+  const buttonBorderWidth = (node.props?.buttonBorderWidth as string) || "";
+  const buttonShadowClass = (node.props?.buttonShadowClass as string) || "";
+  const hoverBgClass = (node.props?.hoverBgClass as string) || "";
+  const hoverTextClass = (node.props?.hoverTextClass as string) || "";
+  const btnBwClass = buttonBorderWidth === "0" ? "border-0"
+    : buttonBorderWidth === "2" ? "border-2"
+    : buttonBorderWidth === "4" ? "border-4"
+    : buttonBorderWidth === "8" ? "border-8"
+    : buttonBorderWidth === "1" ? "border" : "";
+  const btnCls = [
+    "flex cursor-default select-none items-center rounded-sm px-3 py-1 text-sm font-medium outline-none",
+    buttonBgClass, buttonTextClass, btnBwClass, buttonBorderClass, buttonShadowClass,
+    hoverBgClass ? `hover:${hoverBgClass}` : "hover:bg-accent",
+    hoverTextClass ? `hover:${hoverTextClass}` : "hover:text-accent-foreground",
+  ].filter(Boolean).join(" ");
+
+  // Dropdown styling
+  const dropdownBgClass = (node.props?.dropdownBgClass as string) || "";
+  const dropdownTextClass = (node.props?.dropdownTextClass as string) || "";
+  const dropdownBorderClass = (node.props?.dropdownBorderClass as string) || "";
+  const dropdownBorderWidth = (node.props?.dropdownBorderWidth as string) || "";
+  const dropdownShadowClass = (node.props?.dropdownShadowClass as string) || "";
+  const shortcutTextClass = (node.props?.shortcutTextClass as string) || "";
+  const dropBwClass = dropdownBorderWidth === "0" ? "border-0"
+    : dropdownBorderWidth === "2" ? "border-2"
+    : dropdownBorderWidth === "4" ? "border-4"
+    : dropdownBorderWidth === "8" ? "border-8"
+    : "border";
+  const dropCls = [
+    "hidden group-hover:block absolute top-full left-0 z-50 mt-1 min-w-[160px] rounded-md p-1",
+    dropdownBgClass || "bg-popover",
+    dropBwClass, dropdownBorderClass,
+    dropdownShadowClass || "shadow-md",
+    dropdownTextClass,
+  ].filter(Boolean).join(" ");
+  const shortcutCls = shortcutTextClass || "text-muted-foreground";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<div className="${escapeAttr(barCls)}"${styleAttr}>`);
+
+  for (const menu of menus) {
+    lines.push(`${pad}  <div className="relative group">`);
+    lines.push(`${pad}    <button type="button" className="${escapeAttr(btnCls)}">`);
+    lines.push(`${pad}      ${escapeJsx(menu.label || "")}`);
+    lines.push(`${pad}    </button>`);
+    lines.push(`${pad}    <div className="${escapeAttr(dropCls)}">`);
+    for (const item of (menu.items || [])) {
+      if (item.type === "separator") {
+        lines.push(`${pad}      <div className="my-1 h-px bg-border" />`);
+      } else if (item.type === "checkbox") {
+        lines.push(`${pad}      <div className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent">`);
+        lines.push(`${pad}        <span className="mr-2 w-4 text-center text-xs">${item.checked ? "✓" : ""}</span>`);
+        lines.push(`${pad}        <span className="flex-1">${escapeJsx(item.label || "")}</span>`);
+        if (item.shortcut) lines.push(`${pad}        <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}      </div>`);
+      } else {
+        lines.push(`${pad}      <div className="flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent">`);
+        lines.push(`${pad}        <span className="flex-1">${escapeJsx(item.label || "")}</span>`);
+        if (item.shortcut) lines.push(`${pad}        <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}      </div>`);
+      }
+    }
+    lines.push(`${pad}    </div>`);
+    lines.push(`${pad}  </div>`);
+  }
+
+  lines.push(`${pad}</div>`);
+  return lines.join("\n");
+}
+
 function renderTabs(
   node: CraftNodeData,
   craftState: CraftSerializedState,
@@ -1527,6 +2197,80 @@ function renderTabs(
   }
 
   lines.push(`${pad}</Tabs>`);
+  return lines.join("\n");
+}
+
+function renderResizable(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  // Parse panelMeta
+  let direction: "horizontal" | "vertical" = "horizontal";
+  let panels: Array<{ key: number; size: number | string }> = [{ key: 0, size: 50 }, { key: 1, size: 50 }];
+  try {
+    const meta = JSON.parse((node.props?.panelMeta as string) || "{}");
+    if (meta.direction === "vertical") direction = "vertical";
+    if (Array.isArray(meta.panels)) panels = meta.panels;
+  } catch {
+    // use defaults
+  }
+
+  const withHandle = node.props?.withHandle !== false;
+  const userClassName = (node.props?.className as string) || "";
+  const borderColor = (node.props?.borderColor as string) || "";
+  const separatorColor = (node.props?.separatorColor as string) || "";
+  const separatorSize = (node.props?.separatorSize as string) || "4";
+  const borderRadius = (node.props?.borderRadius as string) || "rounded-lg";
+  const shadow = (node.props?.shadow as string) || "";
+
+  // Outer wrapper: owns border/color/size/shadow
+  const outerClasses = ["flex border overflow-hidden", borderRadius, borderColor, shadow, userClassName]
+    .filter(Boolean).join(" ");
+  const styleAttr = buildStyleAttr(node.props);
+
+  const dirAttr = direction === "vertical" ? ` direction="vertical"` : ` direction="horizontal"`;
+  const handleClassAttr = separatorColor ? ` className="${escapeAttr(separatorColor)}"` : "";
+  const handleSizeStyleVal = direction === "vertical"
+    ? `{{ height: '${separatorSize}px' }}`
+    : `{{ width: '${separatorSize}px' }}`;
+  const handleStyleAttr = ` style=${handleSizeStyleVal}`;
+
+  const lines: string[] = [];
+  lines.push(`${pad}<div className="${escapeAttr(outerClasses)}"${styleAttr}>`);
+  lines.push(`${pad}  <ResizablePanelGroup${dirAttr} className="flex-1">`);
+
+  panels.forEach((panel, idx) => {
+    const slotId = node.linkedNodes?.[`panel_${panel.key}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 3)).filter(Boolean)
+      : [];
+
+    // Determine panel size rendering: absolute unit → style flex, numeric/% → defaultSize
+    const isAbsolute = typeof panel.size === "string" && /\d+(px|rem|em|vw|vh)$/.test(panel.size.trim());
+    const panelSizeAttr = isAbsolute
+      ? ` style={{ flex: "0 0 ${panel.size}" }}`
+      : ` defaultSize={${typeof panel.size === "string" ? parseFloat(panel.size) : panel.size}}`;
+
+    if (slotChildren.length > 0) {
+      lines.push(`${pad}    <ResizablePanel${panelSizeAttr}>`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}    </ResizablePanel>`);
+    } else {
+      lines.push(`${pad}    <ResizablePanel${panelSizeAttr} />`);
+    }
+
+    if (idx < panels.length - 1) {
+      lines.push(`${pad}    <ResizableHandle${withHandle ? " withHandle" : ""}${handleClassAttr}${handleStyleAttr} />`);
+    }
+  });
+
+  lines.push(`${pad}  </ResizablePanelGroup>`);
+  lines.push(`${pad}</div>`);
   return lines.join("\n");
 }
 

@@ -28,6 +28,7 @@ export function RenderNode({
     name,
     isCanvas,
     keepAspectRatio,
+    noResize,
     nodeTop,
     nodeLeft,
   } = useNode((node) => ({
@@ -37,6 +38,7 @@ export function RenderNode({
     name: node.data.displayName || node.data.name || "Element",
     isCanvas: node.data.isCanvas,
     keepAspectRatio: !!(node.data.props as Record<string, unknown>)?.keepAspectRatio,
+    noResize: !!(node.data.custom as Record<string, unknown>)?.noResize,
     nodeTop: (node.data.props as Record<string, unknown>)?.top as string | undefined,
     nodeLeft: (node.data.props as Record<string, unknown>)?.left as string | undefined,
   }));
@@ -288,7 +290,7 @@ export function RenderNode({
     handlesRef.current.forEach((h) => h.remove());
     handlesRef.current = [];
 
-    if (!isActive) return;
+    if (!isActive || noResize) return;
 
     dom.style.position =
       dom.style.position === "static" ? "relative" : dom.style.position || "relative";
@@ -356,7 +358,7 @@ export function RenderNode({
       handlesRef.current.forEach((h) => h.remove());
       handlesRef.current = [];
     };
-  }, [dom, isActive, onMouseDown]);
+  }, [dom, isActive, noResize, onMouseDown]);
 
   return <>{render}</>;
 }

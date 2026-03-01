@@ -1,4 +1,4 @@
-import { useNode, type UserComponent } from "@craftjs/core";
+import { useNode, useEditor, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 
 interface CraftInputProps {
@@ -27,6 +27,7 @@ export const CraftInput: UserComponent<CraftInputProps> = ({
   const {
     connectors: { connect, drag },
   } = useNode();
+  const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
 
   return (
     <div
@@ -43,7 +44,7 @@ export const CraftInput: UserComponent<CraftInputProps> = ({
           "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}
-        style={{ height: height !== "auto" ? height : undefined }}
+        style={{ height: height !== "auto" ? height : undefined, pointerEvents: enabled ? "none" : undefined }}
       />
     </div>
   );

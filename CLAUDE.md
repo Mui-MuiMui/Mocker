@@ -43,6 +43,11 @@
   - レイアウトパターン、スタイリング手法
 - この確認を怠りオリジナル実装を作ることは禁止する。
 
+## UIパネルの区別について
+- **「TailwindCSSプロパティ」と言われたら `TailwindEditor.tsx` のみを対象とすること。`PropEditor.tsx` は開いてはならない。**
+- 「プロパティ」「コンポーネントのプロパティ」と言われた場合は `PropEditor.tsx` を対象とすること。
+- この区別を誤った場合は即座に差し戻し、正しいファイルで実装をやり直すこと。
+
 ## Skillについて
 動作に合わせて関連するスキルを参照してください。
 
@@ -52,3 +57,5 @@
   - [e2e-testing-patterns](.agents\skills\e2e-testing-patterns)
 - **コーディングに関するスキル**
   - [clean-code](.agents\skills\clean-code)
+- **ダイアグラムに関するスキル**
+  - [drawio-diagram](.agents\skills\drawio-diagram)

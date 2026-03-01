@@ -53,8 +53,8 @@ export const CraftAlert: UserComponent<CraftAlertProps> = ({
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       {IconComponent && <IconComponent className="h-4 w-4" />}
-      {title && <h5 className="mb-1 font-medium leading-none tracking-tight">{title}</h5>}
-      {description && <div className="text-sm [&_p]:leading-relaxed">{description}</div>}
+      {title && <h5 className="mb-1 font-medium leading-none tracking-tight" style={{ whiteSpace: "pre-line" }}>{title}</h5>}
+      {description && <div className="text-sm [&_p]:leading-relaxed" style={{ whiteSpace: "pre-line" }}>{description}</div>}
     </div>
   );
 };

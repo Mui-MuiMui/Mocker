@@ -416,6 +416,28 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
         break;
       }
 
+      case "browse:imageFile": {
+        const imagePayload = message.payload as { currentPath?: string; targetProp?: string };
+        const docDir = vscode.Uri.joinPath(document.uri, "..");
+        const result = await vscode.window.showOpenDialog({
+          defaultUri: docDir,
+          canSelectFiles: true,
+          canSelectFolders: false,
+          canSelectMany: false,
+          filters: { "Image Files": ["jpg", "jpeg", "png", "gif", "webp", "svg"] },
+        });
+        if (result && result[0]) {
+          const selectedPath = result[0].fsPath;
+          const docDirPath = path.dirname(document.uri.fsPath);
+          const relativePath = path.relative(docDirPath, selectedPath).replace(/\\/g, "/");
+          webviewPanel.webview.postMessage({
+            type: "browse:imageFile:result",
+            payload: { relativePath, targetProp: imagePayload?.targetProp },
+          });
+        }
+        break;
+      }
+
       case "resolve:mocFile": {
         const { path: mocPath } = message.payload as { path: string };
         let filePath: string;

@@ -153,11 +153,25 @@ export async function startPreviewServer(
           await vscode.workspace.fs.readFile(linkedFileUri),
         );
         const linkedDoc = parseMocFile(linkedContent);
-        // Remove min-h-screen from linked components (they render inside overlays, not as full pages)
-        let linkedTsxSource = linkedDoc.tsxSource.replace(/\bmin-h-screen\b/g, "");
-        const linkedTsx = linkedDoc.imports
-          ? `${linkedDoc.imports}\n${linkedTsxSource}`
-          : linkedTsxSource;
+        // Re-generate TSX from craftState (SSOT) so linked .moc always reflects
+        // the latest renderContextMenu / renderMenubar output, not stale stored TSX.
+        let linkedTsx: string;
+        const linkedCraftState = linkedDoc.editorData?.craftState as Record<string, Record<string, unknown>> | undefined;
+        if (linkedCraftState) {
+          const linkedComponentName = extractComponentName(linkedDoc.tsxSource) || "LinkedComponent";
+          const linkedMemos = linkedDoc.editorData?.memos;
+          const linkedGenerated = craftStateToTsx(linkedCraftState, linkedComponentName, linkedMemos);
+          const linkedTsxSource = linkedGenerated.tsxSource.replace(/\bmin-h-screen\b/g, "");
+          linkedTsx = linkedGenerated.imports
+            ? `${linkedGenerated.imports}\n${linkedTsxSource}`
+            : linkedTsxSource;
+        } else {
+          // Fallback: use stored TSX if no craftState available
+          const linkedTsxSource = linkedDoc.tsxSource.replace(/\bmin-h-screen\b/g, "");
+          linkedTsx = linkedDoc.imports
+            ? `${linkedDoc.imports}\n${linkedTsxSource}`
+            : linkedTsxSource;
+        }
         // Skip empty .moc files entirely (no hash registration = no import map entry)
         if (!linkedTsx.trim()) {
           console.warn(`[Momoc] Skipping empty linked .moc: ${relPath}`);
@@ -395,7 +409,7 @@ export async function startPreviewServer(
   }
 
   // Create HTTP server
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
     const url = req.url || "/";
 
     if (url === "/" || url === "/index.html") {
@@ -454,6 +468,34 @@ export async function startPreviewServer(
         sseClients.delete(res);
       });
       return;
+    }
+
+    // Serve static files (images, etc.) from the .moc file's directory
+    {
+      const docDir = path.dirname(mocFilePath);
+      const filePath = path.join(docDir, url.split("?")[0]);
+      // Prevent directory traversal: ensure the resolved path is within docDir
+      if (filePath.startsWith(docDir)) {
+        try {
+          const fileUri = vscode.Uri.file(filePath);
+          const content = await vscode.workspace.fs.readFile(fileUri);
+          const ext = path.extname(filePath).toLowerCase();
+          const mimeMap: Record<string, string> = {
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".png": "image/png",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".svg": "image/svg+xml",
+          };
+          const mimeType = mimeMap[ext] ?? "application/octet-stream";
+          res.writeHead(200, { "Content-Type": mimeType });
+          res.end(Buffer.from(content));
+          return;
+        } catch {
+          // File not found → fall through to 404
+        }
+      }
     }
 
     res.writeHead(404, { "Content-Type": "text/plain" });
@@ -603,7 +645,7 @@ export function Button(props: any) {
       <span className="absolute right-2 pointer-events-none opacity-50">{icons}</span>
     </div>;
   }
-  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
+  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
   return <button className={cls} role={role} style={style} {...rest}>{children}</button>;
 }`,
 
@@ -623,14 +665,14 @@ export function Card(props: any) {
 
   label: `import { cn } from "@/components/ui/_cn";
 export function Label(props: any) {
-  const { className = "", children, ...rest } = props;
+  const { className = "", style, children, ...rest } = props;
   const cls = cn("text-sm font-medium leading-none", className);
-  return <label className={cls} {...rest}>{children}</label>;
+  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</label>;
 }`,
 
   badge: `import { cn } from "@/components/ui/_cn";
 export function Badge(props: any) {
-  const { className = "", variant = "default", children, ...rest } = props;
+  const { className = "", variant = "default", style, children, ...rest } = props;
   const v: Record<string, string> = {
     default: "border-transparent bg-primary text-primary-foreground shadow",
     secondary: "border-transparent bg-secondary text-secondary-foreground",
@@ -638,7 +680,7 @@ export function Badge(props: any) {
     outline: "text-foreground",
   };
   const cls = cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors", v[variant] || v.default, className);
-  return <span className={cls} {...rest}>{children}</span>;
+  return <span className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</span>;
 }`,
 
   separator: `import { cn } from "@/components/ui/_cn";
@@ -735,15 +777,34 @@ export function Alert(props: any) {
 
   "aspect-ratio": `import { cn } from "@/components/ui/_cn";
 export function AspectRatio(props: any) {
-  const { className = "", ratio = 16/9, children, ...rest } = props;
-  return <div className={cn("relative w-full", className)} style={{ paddingBottom: \`\${(1/ratio)*100}%\` }} {...rest}><div className="absolute inset-0">{children}</div></div>;
+  const { className = "", ratio = 16/9, width, height, children, style: _style, ...rest } = props;
+  const widthControlled = width && width !== "auto";
+  const heightControlled = !widthControlled && height && height !== "auto";
+  const style = widthControlled
+    ? { width, height: \`calc(\${width} * \${1 / ratio})\`, alignSelf: "flex-start" }
+    : heightControlled
+    ? { height, width: \`calc(\${height} * \${ratio})\`, alignSelf: "flex-start" }
+    : { aspectRatio: ratio, alignSelf: "flex-start" };
+  return <div className={cn("relative", !widthControlled && !heightControlled && "w-full", className)} style={style} {...rest}>{children}</div>;
 }`,
 
   avatar: `import { cn } from "@/components/ui/_cn";
+const SIZE_CLASSES: Record<string, string> = { sm: "h-8 w-8", default: "h-10 w-10", lg: "h-16 w-16" };
 export function Avatar(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className);
-  return <span className={cls} {...rest}>{children}</span>;
+  const { className = "", src, fallback = "AB", size = "default", style: _style, ...rest } = props;
+  const sizeClass = SIZE_CLASSES[size] ?? SIZE_CLASSES.default;
+  const cls = cn("relative flex shrink-0 rounded-full", sizeClass, className);
+  return (
+    <span className={cls} {...rest}>
+      {src ? (
+        <img src={src} alt={fallback} className="aspect-square h-full w-full overflow-hidden rounded-full" />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center rounded-full bg-muted text-sm font-medium">
+          {fallback}
+        </span>
+      )}
+    </span>
+  );
 }`,
 
   breadcrumb: `export function Breadcrumb(props: any) {
@@ -765,7 +826,7 @@ export function Checkbox(props: any) {
       >
         {checked && <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M20 6 9 17l-5-5"/></svg>}
       </span>
-      {children && <span className="text-sm font-medium leading-none select-none">{children}</span>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ whiteSpace: "pre-line" }}>{children}</span>}
     </label>
   );
 }`,
@@ -800,8 +861,168 @@ export function CollapsibleContent(props: any) {
   pagination: `import { cn } from "@/components/ui/_cn";
 export function Pagination(props: any) {
   const { className = "", children, ...rest } = props;
-  const cls = cn("mx-auto flex w-full justify-center", className);
+  const cls = cn("flex w-full", className);
   return <nav role="navigation" aria-label="pagination" className={cls} {...rest}>{children}</nav>;
+}
+export function PaginationContent(props: any) {
+  const { className = "", children, ...rest } = props;
+  return <ul className={cn("flex flex-row items-center gap-1", className)} {...rest}>{children}</ul>;
+}
+export function PaginationItem(props: any) {
+  const { children, ...rest } = props;
+  return <li {...rest}>{children}</li>;
+}
+export function PaginationLink(props: any) {
+  const { className = "", isActive, children, href, ...rest } = props;
+  const cls = cn(
+    "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 w-9 cursor-pointer",
+    isActive ? cn("border border-input bg-background shadow-sm", className) : cn("hover:bg-accent hover:text-accent-foreground", className),
+  );
+  return <a href={href || "#"} className={cls} aria-current={isActive ? "page" : undefined} {...rest}>{children}</a>;
+}
+export function PaginationPrevious(props: any) {
+  const { className = "", href, ...rest } = props;
+  const cls = cn("inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-3 cursor-pointer hover:bg-accent hover:text-accent-foreground", className);
+  return <a href={href || "#"} className={cls} aria-label="Go to previous page" {...rest}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg><span>Previous</span></a>;
+}
+export function PaginationNext(props: any) {
+  const { className = "", href, ...rest } = props;
+  const cls = cn("inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-3 cursor-pointer hover:bg-accent hover:text-accent-foreground", className);
+  return <a href={href || "#"} className={cls} aria-label="Go to next page" {...rest}><span>Next</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg></a>;
+}`,
+
+  "date-picker": `import { cn } from "@/components/ui/_cn";
+import { useState } from "react";
+const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+function formatDate(date, fmt) {
+  const yyyy = String(date.getFullYear());
+  const MM = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  const HH = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  return fmt.replace("yyyy", yyyy).replace("MM", MM).replace("dd", dd).replace("HH", HH).replace("mm", mm);
+}
+export function DatePicker(props) {
+  const {
+    mode = "date",
+    dateFormat = "yyyy/MM/dd",
+    placeholder = "日付を選択...",
+    editable = false,
+    disabled = false,
+    width = "auto",
+    height = "auto",
+    className = "",
+    style: _style,
+    calendarBorderClass = "",
+    calendarShadowClass = "",
+    todayBgClass = "",
+    todayTextClass = "",
+    todayBorderClass = "",
+    todayShadowClass = "",
+    selectedBgClass = "",
+    selectedTextClass = "",
+    selectedBorderClass = "",
+    selectedShadowClass = "",
+    buttonBgClass = "",
+    hoverBgClass = "",
+    ...rest
+  } = props;
+  const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [inputValue, setInputValue] = useState("");
+  const [displayMonth, setDisplayMonth] = useState(new Date());
+  const [hour, setHour] = useState(0);
+  const [minute, setMinute] = useState(0);
+  const [hoveredDay, setHoveredDay] = useState(null);
+  const today = new Date();
+  const daysInMonth = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfWeek = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1).getDay();
+  const monthName = displayMonth.toLocaleString("default", { month: "long", year: "numeric" });
+  const cells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  const isToday = (d) => d === today.getDate() && displayMonth.getMonth() === today.getMonth() && displayMonth.getFullYear() === today.getFullYear();
+  const isSelected = (d) => selectedDate !== null && d === selectedDate.getDate() && displayMonth.getMonth() === selectedDate.getMonth() && displayMonth.getFullYear() === selectedDate.getFullYear();
+  const handleDayClick = (d) => {
+    const date = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), d, hour, minute, 0);
+    setSelectedDate(date);
+    if (mode === "date") { setInputValue(formatDate(date, dateFormat)); setOpen(false); }
+  };
+  const handleConfirm = () => {
+    if (selectedDate) {
+      const date = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hour, minute, 0);
+      const fmt = dateFormat.includes("HH") ? dateFormat : dateFormat + " HH:mm";
+      setInputValue(formatDate(date, fmt));
+    }
+    setOpen(false);
+  };
+  const prevMonth = () => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() - 1, 1));
+  const nextMonth = () => setDisplayMonth(new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1));
+  const todayCls = cn("border", todayBorderClass || "border-primary", todayBgClass || "bg-primary", todayTextClass || "text-primary-foreground", todayShadowClass);
+  const selectedCls = cn("border", selectedBorderClass || "border-primary", selectedBgClass || "bg-primary", selectedTextClass || "text-primary-foreground", selectedShadowClass || "shadow-sm");
+  const getDayCls = (d) => {
+    if (isSelected(d)) return cn("inline-flex items-center justify-center rounded-md text-sm h-8 w-8", selectedCls);
+    if (isToday(d)) return cn("inline-flex items-center justify-center rounded-md text-sm h-8 w-8", todayCls);
+    return cn("inline-flex items-center justify-center rounded-md text-sm h-8 w-8", hoverBgClass ? (hoveredDay === d ? hoverBgClass : "") : "hover:bg-accent hover:text-accent-foreground");
+  };
+  return (
+    <div className={cn("relative", className)} style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }} {...rest}>
+      <div className={cn("flex w-full rounded-md border border-input overflow-hidden", height !== "auto" ? "h-full" : "h-9", disabled && "opacity-50 cursor-not-allowed")}>
+        <input type="text" value={inputValue} readOnly={!editable} placeholder={placeholder} disabled={disabled}
+          onChange={(e) => editable && setInputValue(e.target.value)}
+          className="flex-1 min-w-0 bg-transparent px-3 py-1 placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed" />
+        <button type="button" disabled={disabled} onClick={() => !disabled && setOpen((v) => !v)}
+          className={cn("flex items-center justify-center px-2.5 border-l border-input hover:bg-accent transition-colors", buttonBgClass)}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
+          </svg>
+        </button>
+      </div>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className={cn("absolute left-0 top-full z-50 mt-1 min-w-[280px] rounded-md border bg-popover p-3", calendarBorderClass, calendarShadowClass || "shadow-md")}>
+            <div className="flex items-center justify-between mb-2">
+              <button type="button" onClick={prevMonth} className="inline-flex items-center justify-center rounded-md text-sm font-medium h-7 w-7 hover:bg-accent hover:text-accent-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <div className="text-sm font-medium">{monthName}</div>
+              <button type="button" onClick={nextMonth} className="inline-flex items-center justify-center rounded-md text-sm font-medium h-7 w-7 hover:bg-accent hover:text-accent-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-0">
+              {DAYS.map((d) => (<div key={d} className="text-center text-xs text-muted-foreground p-1 font-medium">{d}</div>))}
+              {cells.map((d, i) => (
+                <div key={i} className="text-center p-0">
+                  {d !== null ? (
+                    <button type="button" className={getDayCls(d)} onClick={() => handleDayClick(d)}
+                      onMouseEnter={() => hoverBgClass && setHoveredDay(d)} onMouseLeave={() => hoverBgClass && setHoveredDay(null)}>
+                      {d}
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            {mode === "datetime" && (
+              <div className="mt-3 border-t pt-3 flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">時刻:</span>
+                <input type="number" min={0} max={23} value={hour} onChange={(e) => setHour(Math.max(0, Math.min(23, Number(e.target.value))))}
+                  className="w-14 rounded border border-input bg-transparent px-2 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+                <span className="text-sm font-medium">:</span>
+                <input type="number" min={0} max={59} value={minute} onChange={(e) => setMinute(Math.max(0, Math.min(59, Number(e.target.value))))}
+                  className="w-14 rounded border border-input bg-transparent px-2 py-1 text-center text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
+                <button type="button" onClick={handleConfirm}
+                  className={cn("ml-auto rounded px-3 py-1 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90", buttonBgClass && cn(buttonBgClass, "text-foreground"))}>
+                  OK
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }`,
 
   progress: `import { cn } from "@/components/ui/_cn";
@@ -838,7 +1059,7 @@ export function RadioGroupItem(props: any) {
   "scroll-area": `import { cn } from "@/components/ui/_cn";
 export function ScrollArea(props: any) {
   const { className = "", children, ...rest } = props;
-  const cls = cn("relative overflow-auto", className);
+  const cls = cn("relative overflow-auto rounded-md border", className);
   return <div className={cls} {...rest}>{children}</div>;
 }`,
 
@@ -991,7 +1212,7 @@ export function Toggle(props: any) {
     lg: "h-10 px-3 min-w-10",
   };
   const IconComponent = icon ? (Icons as any)[icon] : null;
-  const cls = cn("inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", s[size] || s.default, v[variant] || v.default, className);
+  const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring data-[state=on]:bg-accent data-[state=on]:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50", s[size] || s.default, v[variant] || v.default, className);
   return <button type="button" aria-pressed={pressed} data-state={pressed ? "on" : "off"} data-toggle-pressed={pressed || undefined} data-disabled={disabled || undefined} disabled={disabled} onClick={() => setPressed((p: boolean) => !p)} className={cls} {...rest}>{IconComponent && <IconComponent className="h-4 w-4" />}{children}</button>;
 }`,
 
@@ -1129,16 +1350,116 @@ export function CommandSeparator({ className = "", ...rest }: any) {
 
   calendar: `import { cn } from "@/components/ui/_cn";
 export function Calendar(props: any) {
-  const { className = "", ...rest } = props;
-  const cls = cn("p-3 rounded-md border", className);
-  return <div className={cls} {...rest}><div className="text-sm font-medium text-center">Calendar</div></div>;
+  const { className = "", style, todayBgClass = "", todayTextClass = "" } = props;
+  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+  const today = new Date();
+  const currentDay = today.getDate();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  const firstDayOfWeek = new Date(today.getFullYear(), today.getMonth(), 1).getDay();
+  const monthName = today.toLocaleString("default", { month: "long", year: "numeric" });
+  const cells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  return (
+    <div className={cn("p-3 rounded-md border", className)} style={style}>
+      <div className="flex items-center justify-between mb-2">
+        <button type="button" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-7 w-7 hover:bg-accent hover:text-accent-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <div className="text-sm font-medium">{monthName}</div>
+        <button type="button" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-7 w-7 hover:bg-accent hover:text-accent-foreground">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-0">
+        {days.map((d) => (
+          <div key={d} className="text-center text-xs text-muted-foreground p-1 font-medium">{d}</div>
+        ))}
+        {cells.map((d, i) => (
+          <div key={i} className="text-center p-0">
+            {d !== null ? (
+              <button type="button" className={cn("inline-flex items-center justify-center rounded-md text-sm h-8 w-8", d === currentDay ? cn(todayBgClass || "bg-primary", todayTextClass || "text-primary-foreground") : "hover:bg-accent hover:text-accent-foreground")}>
+                {d}
+              </button>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }`,
 
-  resizable: `import { cn } from "@/components/ui/_cn";
-export function ResizablePanelGroup(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("flex rounded-lg border", className);
-  return <div className={cls} {...rest}>{children}</div>;
+  resizable: `import { createContext, useContext, useRef } from "react";
+import { cn } from "@/components/ui/_cn";
+const PanelCtx = createContext(null);
+export function ResizablePanelGroup(props) {
+  const { className = "", children, direction = "horizontal", style, ...rest } = props;
+  const isVertical = direction === "vertical";
+  const cls = cn("flex", isVertical ? "flex-col" : "flex-row", className);
+  return (
+    <PanelCtx.Provider value={{ isVertical }}>
+      <div className={cls} style={{ width: "100%", height: "100%", ...style }} {...rest}>{children}</div>
+    </PanelCtx.Provider>
+  );
+}
+export function ResizablePanel(props) {
+  const { className = "", children, defaultSize = 50, style, ...rest } = props;
+  const flexVal = (style && style.flex) ? style.flex : (defaultSize + " " + defaultSize + " 0%");
+  return (
+    <div className={cn("overflow-auto min-w-0 min-h-0", className)} style={{ ...style, flex: flexVal }} {...rest}>
+      {children}
+    </div>
+  );
+}
+export function ResizableHandle(props) {
+  const { className = "", withHandle = false, ...rest } = props;
+  const ctx = useContext(PanelCtx);
+  const isVertical = ctx ? ctx.isVertical : false;
+  const ref = useRef(null);
+  function onPointerDown(e) {
+    e.preventDefault();
+    const el = ref.current; if (!el) return;
+    const prev = el.previousElementSibling;
+    const next = el.nextElementSibling;
+    if (!prev || !next) return;
+    const parent = el.parentElement;
+    const parentSize = isVertical ? parent.getBoundingClientRect().height : parent.getBoundingClientRect().width;
+    const prevFlex0 = parseFloat(prev.style.flex) || 50;
+    const nextFlex0 = parseFloat(next.style.flex) || 50;
+    const startPos = isVertical ? e.clientY : e.clientX;
+    el.setPointerCapture(e.pointerId);
+    function onMove(ev) {
+      const deltaPct = ((isVertical ? ev.clientY : ev.clientX) - startPos) / parentSize * 100;
+      const newPrev = Math.max(5, Math.min(prevFlex0 + nextFlex0 - 5, prevFlex0 + deltaPct));
+      const newNext = (prevFlex0 + nextFlex0) - newPrev;
+      prev.style.flex = newPrev + " " + newPrev + " 0%";
+      next.style.flex = newNext + " " + newNext + " 0%";
+    }
+    function onUp() {
+      el.releasePointerCapture(e.pointerId);
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+  return (
+    <div ref={ref}
+      className={cn("flex-shrink-0 flex items-center justify-center select-none",
+        isVertical ? "h-[4px] w-full cursor-row-resize" : "w-[4px] h-full cursor-col-resize",
+        className || "bg-border")}
+      onPointerDown={onPointerDown} {...rest}>
+      {withHandle && (
+        <div style={{
+          width: isVertical ? "32px" : "3px",
+          height: isVertical ? "3px" : "24px",
+          borderRadius: "2px",
+          background: "hsl(var(--border))",
+          opacity: 0.7
+        }} />
+      )}
+    </div>
+  );
 }`,
 
   carousel: `import { cn } from "@/components/ui/_cn";
@@ -1184,7 +1505,7 @@ export function TooltipContent(props: any) {
     left: "top-1/2 -translate-y-1/2 right-full mr-2",
     right: "top-1/2 -translate-y-1/2 left-full ml-2",
   };
-  const cls = \`absolute \${pos[side] || pos.top} z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-nowrap \${props.className || ""}\`.trim();
+  const cls = \`absolute \${pos[side] || pos.top} z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-pre-wrap w-max \${props.className || ""}\`.trim();
   return <div className={cls}>{props.children}</div>;
 }`,
 
@@ -1355,7 +1676,159 @@ export function ContextMenuTrigger(props: any) {
 }
 export function ContextMenuContent(props: any) {
   const ctx = useContext(Ctx);
-  if (!ctx?.pos) return null;
-  return <><div className="fixed inset-0 z-40" onClick={() => ctx?.setPos(null)} /><div className="fixed z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md" style={{ left: ctx.pos.x, top: ctx.pos.y }}>{props.children}</div></>;
+  const cls = props.className || "min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md";
+  if (!ctx) return <div className={cls} style={props.style}>{props.children}</div>;
+  if (!ctx.pos) return null;
+  return <><div className="fixed inset-0 z-40" onClick={() => ctx.setPos(null)} /><div className={"fixed z-50 " + cls} style={{ ...props.style, left: ctx.pos.x, top: ctx.pos.y }}>{props.children}</div></>;
+}
+export function ContextMenuItem(props: any) {
+  const base = "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent";
+  return <div className={props.className ? props.className + " relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none" : base}>{props.children}</div>;
+}
+export function ContextMenuCheckboxItem(props: any) {
+  const [checked, setChecked] = useState(!!props.checked);
+  const base = "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent";
+  return <div className={props.className ? props.className + " relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none" : base} onClick={() => setChecked((v: boolean) => !v)}><span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">{checked ? "✓" : ""}</span>{props.children}</div>;
+}
+export function ContextMenuSeparator() { return <div className="my-1 h-px bg-border" />; }
+export function ContextMenuLabel(props: any) {
+  return <div className="px-2 py-1.5 text-xs font-semibold">{props.children}</div>;
+}`,
+
+  "data-table": `import { cn } from "@/components/ui/_cn";
+import { useState } from "react";
+function parseColDefs(cols) {
+  if (!Array.isArray(cols)) return [];
+  return cols;
+}
+function getHeader(col) { return col.header ?? col.id ?? col.accessorKey ?? ""; }
+function getCell(col, row) {
+  if (typeof col.cell === "function") {
+    try { return col.cell({ row: { original: row, getValue: (k) => row[k] } }); } catch { return null; }
+  }
+  if (col.accessorKey) return String(row[col.accessorKey] ?? "");
+  return null;
+}
+export function DataTable(props) {
+  const {
+    columns = [], data = [],
+    filterType = "none", pageable = false, pageSize = 10,
+    selectable = false, columnToggle = false, stickyHeader = false, pinnedLeft = 0,
+    className = "", headerBgClass = "", hoverRowClass = "", selectedRowClass = "",
+    headerTextClass = "", headerHoverTextClass = "", headerBorderClass = "", tableBorderClass = "",
+    sortIconClass = "", filterIconClass = "",
+    style: _style, width, height, ...rest
+  } = props;
+  const cols = parseColDefs(columns);
+  const pageSizeNum = Math.max(1, Number(pageSize) || 10);
+  const pinnedLeftNum = Math.max(0, Number(pinnedLeft) || 0);
+  const [sortCol, setSortCol] = useState(null);
+  const [sortDir, setSortDir] = useState("asc");
+  const [filterValue, setFilterValue] = useState("");
+  const [filterCol, setFilterCol] = useState("all");
+  const [headerFilters, setHeaderFilters] = useState({});
+  const [activeHeaderFilter, setActiveHeaderFilter] = useState(null);
+  const [page, setPage] = useState(1);
+  const [selectedRows, setSelectedRows] = useState(new Set());
+  const [hiddenCols, setHiddenCols] = useState(new Set());
+  const [showColToggle, setShowColToggle] = useState(false);
+  let rows = [...data];
+  if (filterType === "bar" && filterValue) {
+    rows = rows.filter(row => {
+      if (filterCol === "all") return cols.filter(c => c.accessorKey).some(c => String(row[c.accessorKey] ?? "").toLowerCase().includes(filterValue.toLowerCase()));
+      return String(row[filterCol] ?? "").toLowerCase().includes(filterValue.toLowerCase());
+    });
+  }
+  if (filterType === "header") {
+    for (const [k, v] of Object.entries(headerFilters)) {
+      if (v) rows = rows.filter(row => String(row[k] ?? "").toLowerCase().includes(v.toLowerCase()));
+    }
+  }
+  if (sortCol) {
+    rows = [...rows].sort((a, b) => {
+      const av = String(a[sortCol] ?? ""), bv = String(b[sortCol] ?? "");
+      return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av);
+    });
+  }
+  const totalRows = rows.length;
+  const totalPages = Math.max(1, Math.ceil(totalRows / pageSizeNum));
+  const displayRows = pageable ? rows.slice((page - 1) * pageSizeNum, page * pageSizeNum) : rows;
+  const visibleCols = cols.filter(c => !hiddenCols.has(c.id ?? c.accessorKey ?? c.key));
+  const containerStyle = {};
+  if (width && width !== "auto") containerStyle.width = /^\\d+(\\.\\d+)?$/.test(String(width)) ? String(width) + "px" : String(width);
+  if (height && height !== "auto") containerStyle.height = /^\\d+(\\.\\d+)?$/.test(String(height)) ? String(height) + "px" : String(height);
+  const headerSt = stickyHeader ? { position: "sticky", top: 0, zIndex: 2 } : {};
+  function getPinnedStyle(colIdx) {
+    if (colIdx >= pinnedLeftNum) return {};
+    let left = selectable ? 40 : 0;
+    for (let i = 0; i < colIdx; i++) left += (visibleCols[i]?.size ?? 120);
+    return { position: "sticky", left, zIndex: 1 };
+  }
+  function handleSort(key) {
+    if (sortCol === key) setSortDir(d => d === "asc" ? "desc" : "asc");
+    else { setSortCol(key); setSortDir("asc"); }
+  }
+  const borderCls = tableBorderClass || "border-border";
+  return <div className={cn("flex flex-col gap-2", className)} style={containerStyle}>
+    {(filterType === "bar" || columnToggle) && <div className="flex items-center gap-2">
+      {filterType === "bar" && <>
+        <select className="rounded border border-border bg-background px-2 py-1 text-xs" value={filterCol} onChange={e => setFilterCol(e.target.value)}>
+          <option value="all">All</option>
+          {cols.filter(c => c.accessorKey).map(c => <option key={c.accessorKey} value={c.accessorKey}>{getHeader(c)}</option>)}
+        </select>
+        <input type="text" placeholder="Filter..." className="flex-1 rounded border border-border bg-background px-2 py-1 text-xs" value={filterValue} onChange={e => setFilterValue(e.target.value)} />
+      </>}
+      {columnToggle && <div className="relative ml-auto">
+        <button type="button" className="rounded border border-border bg-background px-2 py-1 text-xs hover:bg-accent" onClick={() => setShowColToggle(v => !v)}>Columns ▾</button>
+        {showColToggle && <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded border border-border bg-background p-2 shadow-md">
+          {cols.map(c => { const k = c.id ?? c.accessorKey ?? ""; return <label key={k} className="flex cursor-pointer items-center gap-1 py-0.5 text-xs"><input type="checkbox" checked={!hiddenCols.has(k)} onChange={() => setHiddenCols(prev => { const next = new Set(prev); next.has(k) ? next.delete(k) : next.add(k); return next; })} />{getHeader(c)}</label>; })}
+        </div>}
+      </div>}
+    </div>}
+    <div className={cn("overflow-auto rounded-md border", borderCls)}>
+      <table className="min-w-full caption-bottom border-collapse text-sm">
+        <thead className={cn(headerBgClass || "bg-background")} style={headerSt}>
+          <tr>
+            {selectable && <th className={cn("w-10 px-2 py-2 text-left border-b", headerTextClass, headerBorderClass)} style={{ width: 40 }}><input type="checkbox" checked={displayRows.length > 0 && selectedRows.size === displayRows.length} onChange={() => selectedRows.size === displayRows.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(displayRows.map((_, i) => i)))} /></th>}
+            {visibleCols.map((col, ci) => {
+              const key = col.id ?? col.accessorKey ?? String(ci);
+              const isSorted = sortCol === key;
+              return <th key={key} className={cn("px-3 py-2 text-left text-xs font-medium border-b", headerTextClass || "text-muted-foreground", headerBorderClass, ci < pinnedLeftNum && (headerBgClass || "bg-background"), col.enableSorting && \`cursor-pointer select-none \${headerHoverTextClass ? \`hover:\${headerHoverTextClass}\` : "hover:text-foreground"}\`)} style={{ ...(col.size ? { width: col.size, minWidth: col.size } : {}), ...getPinnedStyle(ci) }} onClick={() => col.enableSorting && handleSort(key)}>
+                <div className="flex items-center gap-1">
+                  <span>{getHeader(col)}</span>
+                  {col.enableSorting && <span className={cn(sortIconClass || "text-muted-foreground/60")}>{isSorted ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>}
+                  {filterType === "header" && col.accessorKey && <button type="button" className={cn("ml-auto rounded p-0.5 text-xs hover:opacity-100", filterIconClass ? "" : "opacity-40", filterIconClass || "text-muted-foreground", activeHeaderFilter === key && "text-primary opacity-100")} onClick={e => { e.stopPropagation(); setActiveHeaderFilter(v => v === key ? null : key); }}>⌕</button>}
+                </div>
+                {filterType === "header" && activeHeaderFilter === key && <input type="text" placeholder="Filter..." className="mt-1 w-full rounded border border-border bg-background px-1 py-0.5 text-xs font-normal" value={headerFilters[key] ?? ""} onChange={e => setHeaderFilters(p => ({ ...p, [key]: e.target.value }))} onClick={e => e.stopPropagation()} autoFocus />}
+              </th>;
+            })}
+          </tr>
+        </thead>
+        <tbody>
+          {displayRows.map((row, ri) => {
+            const isSelected = selectedRows.has(ri);
+            return <tr key={ri} className={cn("border-b transition-colors group", borderCls, hoverRowClass ? \`hover:\${hoverRowClass}\` : "hover:bg-muted/50", isSelected && (selectedRowClass || "bg-muted"))}>
+              {selectable && <td className="w-10 px-2 py-2" style={{ width: 40 }}><input type="checkbox" checked={isSelected} onChange={() => { const next = new Set(selectedRows); next.has(ri) ? next.delete(ri) : next.add(ri); setSelectedRows(next); }} /></td>}
+              {visibleCols.map((col, ci) => {
+                const key = col.id ?? col.accessorKey ?? String(ci);
+                return <td key={key} className={cn("px-3 py-2 text-sm transition-colors", ci < pinnedLeftNum && "bg-background", ci < pinnedLeftNum && (hoverRowClass ? \`group-hover:\${hoverRowClass}\` : "group-hover:bg-muted/50"), ci < pinnedLeftNum && isSelected && (selectedRowClass || "bg-muted"))} style={{ ...(col.size ? { width: col.size, minWidth: col.size } : {}), ...getPinnedStyle(ci) }}>{getCell(col, row)}</td>;
+              })}
+            </tr>;
+          })}
+          {displayRows.length === 0 && <tr><td colSpan={visibleCols.length + (selectable ? 1 : 0)} className="px-3 py-8 text-center text-sm text-muted-foreground">No results.</td></tr>}
+        </tbody>
+      </table>
+    </div>
+    {pageable && <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <span>{selectable ? \`\${selectedRows.size} of \${totalRows} row(s) selected.\` : \`\${totalRows} row(s)\`}</span>
+      <div className="flex items-center gap-1">
+        <button type="button" className="rounded border border-border px-2 py-1 hover:bg-accent disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(1)}>«</button>
+        <button type="button" className="rounded border border-border px-2 py-1 hover:bg-accent disabled:opacity-40" disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}>‹</button>
+        <span className="px-2">Page {page} of {totalPages}</span>
+        <button type="button" className="rounded border border-border px-2 py-1 hover:bg-accent disabled:opacity-40" disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}>›</button>
+        <button type="button" className="rounded border border-border px-2 py-1 hover:bg-accent disabled:opacity-40" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>»</button>
+      </div>
+    </div>}
+  </div>;
 }`,
 };

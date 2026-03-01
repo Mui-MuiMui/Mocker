@@ -4,6 +4,9 @@ import { getVsCodeApi } from "../../utils/vscodeApi";
 import { IconCombobox } from "./IconCombobox";
 import { TableMetaEditor } from "./TableMetaEditor";
 import { TabMetaEditor } from "./TabMetaEditor";
+import { ResizableMetaEditor } from "./ResizableMetaEditor";
+import { MenubarMetaEditor } from "./MenubarMetaEditor";
+import { ColumnDefsEditor } from "./ColumnDefsEditor";
 import { useEditorStore } from "../../stores/editorStore";
 
 /** Mapping of property names to their allowed values (select options). */
@@ -59,8 +62,11 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     variant: ["default", "card"],
   },
   Resizable: {
-    direction: ["horizontal", "vertical"],
+    borderRadius: ["", "rounded", "rounded-md", "rounded-lg", "rounded-xl"],
+    shadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg"],
+    separatorSize: ["1", "2", "4", "6", "8"],
   },
+  ResizablePanelSlot: {},
   Table: {
     borderWidth: ["0", "1", "2", "4"],
   },
@@ -74,6 +80,9 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Dialog: {
     variant: ["default", "destructive", "outline", "secondary", "ghost", "link"],
   },
+  Avatar: {
+    size: ["default", "sm", "lg"],
+  },
   Sheet: {
     side: ["top", "right", "bottom", "left"],
   },
@@ -81,6 +90,49 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     orientation: ["horizontal", "vertical"],
     outerShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
     contentShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  "Navigation Menu": {
+    buttonShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  Menubar: {
+    buttonShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    dropdownShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  ContextMenu: {
+    panelShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  Pagination: {
+    activeShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  DatePicker: {
+    mode: ["date", "datetime"],
+    calendarShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    todayShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    selectedShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+  "Data Table": {
+    filterType: ["none", "header", "bar"],
+  },
+};
+
+/** Property names rendered as a button group (toggle buttons) per component. */
+const BUTTON_GROUP_PROPS: Record<string, Record<string, string[]>> = {
+  "Navigation Menu": {
+    buttonBorderWidth: ["", "0", "1", "2", "4", "8"],
+  },
+  Menubar: {
+    buttonBorderWidth: ["", "0", "1", "2", "4", "8"],
+    dropdownBorderWidth: ["", "0", "1", "2", "4", "8"],
+  },
+  ContextMenu: {
+    panelBorderWidth: ["", "0", "1", "2", "4", "8"],
+  },
+  Pagination: {
+    activeBorderWidth: ["", "0", "1", "2", "4", "8"],
+  },
+  "Data Table": {
+    pageSize: ["", "5", "10", "20", "50"],
+    pinnedLeft: ["", "0", "1", "2", "3"],
   },
 };
 
@@ -97,10 +149,13 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath"]);
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
-const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass"]);
+const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass"]);
 
 /** Props that use the Tailwind border class palette picker UI (stores "border-red-500" style class names). */
-const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor"]);
+const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass"]);
+
+/** Props that use the Tailwind text class palette picker UI (stores "text-red-500" style class names). */
+const TAILWIND_TEXT_PALETTE_PROPS = new Set(["todayTextClass", "hoverTextClass", "buttonTextClass", "dropdownTextClass", "shortcutTextClass", "panelTextClass", "activeTextClass", "selectedTextClass", "headerTextClass", "headerHoverTextClass", "sortIconClass", "filterIconClass"]);
 
 /**
  * Tailwind CSS color palette (hex) — same data as TailwindEditor.tsx.
@@ -212,6 +267,17 @@ const ABSOLUTE_DEFAULTS: Record<string, unknown> = {
   left: "0px",
 };
 
+/**
+ * コンポーネント固有の非表示プロパティ。
+ * 共通グループ・コンポーネントグループの両方から除外される。
+ */
+const COMPONENT_EXCLUDED_PROPS: Record<string, Set<string>> = {
+  // AspectRatio: keepAspectRatio は RenderNode 内部用、ユーザーには非表示
+  AspectRatio: new Set(["keepAspectRatio"]),
+  // Avatar: width/height はドラッグリサイズ用に内部で保持するが PropEditor には非表示
+  Avatar: new Set(["width", "height"]),
+};
+
 export function PropEditor() {
   const { selectedProps, actions, selectedNodeId, componentName, craftDefaultProps } = useEditor(
     (state) => {
@@ -240,7 +306,7 @@ export function PropEditor() {
   const [colorFamilies, setColorFamilies] = useState<Record<string, string>>({});
   const pendingBrowseIndexRef = useRef<number>(-1);
 
-  // Listen for browse:mocFile:result messages from extension
+  // Listen for browse:mocFile:result and browse:imageFile:result messages from extension
   useEffect(() => {
     const listener = (event: MessageEvent) => {
       const msg = event.data;
@@ -261,6 +327,12 @@ export function PropEditor() {
           });
         }
       }
+      if (msg?.type === "browse:imageFile:result" && selectedNodeId) {
+        const { relativePath, targetProp } = msg.payload as { relativePath: string; targetProp?: string };
+        actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+          props[targetProp || "src"] = relativePath;
+        });
+      }
     };
     window.addEventListener("message", listener);
     return () => window.removeEventListener("message", listener);
@@ -270,9 +342,22 @@ export function PropEditor() {
     return null;
   }
 
+  if (componentName === "ResizablePanelSlot") {
+    return (
+      <div className="px-3 py-2 text-xs text-[var(--vscode-descriptionForeground,#777)] italic">
+        サイズは親の Resizable コンポーネントで管理されます
+      </div>
+    );
+  }
+
   const handlePropChange = (key: string, value: unknown) => {
     actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
       props[key] = value;
+      // AspectRatio: width/height の片方を手打ちしたら、もう片方を "auto" にリセット
+      if (componentName === "AspectRatio") {
+        if (key === "width" && value !== "auto") props.height = "auto";
+        if (key === "height" && value !== "auto") props.width = "auto";
+      }
     });
   };
 
@@ -280,6 +365,10 @@ export function PropEditor() {
     const componentOverride = COMPONENT_PROP_OPTIONS[componentName]?.[key];
     if (componentOverride) return componentOverride;
     return PROP_OPTIONS[key] || null;
+  };
+
+  const getButtonGroupOptions = (key: string): string[] | null => {
+    return BUTTON_GROUP_PROPS[componentName]?.[key] ?? null;
   };
 
   const toggleGroup = (group: string) => {
@@ -293,10 +382,12 @@ export function PropEditor() {
 
   // --- 新グループ分けロジック ---
 
+  const excludedProps = COMPONENT_EXCLUDED_PROPS[componentName] ?? new Set<string>();
+
   // 共通グループ: width/height を selectedProps から取得（無ければデフォルト値）
-  const commonEntries: [string, unknown][] = Array.from(COMMON_KEYS).map(
-    (k) => [k, selectedProps[k] ?? "auto"],
-  );
+  const commonEntries: [string, unknown][] = Array.from(COMMON_KEYS)
+    .filter((k) => !excludedProps.has(k))
+    .map((k) => [k, selectedProps[k] ?? "auto"]);
 
   // フロー配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
   const flowEntries: [string, unknown][] = layoutMode === "flow"
@@ -314,6 +405,7 @@ export function PropEditor() {
       key !== "children" &&
       key !== "className" &&
       !LAYOUT_ALL_KEYS.has(key) &&
+      !excludedProps.has(key) &&
       (craftDefaultProps ? key in craftDefaultProps : true),
   );
 
@@ -328,6 +420,32 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
+    // Custom UI for columnDefs (Data Table column definitions editor)
+    if (key === "columnDefs" && selectedNodeId) {
+      return (
+        <ColumnDefsEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for csvData (Data Table CSV data)
+    if (key === "csvData") {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">csvData (CSV)</label>
+          <textarea
+            value={String(value ?? "")}
+            onChange={(e) => handlePropChange(key, e.target.value)}
+            rows={5}
+            className={`${INPUT_CLASS} w-full resize-y font-mono text-[10px]`}
+          />
+        </div>
+      );
+    }
+
     // Custom UI for tableMeta (table structure editor)
     if (key === "tableMeta" && selectedNodeId) {
       return (
@@ -347,6 +465,74 @@ export function PropEditor() {
           value={String(value ?? "")}
           selectedNodeId={selectedNodeId}
         />
+      );
+    }
+
+    // Custom UI for panelMeta (resizable panel structure editor)
+    if (key === "panelMeta" && selectedNodeId) {
+      return (
+        <ResizableMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for menuData (menubar structure editor)
+    if (key === "menuData" && selectedNodeId) {
+      return (
+        <MenubarMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for ratio (AspectRatio)
+    if (key === "ratio") {
+      const currentValue = typeof value === "number" ? value : parseFloat(String(value ?? "1.7778"));
+      const RATIO_PRESETS: { label: string; value: number }[] = [
+        { label: "16:9", value: 16 / 9 },
+        { label: "4:3", value: 4 / 3 },
+        { label: "1:1", value: 1 },
+        { label: "3:2", value: 3 / 2 },
+        { label: "2:1", value: 2 },
+        { label: "3:4", value: 3 / 4 },
+        { label: "9:16", value: 9 / 16 },
+      ];
+      const matchesPreset = (v: number) => Math.abs(currentValue - v) < 0.001;
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          <div className="flex flex-wrap gap-1">
+            {RATIO_PRESETS.map((preset) => (
+              <button
+                key={preset.label}
+                type="button"
+                onClick={() => handlePropChange(key, preset.value)}
+                className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                  matchesPreset(preset.value)
+                    ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                    : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+          <input
+            type="number"
+            value={currentValue}
+            step={0.01}
+            min={0.01}
+            onChange={(e) => handlePropChange(key, Number(e.target.value))}
+            className={`${INPUT_CLASS} w-full`}
+          />
+        </div>
       );
     }
 
@@ -391,6 +577,44 @@ export function PropEditor() {
             onChange={(e) => handlePropChange(key, e.target.value)}
             className={`${INPUT_CLASS} w-full`}
             placeholder="Tailwind classes..."
+          />
+        </div>
+      );
+    }
+
+    // Custom UI for dateFormat (preset select + free text input)
+    if (key === "dateFormat") {
+      const DATE_FORMAT_PRESETS: { label: string; value: string }[] = [
+        { label: "(custom)", value: "" },
+        { label: "yyyy/MM/dd", value: "yyyy/MM/dd" },
+        { label: "MM/dd/yyyy", value: "MM/dd/yyyy" },
+        { label: "dd/MM/yyyy", value: "dd/MM/yyyy" },
+        { label: "yyyy-MM-dd", value: "yyyy-MM-dd" },
+      ];
+      const currentValue = String(value ?? "");
+      const matchesPreset = DATE_FORMAT_PRESETS.some((p) => p.value === currentValue && p.value !== "");
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          <select
+            value={matchesPreset ? currentValue : ""}
+            onChange={(e) => e.target.value !== "" && handlePropChange(key, e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+          >
+            {DATE_FORMAT_PRESETS.map((preset) => (
+              <option key={preset.label} value={preset.value}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => handlePropChange(key, e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="例: yyyy/MM/dd HH:mm"
           />
         </div>
       );
@@ -676,6 +900,101 @@ export function PropEditor() {
       );
     }
 
+    // Custom UI for Tailwind text class palette props (todayTextClass)
+    if (TAILWIND_TEXT_PALETTE_PROPS.has(key)) {
+      const currentValue = String(value ?? "");
+      const textInfo = parseTailwindColorClass(currentValue, "text");
+      const family = colorFamilies[key] || textInfo?.family || "gray";
+      const setFamily = (f: string) => setColorFamilies((prev) => ({ ...prev, [key]: f }));
+      const isActive = (s: string) => currentValue === `text-${family}-${s}`;
+
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {key}
+          </label>
+          {/* Special colors: none / black / white */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, "")}
+              className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                !currentValue
+                  ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                  : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+              }`}
+            >
+              none
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, currentValue === "text-black" ? "" : "text-black")}
+              title="black"
+              className={`h-3.5 w-3.5 rounded-sm border border-[var(--vscode-input-border,#555)] transition-all ${
+                currentValue === "text-black" ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: "#000" }}
+            />
+            <button
+              type="button"
+              onClick={() => handlePropChange(key, currentValue === "text-white" ? "" : "text-white")}
+              title="white"
+              className={`h-3.5 w-3.5 rounded-sm border border-[var(--vscode-input-border,#555)] transition-all ${
+                currentValue === "text-white" ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+              }`}
+              style={{ backgroundColor: "#fff" }}
+            />
+            {textInfo && (
+              <span className="ml-auto shrink-0 text-[9px] text-[var(--vscode-descriptionForeground,#888)]">
+                {textInfo.family}-{textInfo.shade}
+              </span>
+            )}
+          </div>
+          {/* Palette family selector */}
+          <div className="flex flex-wrap gap-1">
+            {PALETTE_FAMILIES.map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFamily(f)}
+                title={f}
+                className={`h-3.5 w-3.5 rounded-sm transition-all ${
+                  family === f ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-110"
+                }`}
+                style={{ backgroundColor: CP[f]["500"] }}
+              />
+            ))}
+          </div>
+          {/* Shade swatches */}
+          <div className="flex gap-0.5">
+            {PALETTE_SHADES.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => handlePropChange(key, isActive(s) ? "" : `text-${family}-${s}`)}
+                title={`${family}-${s}`}
+                className={`h-4 flex-1 rounded-sm transition-all ${
+                  isActive(s) ? "ring-2 ring-[var(--vscode-focusBorder,#007fd4)] ring-offset-1 ring-offset-[var(--vscode-editor-background,#1e1e1e)]" : "hover:scale-y-125"
+                }`}
+                style={{ backgroundColor: CP[family][s] }}
+              />
+            ))}
+          </div>
+          <div className="flex justify-between text-[8px] text-[var(--vscode-descriptionForeground,#666)]">
+            <span>50</span><span>500</span><span>950</span>
+          </div>
+          {/* Editable text field for fine-tuning */}
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => handlePropChange(key, e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="text-gray-700 ..."
+          />
+        </div>
+      );
+    }
+
     // Custom UI for descriptions: per-item text input linked to items
     if (key === "descriptions") {
       const itemsRaw = selectedProps?.items;
@@ -796,6 +1115,38 @@ export function PropEditor() {
       );
     }
 
+    // Custom UI for Image/Avatar src prop (text input + file browse button)
+    if ((componentName === "Image" || componentName === "Avatar") && key === "src") {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            src
+          </label>
+          <div className="flex gap-1">
+            <input
+              type="text"
+              value={String(value ?? "")}
+              onChange={(e) => handlePropChange(key, e.target.value)}
+              className={`${INPUT_CLASS} flex-1`}
+              placeholder="image path"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                getVsCodeApi().postMessage({
+                  type: "browse:imageFile",
+                  payload: { currentPath: String(value ?? ""), targetProp: key },
+                });
+              }}
+              className="rounded border border-[var(--vscode-button-border,transparent)] bg-[var(--vscode-button-background,#0e639c)] px-2 py-1 text-xs text-[var(--vscode-button-foreground,#fff)] hover:opacity-90"
+            >
+              ...
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // Custom UI for .moc file path props (linkedMocPath, contextMenuMocPath)
     if (MOC_PATH_PROPS.has(key)) {
       return (
@@ -823,6 +1174,31 @@ export function PropEditor() {
             >
               ...
             </button>
+          </div>
+        </div>
+      );
+    }
+
+    const bgOptions = getButtonGroupOptions(key);
+    if (bgOptions) {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">{key}</label>
+          <div className="flex flex-wrap gap-1">
+            {bgOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => handlePropChange(key, value === opt ? "" : opt)}
+                className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                  value === opt && opt !== ""
+                    ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                    : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+                }`}
+              >
+                {opt === "" ? "–" : opt}
+              </button>
+            ))}
           </div>
         </div>
       );

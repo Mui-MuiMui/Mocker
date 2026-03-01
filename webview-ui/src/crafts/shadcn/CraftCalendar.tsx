@@ -5,12 +5,16 @@ interface CraftCalendarProps {
   width?: string;
   height?: string;
   className?: string;
+  todayBgClass?: string;
+  todayTextClass?: string;
 }
 
 export const CraftCalendar: UserComponent<CraftCalendarProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  todayBgClass = "",
+  todayTextClass = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -56,7 +60,7 @@ export const CraftCalendar: UserComponent<CraftCalendarProps> = ({
                 className={cn(
                   "inline-flex items-center justify-center rounded-md text-sm h-8 w-8",
                   d === currentDay
-                    ? "bg-primary text-primary-foreground"
+                    ? cn(todayBgClass || "bg-primary", todayTextClass || "text-primary-foreground")
                     : "hover:bg-accent hover:text-accent-foreground",
                 )}
               >
@@ -76,6 +80,8 @@ CraftCalendar.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    todayBgClass: "",
+    todayTextClass: "",
   },
   rules: {
     canDrag: () => true,

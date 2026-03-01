@@ -11,6 +11,7 @@ import { CraftLabel } from "./shadcn/CraftLabel";
 import { CraftSeparator } from "./shadcn/CraftSeparator";
 import { CraftBadge } from "./shadcn/CraftBadge";
 import { CraftTable, TableCellSlot } from "./shadcn/CraftTable";
+import { CraftDataTable, DataTableSlot, DEFAULT_COLUMN_DEFS_STR, DEFAULT_CSV_DATA } from "./shadcn/CraftDataTable";
 // Phase 1: Simple components
 import { CraftAccordion } from "./shadcn/CraftAccordion";
 import { CraftAlert } from "./shadcn/CraftAlert";
@@ -34,7 +35,8 @@ import { CraftToggleGroup } from "./shadcn/CraftToggleGroup";
 import { CraftSelect } from "./shadcn/CraftSelect";
 import { CraftCombobox } from "./shadcn/CraftCombobox";
 import { CraftCalendar } from "./shadcn/CraftCalendar";
-import { CraftResizable } from "./shadcn/CraftResizable";
+import { CraftDatePicker } from "./shadcn/CraftDatePicker";
+import { CraftResizable, ResizablePanelSlot } from "./shadcn/CraftResizable";
 import { CraftCarousel } from "./shadcn/CraftCarousel";
 import { CraftChart } from "./shadcn/CraftChart";
 import { CraftForm } from "./shadcn/CraftForm";
@@ -44,11 +46,11 @@ import { CraftAlertDialog } from "./shadcn/CraftAlertDialog";
 import { CraftSheet } from "./shadcn/CraftSheet";
 import { CraftDrawer } from "./shadcn/CraftDrawer";
 import { CraftDropdownMenu } from "./shadcn/CraftDropdownMenu";
-import { CraftContextMenu } from "./shadcn/CraftContextMenu";
+import { CraftContextMenu, DEFAULT_CONTEXTMENU_DATA } from "./shadcn/CraftContextMenu";
 import { CraftPopover } from "./shadcn/CraftPopover";
 import { CraftHoverCard } from "./shadcn/CraftHoverCard";
-import { CraftNavigationMenu } from "./shadcn/CraftNavigationMenu";
-import { CraftMenubar } from "./shadcn/CraftMenubar";
+import { CraftNavigationMenu, NavMenuSlot } from "./shadcn/CraftNavigationMenu";
+import { CraftMenubar, DEFAULT_MENUBAR_DATA } from "./shadcn/CraftMenubar";
 import { CraftCommand } from "./shadcn/CraftCommand";
 import { CraftTooltip } from "./shadcn/CraftTooltip";
 import { CraftSonner } from "./shadcn/CraftSonner";
@@ -68,6 +70,8 @@ export const resolvers = {
   CraftBadge,
   CraftTable,
   TableCellSlot,
+  CraftDataTable,
+  DataTableSlot,
   // Phase 1
   CraftAccordion,
   CraftAlert,
@@ -93,7 +97,9 @@ export const resolvers = {
   CraftSelect,
   CraftCombobox,
   CraftCalendar,
+  CraftDatePicker,
   CraftResizable,
+  ResizablePanelSlot,
   CraftCarousel,
   CraftChart,
   CraftForm,
@@ -107,6 +113,7 @@ export const resolvers = {
   CraftPopover,
   CraftHoverCard,
   CraftNavigationMenu,
+  NavMenuSlot,
   CraftMenubar,
   CraftCommand,
   CraftTooltip,
@@ -240,6 +247,17 @@ export const paletteItems: PaletteItem[] = [
     enabled: true,
   },
   {
+    resolverKey: "CraftDataTable",
+    label: "Data Table",
+    category: "shadcn",
+    icon: "Table2",
+    defaultProps: {
+      columnDefs: DEFAULT_COLUMN_DEFS_STR,
+      csvData: DEFAULT_CSV_DATA,
+    },
+    enabled: true,
+  },
+  {
     resolverKey: "CraftAccordion",
     label: "Accordion",
     category: "shadcn",
@@ -262,7 +280,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "RatioIcon",
     defaultProps: {},
     isCanvas: true,
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftAvatar",
@@ -270,7 +288,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "CircleUser",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftBreadcrumb",
@@ -303,7 +321,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ArrowLeftRight",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftProgress",
@@ -328,7 +346,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "ScrollText",
     defaultProps: {},
     isCanvas: true,
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftSkeleton",
@@ -409,7 +427,15 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Calendar",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftDatePicker",
+    label: "Date Picker",
+    category: "shadcn",
+    icon: "CalendarDays",
+    defaultProps: {},
+    enabled: true,
   },
   {
     resolverKey: "CraftResizable",
@@ -417,7 +443,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "GripVertical",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftCarousel",
@@ -450,15 +476,23 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Navigation",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftMenubar",
     label: "Menubar",
     category: "shadcn",
     icon: "Menu",
-    defaultProps: {},
-    enabled: false,
+    defaultProps: { menuData: JSON.stringify(DEFAULT_MENUBAR_DATA) },
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftContextMenu",
+    label: "Context Menu",
+    category: "shadcn",
+    icon: "MousePointerClick",
+    defaultProps: { menuData: JSON.stringify(DEFAULT_CONTEXTMENU_DATA) },
+    enabled: true,
   },
   {
     resolverKey: "CraftCommand",

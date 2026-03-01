@@ -79,7 +79,7 @@ export const CraftToggle: UserComponent<CraftToggleProps> = ({
           pressed ? "bg-accent text-accent-foreground" : "bg-transparent",
           className,
         )}
-        style={{ width: hasCustomWidth ? "100%" : undefined, height: hasCustomHeight ? "100%" : undefined }}
+        style={{ width: hasCustomWidth ? "100%" : undefined, height: hasCustomHeight ? "100%" : undefined, whiteSpace: "pre-line" }}
       >
         {IconComponent && <IconComponent className="h-4 w-4" style={{ fill: pressed ? "currentColor" : undefined }} />}
         {text}
