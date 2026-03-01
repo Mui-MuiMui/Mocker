@@ -181,6 +181,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: true,
   },
+  NavMenuSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   CraftPagination: {
     tag: "Pagination",
     importFrom: "@/components/ui/pagination",
@@ -644,6 +649,14 @@ export function craftStateToTsx(
       return;
     }
 
+    // CraftNavigationMenu: traverse linkedNodes (slot children)
+    if (resolvedName === "CraftNavigationMenu") {
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftResizable: add panel sub-component imports and traverse linkedNodes
     if (resolvedName === "CraftResizable") {
       addImport("@/components/ui/resizable", "ResizablePanelGroup");
@@ -1063,6 +1076,11 @@ export function craftStateToTsx(
       return `${mocComments}\n${renderTabs(node, craftState, indent, renderNode)}`;
     }
 
+    // NavigationMenu special case: render nav bar with hover dropdown slots
+    if (resolvedName === "CraftNavigationMenu") {
+      return `${mocComments}\n${renderNavigationMenu(node, craftState, indent, renderNode)}`;
+    }
+
     // Table special case: render as LinkedNodes table
     if (resolvedName === "CraftTable") {
       return `${mocComments}\n${renderTable(node, craftState, indent, renderNode)}`;
@@ -1462,6 +1480,54 @@ function renderTable(
   }
 
   lines.push(`${pad}</Table>`);
+  return lines.join("\n");
+}
+
+function renderNavigationMenu(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+  const items = ((node.props?.items as string) || "Getting Started,Components,Documentation")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+  const navCls = ["relative flex items-center", className].filter(Boolean).join(" ");
+
+  const lines: string[] = [];
+  lines.push(`${pad}<nav className="${escapeAttr(navCls)}"${styleAttr}>`);
+  lines.push(`${pad}  <ul className="flex list-none items-center gap-1">`);
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const slotId = node.linkedNodes?.[`menu_${i}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 5)).filter(Boolean)
+      : [];
+
+    lines.push(`${pad}    <li className="relative group">`);
+    lines.push(`${pad}      <button className="inline-flex h-9 w-max items-center justify-center gap-1 rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none">`);
+    lines.push(`${pad}        ${escapeJsx(item)}`);
+    lines.push(`${pad}        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3 opacity-50"><path d="m6 9 6 6 6-6" /></svg>`);
+    lines.push(`${pad}      </button>`);
+    if (slotChildren.length > 0) {
+      lines.push(`${pad}      <div className="hidden group-hover:block absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-2">`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}      </div>`);
+    } else {
+      lines.push(`${pad}      <div className="hidden group-hover:block absolute top-full left-0 mt-1 z-50 bg-popover border rounded-md shadow-md p-2 min-w-[160px] min-h-[60px]" />`);
+    }
+    lines.push(`${pad}    </li>`);
+  }
+
+  lines.push(`${pad}  </ul>`);
+  lines.push(`${pad}</nav>`);
+
   return lines.join("\n");
 }
 
