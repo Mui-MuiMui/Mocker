@@ -1507,6 +1507,7 @@ function renderNavigationMenu(
   const btnBwClass = buttonBorderWidth === "0" ? "border-0"
     : buttonBorderWidth === "2" ? "border-2"
     : buttonBorderWidth === "4" ? "border-4"
+    : buttonBorderWidth === "8" ? "border-8"
     : buttonBorderWidth === "1" ? "border"
     : "";
 

@@ -90,8 +90,14 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     contentShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
   },
   "Navigation Menu": {
-    buttonBorderWidth: ["", "0", "1", "2", "4"],
     buttonShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
+};
+
+/** Property names rendered as a button group (toggle buttons) per component. */
+const BUTTON_GROUP_PROPS: Record<string, Record<string, string[]>> = {
+  "Navigation Menu": {
+    buttonBorderWidth: ["", "0", "1", "2", "4", "8"],
   },
 };
 
@@ -324,6 +330,10 @@ export function PropEditor() {
     const componentOverride = COMPONENT_PROP_OPTIONS[componentName]?.[key];
     if (componentOverride) return componentOverride;
     return PROP_OPTIONS[key] || null;
+  };
+
+  const getButtonGroupOptions = (key: string): string[] | null => {
+    return BUTTON_GROUP_PROPS[componentName]?.[key] ?? null;
   };
 
   const toggleGroup = (group: string) => {
@@ -1054,6 +1064,31 @@ export function PropEditor() {
             >
               ...
             </button>
+          </div>
+        </div>
+      );
+    }
+
+    const bgOptions = getButtonGroupOptions(key);
+    if (bgOptions) {
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">{key}</label>
+          <div className="flex flex-wrap gap-1">
+            {bgOptions.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => handlePropChange(key, value === opt ? "" : opt)}
+                className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
+                  value === opt && opt !== ""
+                    ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
+                    : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
+                }`}
+              >
+                {opt === "" ? "–" : opt}
+              </button>
+            ))}
           </div>
         </div>
       );
