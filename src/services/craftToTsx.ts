@@ -722,7 +722,7 @@ export function craftStateToTsx(
       rendered,
       `${pad}    </TooltipTrigger>`,
       `${pad}    <TooltipContent${sideAttr}>`,
-      `${pad}      <p>${tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
+      `${pad}      <p className="whitespace-pre-wrap">${tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
       `${pad}    </TooltipContent>`,
       `${pad}  </Tooltip>`,
       `${pad}</TooltipProvider>`,
