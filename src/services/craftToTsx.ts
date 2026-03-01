@@ -186,6 +186,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: true,
   },
+  CraftPagination: {
+    tag: "nav",
+    propsMap: ["className"],
+    isContainer: false,
+  },
   CraftProgress: {
     tag: "Progress",
     importFrom: "@/components/ui/progress",
