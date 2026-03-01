@@ -17,6 +17,7 @@ interface CraftAvatarProps {
   className?: string;
   tooltipText?: string;
   tooltipSide?: string;
+  borderColor?: string;
 }
 
 export const CraftAvatar: UserComponent<CraftAvatarProps> = ({
@@ -28,6 +29,7 @@ export const CraftAvatar: UserComponent<CraftAvatarProps> = ({
   className = "",
   tooltipText = "",
   tooltipSide = "",
+  borderColor = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -43,6 +45,8 @@ export const CraftAvatar: UserComponent<CraftAvatarProps> = ({
       className={cn(
         "relative flex shrink-0 overflow-hidden rounded-full",
         SIZE_CLASSES[size] ?? SIZE_CLASSES.default,
+        borderColor && "border-2",
+        borderColor,
         className,
       )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
@@ -69,6 +73,7 @@ CraftAvatar.craft = {
     className: "",
     tooltipText: "",
     tooltipSide: "",
+    borderColor: "",
   },
   rules: {
     canDrag: () => true,
