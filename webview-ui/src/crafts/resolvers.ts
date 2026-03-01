@@ -263,7 +263,7 @@ export const paletteItems: PaletteItem[] = [
     icon: "RatioIcon",
     defaultProps: {},
     isCanvas: true,
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftAvatar",
@@ -271,7 +271,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "CircleUser",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftBreadcrumb",

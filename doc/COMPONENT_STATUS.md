@@ -46,7 +46,7 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Tabs         | Implemented | [x]       |                                        |
 | Resizable    | Implemented | [x]       |                                        |
 | Scroll Area  | Implemented | [x]       |                                        |
-| Aspect Ratio | Implemented | [ ]       |                                        |
+| Aspect Ratio | Implemented | [x]       |                                        |
 | Separator    | Implemented | [ ]       |                                        |
 | Sidebar      | TBD         | [ ]       |                                        |
 | Item         | TBD         | [ ]       | Container で代用可能かも。すみわけ不明 |
@@ -56,8 +56,8 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 | Component  | Status      | Confirmed | Notes                                                        |
 | ---------- | ----------- | --------- | ------------------------------------------------------------ |
 | Table      | Implemented | [x]       |                                                              |
-| Data Table | TBD         | [ ]       | Table の高機能版（ソート・フィルタ等）                       |
-| Badge      | Implemented | [ ]       |                                                              |
+| Data Table | Planned     | [ ]       | Table の高機能版（ソート・フィルタ等）                       |
+| Badge      | Implemented | [x]       |                                                              |
 | Avatar     | Implemented | [ ]       |                                                              |
 | Calendar   | Implemented | [ ]       |                                                              |
 | Carousel   | Implemented | [ ]       |                                                              |
@@ -110,8 +110,8 @@ shadcn/ui 公式コンポーネントの実装状況と確認状態を管理す�
 
 ## Summary
 
-- **Confirmed**: 32
+- **Confirmed**: 33
 - **Implemented**: 45
 - **Planned**: 2 (Native Select, Date Picker)
-- **TBD**: 8 (Button Group, Input Group, Input OTP, Sidebar, Data Table, Typography, Kbd, Empty, Spinner, Item)
+- **TBD**: 7 (Button Group, Input Group, Input OTP, Sidebar, Typography, Kbd, Empty, Spinner, Item)
 - **Not Planned**: 4 (Toast, Field, Direction)
