@@ -1498,6 +1498,21 @@ function renderNavigationMenu(
   const styleAttr = buildStyleAttr(node.props);
   const navCls = ["relative flex items-center", className].filter(Boolean).join(" ");
 
+  const buttonBgClass = (node.props?.buttonBgClass as string) || "";
+  const hoverBgClass = (node.props?.hoverBgClass as string) || "";
+  const hoverTextClass = (node.props?.hoverTextClass as string) || "";
+  const buttonBorderClass = (node.props?.buttonBorderClass as string) || "";
+  const buttonShadowClass = (node.props?.buttonShadowClass as string) || "";
+
+  const btnCls = [
+    "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none",
+    buttonBgClass || "bg-background",
+    buttonBorderClass,
+    buttonShadowClass,
+    hoverBgClass ? `hover:${hoverBgClass}` : "hover:bg-accent",
+    hoverTextClass ? `hover:${hoverTextClass}` : "hover:text-accent-foreground",
+  ].filter(Boolean).join(" ");
+
   const lines: string[] = [];
   lines.push(`${pad}<nav className="${escapeAttr(navCls)}"${styleAttr}>`);
   lines.push(`${pad}  <ul className="flex list-none items-center gap-1">`);
@@ -1511,7 +1526,7 @@ function renderNavigationMenu(
       : [];
 
     lines.push(`${pad}    <li className="relative group">`);
-    lines.push(`${pad}      <button className="inline-flex h-9 w-max items-center justify-center gap-1 rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none">`);
+    lines.push(`${pad}      <button className="${escapeAttr(btnCls)}">`);
     lines.push(`${pad}        ${escapeJsx(item)}`);
     lines.push(`${pad}        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3 opacity-50"><path d="m6 9 6 6 6-6" /></svg>`);
     lines.push(`${pad}      </button>`);

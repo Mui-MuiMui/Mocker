@@ -37,6 +37,11 @@ interface CraftNavigationMenuProps {
   width?: string;
   height?: string;
   className?: string;
+  buttonBgClass?: string;
+  hoverBgClass?: string;
+  hoverTextClass?: string;
+  buttonBorderClass?: string;
+  buttonShadowClass?: string;
 }
 
 export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
@@ -44,6 +49,11 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  buttonBgClass = "",
+  hoverBgClass = "",
+  hoverTextClass = "",
+  buttonBorderClass = "",
+  buttonShadowClass = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -52,6 +62,7 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
   const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
 
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const itemList = (items || "").split(",").map((s) => s.trim()).filter(Boolean);
 
@@ -67,17 +78,24 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
       }}
     >
       <ul className="flex list-none items-center gap-1">
-        {itemList.map((item, i) => (
+        {itemList.map((item, i) => {
+          const isHighlighted = activeIndex === i || hoveredIndex === i;
+          return (
           <li key={i} className="relative">
             {/* Nav item button */}
             <button
               type="button"
               onClick={enabled ? () => setActiveIndex(activeIndex === i ? null : i) : undefined}
-              onMouseEnter={!enabled ? () => setActiveIndex(i) : undefined}
-              onMouseLeave={!enabled ? () => setActiveIndex(null) : undefined}
+              onMouseEnter={() => { if (!enabled) setActiveIndex(i); setHoveredIndex(i); }}
+              onMouseLeave={() => { if (!enabled) setActiveIndex(null); setHoveredIndex(null); }}
               className={cn(
-                "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none",
-                activeIndex === i && "bg-accent text-accent-foreground",
+                "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none",
+                buttonBgClass || "bg-background",
+                buttonBorderClass,
+                buttonShadowClass,
+                isHighlighted
+                  ? cn(hoverBgClass || "bg-accent", hoverTextClass || "text-accent-foreground")
+                  : (!hoverBgClass && "hover:bg-accent"),
               )}
             >
               {item}
@@ -110,7 +128,8 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
               ) : null,
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </nav>
   );
@@ -123,6 +142,11 @@ CraftNavigationMenu.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    buttonBgClass: "",
+    hoverBgClass: "",
+    hoverTextClass: "",
+    buttonBorderClass: "",
+    buttonShadowClass: "",
   },
   rules: {
     canDrag: () => true,
