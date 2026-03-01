@@ -3,12 +3,22 @@ import { Element, useEditor, useNode, type UserComponent } from "@craftjs/core";
 import type { ReactNode } from "react";
 import { cn } from "../../utils/cn";
 
+export interface ActionButton {
+  label: string;
+  bgClass?: string;
+  textClass?: string;
+  borderClass?: string;
+  borderWidth?: string;
+  shadowClass?: string;
+}
+
 export interface ColumnDef {
   key: string;
   label?: string;
   type?: "data" | "actions" | "slot";
   sortable?: boolean;
   width?: number; // px
+  actionButtons?: ActionButton[]; // type==="actions" のみ使用
 }
 
 const DEFAULT_COLUMN_DEFS: ColumnDef[] = [
@@ -396,12 +406,35 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                             </div>
                           )
                         ) : col.type === "actions" ? (
-                          <button
-                            type="button"
-                            className="flex h-8 w-8 items-center justify-center rounded-md text-base hover:bg-accent"
-                          >
-                            ···
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {col.actionButtons && col.actionButtons.length > 0
+                              ? col.actionButtons.map((btn, bi) => (
+                                  <button
+                                    key={bi}
+                                    type="button"
+                                    className={cn(
+                                      "rounded px-2 py-1 text-xs",
+                                      btn.bgClass,
+                                      btn.textClass,
+                                      btn.borderClass && "border",
+                                      btn.borderClass,
+                                      btn.borderWidth,
+                                      btn.shadowClass,
+                                      !btn.bgClass && "hover:bg-accent",
+                                    )}
+                                  >
+                                    {btn.label || "···"}
+                                  </button>
+                                ))
+                              : (
+                                  <button
+                                    type="button"
+                                    className="flex h-8 w-8 items-center justify-center rounded-md text-base hover:bg-accent"
+                                  >
+                                    ···
+                                  </button>
+                                )}
+                          </div>
                         ) : (
                           row[col.key] ?? ""
                         )}
