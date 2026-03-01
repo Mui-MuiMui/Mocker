@@ -15,6 +15,8 @@ interface CraftAvatarProps {
   width?: string;
   height?: string;
   className?: string;
+  tooltipText?: string;
+  tooltipSide?: string;
 }
 
 export const CraftAvatar: UserComponent<CraftAvatarProps> = ({
@@ -24,6 +26,8 @@ export const CraftAvatar: UserComponent<CraftAvatarProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  tooltipText = "",
+  tooltipSide = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -63,6 +67,8 @@ CraftAvatar.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    tooltipText: "",
+    tooltipSide: "",
   },
   rules: {
     canDrag: () => true,

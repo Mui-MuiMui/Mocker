@@ -146,7 +146,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Avatar",
     importFrom: "@/components/ui/avatar",
     importName: "Avatar",
-    propsMap: ["src", "fallback", "size", "className"],
+    propsMap: ["src", "fallback", "size", "className", "tooltipText", "tooltipSide"],
     isContainer: false,
   },
   CraftBreadcrumb: {
@@ -434,7 +434,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single", linkedMocPaths: "" },
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default", icon: "AlertCircle" },
   CraftAspectRatio: { ratio: 1.78, width: "auto", height: "auto" },
-  CraftAvatar: { src: "", fallback: "AB", size: "default", width: "auto", height: "auto" },
+  CraftAvatar: { src: "", fallback: "AB", size: "default", width: "auto", height: "auto", tooltipText: "", tooltipSide: "" },
   CraftBreadcrumb: { items: "Home,Products,Current" },
   CraftCheckbox: { label: "Accept terms", checked: false, disabled: false, tooltipText: "", tooltipSide: "" },
   CraftCollapsible: { open: false, triggerStyle: "chevron", linkedMocPath: "" },
