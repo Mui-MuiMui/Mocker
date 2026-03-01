@@ -1792,7 +1792,6 @@ function renderPagination(node: CraftNodeData, indent: number): string {
 
 function renderDatePicker(node: CraftNodeData, indent: number): string {
   const pad = "  ".repeat(indent);
-  const styleAttr = buildStyleAttr(node.props);
 
   const props: string[] = [];
 
@@ -1808,30 +1807,29 @@ function renderDatePicker(node: CraftNodeData, indent: number): string {
   if (node.props?.editable) props.push(`editable`);
   if (node.props?.disabled) props.push(`disabled`);
 
+  // width/height を style ではなく explicit prop として渡す（fallback が style を除外するため）
+  const w = normalizeCssSize(node.props?.width as string | undefined);
+  if (w && w !== "auto") props.push(`width="${escapeAttr(w)}"`);
+
+  const h = normalizeCssSize(node.props?.height as string | undefined);
+  if (h && h !== "auto") props.push(`height="${escapeAttr(h)}"`);
+
   const className = (node.props?.className as string) || "";
   if (className) props.push(`className="${escapeAttr(className)}"`);
 
-  const stylingProps: [string, string][] = [
-    ["calendarBorderClass", ""],
-    ["calendarShadowClass", ""],
-    ["todayBgClass", ""],
-    ["todayTextClass", ""],
-    ["todayBorderClass", ""],
-    ["todayShadowClass", ""],
-    ["selectedBgClass", ""],
-    ["selectedTextClass", ""],
-    ["selectedBorderClass", ""],
-    ["selectedShadowClass", ""],
-    ["buttonBgClass", ""],
-    ["hoverBgClass", ""],
+  const stylingProps = [
+    "calendarBorderClass", "calendarShadowClass",
+    "todayBgClass", "todayTextClass", "todayBorderClass", "todayShadowClass",
+    "selectedBgClass", "selectedTextClass", "selectedBorderClass", "selectedShadowClass",
+    "buttonBgClass", "hoverBgClass",
   ];
-  for (const [key] of stylingProps) {
+  for (const key of stylingProps) {
     const val = (node.props?.[key] as string) || "";
     if (val) props.push(`${key}="${escapeAttr(val)}"`);
   }
 
   const propsStr = props.length > 0 ? " " + props.join(" ") : "";
-  return `${pad}<DatePicker${propsStr}${styleAttr} />`;
+  return `${pad}<DatePicker${propsStr} />`;
 }
 
 function renderMenubar(node: CraftNodeData, indent: number): string {
