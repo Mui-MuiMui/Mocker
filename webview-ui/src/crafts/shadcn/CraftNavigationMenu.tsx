@@ -41,6 +41,7 @@ interface CraftNavigationMenuProps {
   hoverBgClass?: string;
   hoverTextClass?: string;
   buttonBorderClass?: string;
+  buttonBorderWidth?: string;
   buttonShadowClass?: string;
 }
 
@@ -53,6 +54,7 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
   hoverBgClass = "",
   hoverTextClass = "",
   buttonBorderClass = "",
+  buttonBorderWidth = "",
   buttonShadowClass = "",
 }) => {
   const {
@@ -91,6 +93,11 @@ export const CraftNavigationMenu: UserComponent<CraftNavigationMenuProps> = ({
               className={cn(
                 "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none",
                 buttonBgClass || "bg-background",
+                buttonBorderWidth === "0" ? "border-0"
+                  : buttonBorderWidth === "2" ? "border-2"
+                  : buttonBorderWidth === "4" ? "border-4"
+                  : buttonBorderWidth === "1" ? "border"
+                  : "",
                 buttonBorderClass,
                 buttonShadowClass,
                 isHighlighted
@@ -146,6 +153,7 @@ CraftNavigationMenu.craft = {
     hoverBgClass: "",
     hoverTextClass: "",
     buttonBorderClass: "",
+    buttonBorderWidth: "",
     buttonShadowClass: "",
   },
   rules: {

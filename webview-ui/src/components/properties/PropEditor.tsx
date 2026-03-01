@@ -90,6 +90,7 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     contentShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
   },
   "Navigation Menu": {
+    buttonBorderWidth: ["", "0", "1", "2", "4"],
     buttonShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
   },
 };

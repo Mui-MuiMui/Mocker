@@ -1502,11 +1502,18 @@ function renderNavigationMenu(
   const hoverBgClass = (node.props?.hoverBgClass as string) || "";
   const hoverTextClass = (node.props?.hoverTextClass as string) || "";
   const buttonBorderClass = (node.props?.buttonBorderClass as string) || "";
+  const buttonBorderWidth = (node.props?.buttonBorderWidth as string) || "";
   const buttonShadowClass = (node.props?.buttonShadowClass as string) || "";
+  const btnBwClass = buttonBorderWidth === "0" ? "border-0"
+    : buttonBorderWidth === "2" ? "border-2"
+    : buttonBorderWidth === "4" ? "border-4"
+    : buttonBorderWidth === "1" ? "border"
+    : "";
 
   const btnCls = [
     "inline-flex h-9 w-max items-center justify-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none",
     buttonBgClass || "bg-background",
+    btnBwClass,
     buttonBorderClass,
     buttonShadowClass,
     hoverBgClass ? `hover:${hoverBgClass}` : "hover:bg-accent",
