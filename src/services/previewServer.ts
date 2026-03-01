@@ -775,10 +775,22 @@ export function AspectRatio(props: any) {
 }`,
 
   avatar: `import { cn } from "@/components/ui/_cn";
+const SIZE_CLASSES: Record<string, string> = { sm: "h-8 w-8", default: "h-10 w-10", lg: "h-16 w-16" };
 export function Avatar(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full", className);
-  return <span className={cls} {...rest}>{children}</span>;
+  const { className = "", src, fallback = "AB", size = "default", style: _style, ...rest } = props;
+  const sizeClass = SIZE_CLASSES[size] ?? SIZE_CLASSES.default;
+  const cls = cn("relative flex shrink-0 overflow-hidden rounded-full", sizeClass, className);
+  return (
+    <span className={cls} {...rest}>
+      {src ? (
+        <img src={src} alt={fallback} className="aspect-square h-full w-full" />
+      ) : (
+        <span className="flex h-full w-full items-center justify-center rounded-full bg-muted text-sm font-medium">
+          {fallback}
+        </span>
+      )}
+    </span>
+  );
 }`,
 
   breadcrumb: `export function Breadcrumb(props: any) {

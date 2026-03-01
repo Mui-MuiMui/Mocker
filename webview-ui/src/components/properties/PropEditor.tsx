@@ -78,6 +78,9 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Dialog: {
     variant: ["default", "destructive", "outline", "secondary", "ghost", "link"],
   },
+  Avatar: {
+    size: ["default", "sm", "lg"],
+  },
   Sheet: {
     side: ["top", "right", "bottom", "left"],
   },
@@ -223,6 +226,8 @@ const ABSOLUTE_DEFAULTS: Record<string, unknown> = {
 const COMPONENT_EXCLUDED_PROPS: Record<string, Set<string>> = {
   // AspectRatio: keepAspectRatio は RenderNode 内部用、ユーザーには非表示
   AspectRatio: new Set(["keepAspectRatio"]),
+  // Avatar: width/height はドラッグリサイズ用に内部で保持するが PropEditor には非表示
+  Avatar: new Set(["width", "height"]),
 };
 
 export function PropEditor() {
@@ -888,8 +893,8 @@ export function PropEditor() {
       );
     }
 
-    // Custom UI for Image src prop (text input + file browse button)
-    if (componentName === "Image" && key === "src") {
+    // Custom UI for Image/Avatar src prop (text input + file browse button)
+    if ((componentName === "Image" || componentName === "Avatar") && key === "src") {
       return (
         <div key={key} className="flex flex-col gap-1">
           <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
