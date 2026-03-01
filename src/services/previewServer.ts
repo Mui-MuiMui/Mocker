@@ -1504,5 +1504,15 @@ export function ContextMenuContent(props: any) {
   const ctx = useContext(Ctx);
   if (!ctx?.pos) return null;
   return <><div className="fixed inset-0 z-40" onClick={() => ctx?.setPos(null)} /><div className="fixed z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md" style={{ left: ctx.pos.x, top: ctx.pos.y }}>{props.children}</div></>;
+}
+export function ContextMenuItem(props: any) {
+  return <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent">{props.children}</div>;
+}
+export function ContextMenuCheckboxItem(props: any) {
+  return <div className="relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent"><span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">{props.checked ? "✓" : ""}</span>{props.children}</div>;
+}
+export function ContextMenuSeparator() { return <div className="my-1 h-px bg-border" />; }
+export function ContextMenuLabel(props: any) {
+  return <div className="px-2 py-1.5 text-xs font-semibold">{props.children}</div>;
 }`,
 };

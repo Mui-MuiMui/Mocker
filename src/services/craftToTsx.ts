@@ -416,7 +416,12 @@ const OVERLAY_IMPORTS: Record<string, { from: string; names: string[] }> = {
 
 const TOOLTIP_IMPORT = { from: "@/components/ui/tooltip", names: ["TooltipProvider", "Tooltip", "TooltipTrigger", "TooltipContent"] };
 
-const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["ContextMenu", "ContextMenuTrigger", "ContextMenuContent"] };
+const CONTEXT_MENU_IMPORT = { from: "@/components/ui/context-menu", names: ["ContextMenu", "ContextMenuTrigger", "ContextMenuContent", "ContextMenuItem", "ContextMenuCheckboxItem", "ContextMenuSeparator", "ContextMenuLabel"] };
+
+/** Default ContextMenu data (matches DEFAULT_CONTEXTMENU_DATA in CraftContextMenu.tsx) */
+const DEFAULT_CONTEXTMENU_DATA_STR = JSON.stringify([
+  { label: "", items: [{ type: "item", label: "Open", shortcut: "Ctrl+O" }, { type: "item", label: "Edit" }, { type: "separator" }, { type: "checkbox", label: "Show Details", checked: false }, { type: "separator" }, { type: "item", label: "Delete" }] },
+]);
 
 /** Default Menubar data (matches DEFAULT_MENUBAR_DATA in CraftMenubar.tsx) */
 const DEFAULT_MENUBAR_DATA_STR = JSON.stringify([
@@ -475,7 +480,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftSheet: { triggerText: "Open Sheet", side: "right", linkedMocPath: "" },
   CraftDrawer: { triggerText: "Open Drawer", linkedMocPath: "" },
   CraftDropdownMenu: { triggerText: "Open Menu", linkedMocPath: "" },
-  CraftContextMenu: { linkedMocPath: "" },
+  CraftContextMenu: { menuData: DEFAULT_CONTEXTMENU_DATA_STR },
   CraftPopover: { triggerText: "Open Popover", linkedMocPath: "" },
   CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "" },
   CraftNavigationMenu: {},
@@ -620,6 +625,14 @@ export function craftStateToTsx(
       for (const name of CONTEXT_MENU_IMPORT.names) {
         addImport(CONTEXT_MENU_IMPORT.from, name);
       }
+    }
+
+    // CraftContextMenu: add full context-menu sub-component imports
+    if (resolvedName === "CraftContextMenu") {
+      for (const name of CONTEXT_MENU_IMPORT.names) {
+        addImport(CONTEXT_MENU_IMPORT.from, name);
+      }
+      return;
     }
 
     // CraftTable: add table sub-component imports and traverse cell slot linkedNodes
@@ -1092,6 +1105,11 @@ export function craftStateToTsx(
     // Menubar special case: render from JSON menuData
     if (resolvedName === "CraftMenubar") {
       return `${mocComments}\n${renderMenubar(node, indent)}`;
+    }
+
+    // ContextMenu special case: render from JSON menuData
+    if (resolvedName === "CraftContextMenu") {
+      return `${mocComments}\n${renderContextMenu(node, indent)}`;
     }
 
     // Table special case: render as LinkedNodes table
@@ -1577,6 +1595,85 @@ interface MenuItemDef {
 interface TopLevelMenuDef {
   label: string;
   items: MenuItemDef[];
+}
+
+function renderContextMenu(node: CraftNodeData, indent: number): string {
+  const pad = "  ".repeat(indent);
+  let menus: TopLevelMenuDef[] = [];
+  try {
+    const parsed = JSON.parse((node.props?.menuData as string) || "[]");
+    if (Array.isArray(parsed)) menus = parsed as TopLevelMenuDef[];
+  } catch {
+    menus = [];
+  }
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  // Panel styling
+  const panelBgClass = (node.props?.panelBgClass as string) || "";
+  const panelTextClass = (node.props?.panelTextClass as string) || "";
+  const panelBorderClass = (node.props?.panelBorderClass as string) || "";
+  const panelBorderWidth = (node.props?.panelBorderWidth as string) || "";
+  const panelShadowClass = (node.props?.panelShadowClass as string) || "";
+  const shortcutTextClass = (node.props?.shortcutTextClass as string) || "";
+  const shortcutCls = shortcutTextClass || "text-muted-foreground";
+
+  const panelBwClass = panelBorderWidth === "0" ? "border-0"
+    : panelBorderWidth === "2" ? "border-2"
+    : panelBorderWidth === "4" ? "border-4"
+    : panelBorderWidth === "8" ? "border-8"
+    : panelBorderWidth === "1" ? "border" : "border";
+
+  const panelCls = [
+    "min-w-[160px]",
+    panelBgClass || "bg-popover",
+    panelBwClass,
+    panelBorderClass,
+    panelShadowClass || "shadow-md",
+    panelTextClass,
+    className,
+  ].filter(Boolean).join(" ");
+
+  const triggerCls = "flex items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<ContextMenu>`);
+  lines.push(`${pad}  <ContextMenuTrigger asChild>`);
+  lines.push(`${pad}    <div className="${escapeAttr(triggerCls)}"${styleAttr}>`);
+  lines.push(`${pad}      Right-click me`);
+  lines.push(`${pad}    </div>`);
+  lines.push(`${pad}  </ContextMenuTrigger>`);
+  lines.push(`${pad}  <ContextMenuContent className="${escapeAttr(panelCls)}">`);
+
+  for (let sectionIdx = 0; sectionIdx < menus.length; sectionIdx++) {
+    const menu = menus[sectionIdx];
+    if (sectionIdx > 0) {
+      lines.push(`${pad}    <ContextMenuSeparator />`);
+    }
+    if (menu.label) {
+      lines.push(`${pad}    <ContextMenuLabel>${escapeJsx(menu.label)}</ContextMenuLabel>`);
+    }
+    for (const item of (menu.items || [])) {
+      if (item.type === "separator") {
+        lines.push(`${pad}    <ContextMenuSeparator />`);
+      } else if (item.type === "checkbox") {
+        const checkedAttr = item.checked ? " checked" : "";
+        lines.push(`${pad}    <ContextMenuCheckboxItem${checkedAttr}>`);
+        lines.push(`${pad}      ${escapeJsx(item.label || "")}`);
+        if (item.shortcut) lines.push(`${pad}      <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}    </ContextMenuCheckboxItem>`);
+      } else {
+        lines.push(`${pad}    <ContextMenuItem>`);
+        lines.push(`${pad}      ${escapeJsx(item.label || "")}`);
+        if (item.shortcut) lines.push(`${pad}      <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
+        lines.push(`${pad}    </ContextMenuItem>`);
+      }
+    }
+  }
+
+  lines.push(`${pad}  </ContextMenuContent>`);
+  lines.push(`${pad}</ContextMenu>`);
+  return lines.join("\n");
 }
 
 function renderMenubar(node: CraftNodeData, indent: number): string {

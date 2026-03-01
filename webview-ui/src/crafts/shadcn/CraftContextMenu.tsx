@@ -1,22 +1,69 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { type MenuData, type MenuItemDef, type TopLevelMenuDef } from "./CraftMenubar";
+
+export const DEFAULT_CONTEXTMENU_DATA: MenuData = [
+  {
+    label: "",
+    items: [
+      { type: "item", label: "Open", shortcut: "Ctrl+O" },
+      { type: "item", label: "Edit" },
+      { type: "separator" },
+      { type: "checkbox", label: "Show Details", checked: false },
+      { type: "separator" },
+      { type: "item", label: "Delete" },
+    ],
+  },
+];
+
+function parseMenuData(raw: string): MenuData {
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed as MenuData;
+    return DEFAULT_CONTEXTMENU_DATA;
+  } catch {
+    return DEFAULT_CONTEXTMENU_DATA;
+  }
+}
 
 interface CraftContextMenuProps {
-  linkedMocPath?: string;
+  menuData?: string;
   width?: string;
   height?: string;
   className?: string;
+  panelBgClass?: string;
+  panelTextClass?: string;
+  panelBorderClass?: string;
+  panelBorderWidth?: string;
+  panelShadowClass?: string;
+  shortcutTextClass?: string;
 }
 
 export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
-  linkedMocPath = "",
+  menuData = JSON.stringify(DEFAULT_CONTEXTMENU_DATA),
   width = "200px",
-  height = "100px",
+  height = "auto",
   className = "",
+  panelBgClass = "",
+  panelTextClass = "",
+  panelBorderClass = "",
+  panelBorderWidth = "",
+  panelShadowClass = "",
+  shortcutTextClass = "",
 }) => {
   const {
     connectors: { connect, drag },
   } = useNode();
+
+  const menus = parseMenuData(menuData);
+
+  const panelBorderWidthClass =
+    panelBorderWidth === "0" ? "border-0"
+    : panelBorderWidth === "2" ? "border-2"
+    : panelBorderWidth === "4" ? "border-4"
+    : panelBorderWidth === "8" ? "border-8"
+    : panelBorderWidth === "1" ? "border"
+    : "border";
 
   return (
     <div
@@ -24,15 +71,57 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
         if (ref) connect(drag(ref));
       }}
       className={cn(
-        "flex items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground",
+        "flex flex-col rounded-md p-1",
+        panelBgClass || "bg-popover",
+        panelBorderWidthClass,
+        panelBorderClass,
+        panelShadowClass || "shadow-md",
+        panelTextClass,
         className,
       )}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
-      Right-click area
-      {linkedMocPath && (
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-3 w-3 opacity-50"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      )}
+      <div className="px-2 py-1 text-xs text-muted-foreground font-medium border-b border-border mb-1">
+        右クリックメニュー
+      </div>
+      {menus.map((menu: TopLevelMenuDef, sectionIdx: number) => (
+        <div key={sectionIdx}>
+          {sectionIdx > 0 && <div className="my-1 h-px bg-border" />}
+          {menu.label && (
+            <div className="px-2 py-1.5 text-xs font-semibold">{menu.label}</div>
+          )}
+          {menu.items.map((item: MenuItemDef, j: number) => {
+            if (item.type === "separator") {
+              return <div key={j} className="my-1 h-px bg-border" />;
+            }
+            if (item.type === "checkbox") {
+              return (
+                <div
+                  key={j}
+                  className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent"
+                >
+                  <span className="mr-2 w-4 text-center text-xs">{item.checked ? "✓" : ""}</span>
+                  <span className="flex-1">{item.label}</span>
+                  {item.shortcut && (
+                    <span className={cn("ml-auto text-xs", shortcutTextClass || "text-muted-foreground")}>{item.shortcut}</span>
+                  )}
+                </div>
+              );
+            }
+            return (
+              <div
+                key={j}
+                className="flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent"
+              >
+                <span className="flex-1">{item.label}</span>
+                {item.shortcut && (
+                  <span className={cn("ml-auto text-xs", shortcutTextClass || "text-muted-foreground")}>{item.shortcut}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ))}
     </div>
   );
 };
@@ -40,10 +129,16 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
 CraftContextMenu.craft = {
   displayName: "ContextMenu",
   props: {
-    linkedMocPath: "",
+    menuData: JSON.stringify(DEFAULT_CONTEXTMENU_DATA),
     width: "200px",
-    height: "100px",
+    height: "auto",
     className: "",
+    panelBgClass: "",
+    panelTextClass: "",
+    panelBorderClass: "",
+    panelBorderWidth: "",
+    panelShadowClass: "",
+    shortcutTextClass: "",
   },
   rules: {
     canDrag: () => true,
