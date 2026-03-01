@@ -6,6 +6,7 @@ import { TableMetaEditor } from "./TableMetaEditor";
 import { TabMetaEditor } from "./TabMetaEditor";
 import { ResizableMetaEditor } from "./ResizableMetaEditor";
 import { MenubarMetaEditor } from "./MenubarMetaEditor";
+import { ColumnDefsEditor } from "./ColumnDefsEditor";
 import { useEditorStore } from "../../stores/editorStore";
 
 /** Mapping of property names to their allowed values (select options). */
@@ -419,18 +420,14 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
-    // Custom UI for columnDefs (Data Table column definitions JSON)
-    if (key === "columnDefs") {
+    // Custom UI for columnDefs (Data Table column definitions editor)
+    if (key === "columnDefs" && selectedNodeId) {
       return (
-        <div key={key} className="flex flex-col gap-1">
-          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">columnDefs (JSON)</label>
-          <textarea
-            value={String(value ?? "")}
-            onChange={(e) => handlePropChange(key, e.target.value)}
-            rows={6}
-            className={`${INPUT_CLASS} w-full resize-y font-mono text-[10px]`}
-          />
-        </div>
+        <ColumnDefsEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
       );
     }
 
