@@ -1716,6 +1716,7 @@ export function DataTable(props) {
     selectable = false, columnToggle = false, stickyHeader = false, pinnedLeft = 0,
     className = "", headerBgClass = "", hoverRowClass = "", selectedRowClass = "",
     headerTextClass = "", headerHoverTextClass = "", headerBorderClass = "", tableBorderClass = "",
+    sortIconClass = "", filterIconClass = "",
     style: _style, width, height, ...rest
   } = props;
   const cols = parseColDefs(columns);
@@ -1786,17 +1787,17 @@ export function DataTable(props) {
     </div>}
     <div className={cn("overflow-auto rounded-md border", borderCls)}>
       <table className="min-w-full caption-bottom border-collapse text-sm">
-        <thead className={cn(headerBgClass || "bg-muted/50")} style={headerSt}>
+        <thead className={cn(headerBgClass || "bg-background")} style={headerSt}>
           <tr>
             {selectable && <th className={cn("w-10 px-2 py-2 text-left border-b", headerTextClass, headerBorderClass)} style={{ width: 40 }}><input type="checkbox" checked={displayRows.length > 0 && selectedRows.size === displayRows.length} onChange={() => selectedRows.size === displayRows.length ? setSelectedRows(new Set()) : setSelectedRows(new Set(displayRows.map((_, i) => i)))} /></th>}
             {visibleCols.map((col, ci) => {
               const key = col.id ?? col.accessorKey ?? String(ci);
               const isSorted = sortCol === key;
-              return <th key={key} className={cn("px-3 py-2 text-left text-xs font-medium border-b", headerTextClass || "text-muted-foreground", headerBorderClass, ci < pinnedLeftNum && (headerBgClass || "bg-muted/50"), col.enableSorting && \`cursor-pointer select-none \${headerHoverTextClass ? \`hover:\${headerHoverTextClass}\` : "hover:text-foreground"}\`)} style={{ ...(col.size ? { width: col.size, minWidth: col.size } : {}), ...getPinnedStyle(ci) }} onClick={() => col.enableSorting && handleSort(key)}>
+              return <th key={key} className={cn("px-3 py-2 text-left text-xs font-medium border-b", headerTextClass || "text-muted-foreground", headerBorderClass, ci < pinnedLeftNum && (headerBgClass || "bg-background"), col.enableSorting && \`cursor-pointer select-none \${headerHoverTextClass ? \`hover:\${headerHoverTextClass}\` : "hover:text-foreground"}\`)} style={{ ...(col.size ? { width: col.size, minWidth: col.size } : {}), ...getPinnedStyle(ci) }} onClick={() => col.enableSorting && handleSort(key)}>
                 <div className="flex items-center gap-1">
                   <span>{getHeader(col)}</span>
-                  {col.enableSorting && <span className="text-muted-foreground/60">{isSorted ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>}
-                  {filterType === "header" && col.accessorKey && <button type="button" className={cn("ml-auto rounded p-0.5 text-xs opacity-40 hover:opacity-100", activeHeaderFilter === key && "text-primary opacity-100")} onClick={e => { e.stopPropagation(); setActiveHeaderFilter(v => v === key ? null : key); }}>⌕</button>}
+                  {col.enableSorting && <span className={cn(sortIconClass || "text-muted-foreground/60")}>{isSorted ? (sortDir === "asc" ? "↑" : "↓") : "↕"}</span>}
+                  {filterType === "header" && col.accessorKey && <button type="button" className={cn("ml-auto rounded p-0.5 text-xs opacity-40 hover:opacity-100", filterIconClass || "text-muted-foreground", activeHeaderFilter === key && "text-primary opacity-100")} onClick={e => { e.stopPropagation(); setActiveHeaderFilter(v => v === key ? null : key); }}>⌕</button>}
                 </div>
                 {filterType === "header" && activeHeaderFilter === key && <input type="text" placeholder="Filter..." className="mt-1 w-full rounded border border-border bg-background px-1 py-0.5 text-xs font-normal" value={headerFilters[key] ?? ""} onChange={e => setHeaderFilters(p => ({ ...p, [key]: e.target.value }))} onClick={e => e.stopPropagation()} autoFocus />}
               </th>;

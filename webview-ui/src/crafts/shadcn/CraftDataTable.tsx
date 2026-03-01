@@ -103,6 +103,8 @@ interface CraftDataTableProps {
   headerHoverTextClass?: string;
   headerBorderClass?: string;
   tableBorderClass?: string;
+  sortIconClass?: string;
+  filterIconClass?: string;
 }
 
 export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
@@ -125,6 +127,8 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
   headerHoverTextClass = "",
   headerBorderClass = "",
   tableBorderClass = "",
+  sortIconClass = "",
+  filterIconClass = "",
 }) => {
   const { connectors: { connect, drag } } = useNode();
   const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
@@ -323,7 +327,7 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                       "px-3 py-2 text-left text-xs font-medium border-b",
                       headerTextClass || "text-muted-foreground",
                       headerBorderClass,
-                      colIdx < pinnedLeftNum && (headerBgClass || "bg-muted/50"),
+                      colIdx < pinnedLeftNum && (headerBgClass || "bg-background"),
                       col.sortable && !enabled && cn(
                         "cursor-pointer select-none",
                         headerHoverTextClass ? `hover:${headerHoverTextClass}` : "hover:text-foreground",
@@ -335,7 +339,7 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                     <div className="flex items-center gap-1">
                       <span>{col.label ?? col.key}</span>
                       {col.sortable && (
-                        <span className="text-muted-foreground/60">
+                        <span className={cn(sortIconClass || "text-muted-foreground/60")}>
                           {isSorted ? (sortDir === "asc" ? "↑" : "↓") : "↕"}
                         </span>
                       )}
@@ -344,6 +348,7 @@ export const CraftDataTable: UserComponent<CraftDataTableProps> = ({
                           type="button"
                           className={cn(
                             "ml-auto rounded p-0.5 text-xs opacity-40 hover:opacity-100",
+                            filterIconClass || "text-muted-foreground",
                             activeHeaderFilter === col.key && "text-primary opacity-100",
                           )}
                           onClick={(e) => {
@@ -540,6 +545,8 @@ CraftDataTable.craft = {
     headerHoverTextClass: "",
     headerBorderClass: "",
     tableBorderClass: "",
+    sortIconClass: "",
+    filterIconClass: "",
   },
   rules: {
     canDrag: () => true,
