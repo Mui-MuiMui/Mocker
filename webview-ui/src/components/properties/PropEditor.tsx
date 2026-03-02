@@ -240,6 +240,24 @@ const GROUP_ORDER: PropGroup[] = ["common", "flow", "absolute", "component"];
 /** 共通プロパティ (width/height) — 常時表示 */
 const COMMON_KEYS = new Set(["width", "height"]);
 
+/** インタラクション共通プロパティ — 対象外コンポーネント以外で常時表示 */
+const INTERACTION_KEYS = new Set(["tooltipText", "tooltipSide", "tooltipTrigger", "contextMenuMocPath"]);
+
+/** インタラクションプロパティを表示しないコンポーネント（Tooltip/ContextMenu自身・スロット系） */
+const INTERACTION_EXCLUDED_COMPONENTS = new Set([
+  "Tooltip", "ContextMenu", "FreeCanvas",
+  "ResizablePanelSlot", "TableCellSlot", "DataTableSlot",
+  "NavMenuSlot", "CollapsibleSlot", "TabContentSlot",
+]);
+
+/** インタラクションプロパティのデフォルト値 */
+const INTERACTION_DEFAULTS: Record<string, unknown> = {
+  tooltipText: "",
+  tooltipSide: "",
+  tooltipTrigger: "hover",
+  contextMenuMocPath: "",
+};
+
 /** フロー配置専用プロパティ — layoutMode === "flow" のみ表示 */
 const FLOW_KEYS = new Set([
   "display", "flexDirection", "justifyContent", "alignItems", "gap", "gridCols",
@@ -399,18 +417,25 @@ export function PropEditor() {
     ? Array.from(ABSOLUTE_KEYS).map((k) => [k, selectedProps[k] ?? ABSOLUTE_DEFAULTS[k]])
     : [];
 
-  // コンポーネントグループ: craftDefaultProps に定義されているキーのうち、レイアウト系を除いたもの
+  // インタラクション共通: 対象外コンポーネント以外で常時表示、selectedProps に無ければデフォルト値
+  const isInteractionExcluded = INTERACTION_EXCLUDED_COMPONENTS.has(componentName);
+  const interactionEntries: [string, unknown][] = isInteractionExcluded
+    ? []
+    : Array.from(INTERACTION_KEYS).map((k) => [k, selectedProps[k] ?? INTERACTION_DEFAULTS[k]]);
+
+  // コンポーネントグループ: craftDefaultProps に定義されているキーのうち、レイアウト系・インタラクション系を除いたもの
   const componentEntries: [string, unknown][] = Object.entries(selectedProps).filter(
     ([key]) =>
       key !== "children" &&
       key !== "className" &&
       !LAYOUT_ALL_KEYS.has(key) &&
+      !INTERACTION_KEYS.has(key) &&
       !excludedProps.has(key) &&
       (craftDefaultProps ? key in craftDefaultProps : true),
   );
 
   const grouped = new Map<PropGroup, [string, unknown][]>([
-    ["common", commonEntries],
+    ["common", [...commonEntries, ...interactionEntries]],
     ["flow", flowEntries],
     ["absolute", absoluteEntries],
     ["component", componentEntries],
