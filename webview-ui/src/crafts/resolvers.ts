@@ -471,6 +471,14 @@ export const paletteItems: PaletteItem[] = [
   },
   // Phase 4: Overlay components (standalone kept in palette)
   {
+    resolverKey: "CraftHoverCard",
+    label: "Hover Card",
+    category: "shadcn",
+    icon: "MousePointer",
+    defaultProps: {},
+    enabled: true,
+  },
+  {
     resolverKey: "CraftNavigationMenu",
     label: "Navigation Menu",
     category: "shadcn",

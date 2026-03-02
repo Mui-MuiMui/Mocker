@@ -422,6 +422,7 @@ const OVERLAY_IMPORTS: Record<string, { from: string; names: string[] }> = {
   drawer: { from: "@/components/ui/drawer", names: ["Drawer", "DrawerTrigger", "DrawerContent"] },
   popover: { from: "@/components/ui/popover", names: ["Popover", "PopoverTrigger", "PopoverContent"] },
   "dropdown-menu": { from: "@/components/ui/dropdown-menu", names: ["DropdownMenu", "DropdownMenuTrigger", "DropdownMenuContent", "DropdownMenuItem", "DropdownMenuCheckboxItem", "DropdownMenuSeparator", "DropdownMenuLabel", "DropdownMenuShortcut"] },
+  "hover-card": { from: "@/components/ui/hover-card", names: ["HoverCard", "HoverCardTrigger", "HoverCardContent"] },
 };
 
 const TOOLTIP_IMPORT = { from: "@/components/ui/tooltip", names: ["TooltipProvider", "Tooltip", "TooltipTrigger", "TooltipContent"] };
@@ -517,7 +518,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftDropdownMenu: { triggerText: "Open Menu", menuData: DEFAULT_DROPDOWN_DATA_STR },
   CraftContextMenu: { menuData: DEFAULT_CONTEXTMENU_DATA_STR },
   CraftPopover: { triggerText: "Open Popover", linkedMocPath: "" },
-  CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "" },
+  CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "", cardBorderRadius: "rounded-md" },
   CraftNavigationMenu: {},
   CraftMenubar: { menuData: DEFAULT_MENUBAR_DATA_STR },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
@@ -662,6 +663,15 @@ export function craftStateToTsx(
       }
     }
 
+    // Collect hover-card imports for containers with hoverCardMocPath
+    const hoverCardMocPathProp = node.props?.hoverCardMocPath as string | undefined;
+    if (hoverCardMocPathProp) {
+      const hcImport = OVERLAY_IMPORTS["hover-card"];
+      for (const name of hcImport.names) {
+        addImport(hcImport.from, name);
+      }
+    }
+
     // CraftContextMenu: exports <ContextMenuContent> + item-level components
     if (resolvedName === "CraftContextMenu") {
       for (const name of ["ContextMenuContent", "ContextMenuItem", "ContextMenuCheckboxItem", "ContextMenuSeparator", "ContextMenuLabel"]) {
@@ -674,6 +684,18 @@ export function craftStateToTsx(
     if (resolvedName === "CraftDropdownMenu") {
       for (const name of OVERLAY_IMPORTS["dropdown-menu"].names) {
         addImport(OVERLAY_IMPORTS["dropdown-menu"].from, name);
+      }
+      return;
+    }
+
+    // CraftHoverCard: add hover-card imports when linkedMocPath is set
+    if (resolvedName === "CraftHoverCard") {
+      const linkedMocPath = node.props?.linkedMocPath as string | undefined;
+      if (linkedMocPath) {
+        const hcImport = OVERLAY_IMPORTS["hover-card"];
+        for (const name of hcImport.names) {
+          addImport(hcImport.from, name);
+        }
       }
       return;
     }
@@ -946,6 +968,25 @@ export function craftStateToTsx(
     ].join("\n");
   }
 
+  /** Wrap rendered element with HoverCard if hoverCardMocPath is set */
+  function wrapWithHoverCard(rendered: string, props: Record<string, unknown>, pad: string): string {
+    const hoverCardMocPath = props?.hoverCardMocPath as string | undefined;
+    if (!hoverCardMocPath) return rendered;
+
+    const side = (props?.hoverCardSide as string) || "bottom";
+    const contentComment = `{/* linked: ${escapeJsx(hoverCardMocPath)} */}`;
+    return [
+      `${pad}<HoverCard>`,
+      `${pad}  <HoverCardTrigger asChild>`,
+      rendered,
+      `${pad}  </HoverCardTrigger>`,
+      `${pad}  <HoverCardContent side="${side}">`,
+      `${pad}    ${contentComment}`,
+      `${pad}  </HoverCardContent>`,
+      `${pad}</HoverCard>`,
+    ].join("\n");
+  }
+
   function renderNode(nodeId: string, indent: number): string {
     const node = craftState[nodeId];
     if (!node) return "";
@@ -956,9 +997,14 @@ export function craftStateToTsx(
 
     // Common interaction wrappers applied to all components
     const tooltipTrigger = (node.props?.tooltipTrigger as string) || "hover";
+    const hoverCardMocPath = node.props?.hoverCardMocPath as string | undefined;
     const applyCommonWrappers = (s: string): string => {
       let r = wrapWithContextMenu(s, node.props, pad);
-      r = wrapWithTooltip(r, node.props, pad, tooltipTrigger);
+      r = wrapWithHoverCard(r, node.props, pad);
+      // HoverCard が設定されている場合は Tooltip をスキップ（HoverCard 優先）
+      if (!hoverCardMocPath) {
+        r = wrapWithTooltip(r, node.props, pad, tooltipTrigger);
+      }
       return r;
     };
 
@@ -1184,6 +1230,30 @@ export function craftStateToTsx(
     // DropdownMenu special case: render from JSON menuData
     if (resolvedName === "CraftDropdownMenu") {
       return applyCommonWrappers(`${mocComments}\n${renderDropdownMenu(node, indent)}`);
+    }
+
+    // HoverCard special case: wrap trigger span with HoverCard if linkedMocPath is set
+    if (resolvedName === "CraftHoverCard") {
+      const linkedMocPath = node.props?.linkedMocPath as string | undefined;
+      if (linkedMocPath) {
+        const triggerText = (node.props?.triggerText as string) || "Hover me";
+        const side = (node.props?.hoverCardSide as string) || "bottom";
+        const userCls = (node.props?.className as string) || "";
+        const triggerCls = ["text-sm font-medium underline underline-offset-4 cursor-pointer", userCls].filter(Boolean).join(" ");
+        const triggerSpan = `${pad}  <span className="${triggerCls}"${styleAttr}>${escapeJsx(triggerText)}</span>`;
+        const contentComment = `{/* linked: ${escapeJsx(linkedMocPath)} */}`;
+        const hoverCardTsx = [
+          `${pad}<HoverCard>`,
+          `${pad}  <HoverCardTrigger asChild>`,
+          triggerSpan,
+          `${pad}  </HoverCardTrigger>`,
+          `${pad}  <HoverCardContent side="${side}">`,
+          `${pad}    ${contentComment}`,
+          `${pad}  </HoverCardContent>`,
+          `${pad}</HoverCard>`,
+        ].join("\n");
+        return applyCommonWrappers(`${mocComments}\n${hoverCardTsx}`);
+      }
     }
 
     // Pagination special case: render full pagination structure

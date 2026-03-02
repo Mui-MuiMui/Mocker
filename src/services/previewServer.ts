@@ -1720,6 +1720,31 @@ export function ContextMenuLabel(props: any) {
   return <div className="px-2 py-1.5 text-xs font-semibold">{props.children}</div>;
 }`,
 
+  "hover-card": `import { createContext, useContext, useState } from "react";
+const Ctx = createContext<any>(null);
+export function HoverCard(props: any) {
+  const [show, setShow] = useState(false);
+  return <Ctx.Provider value={{ show, setShow }}><div className="relative inline-block">{props.children}</div></Ctx.Provider>;
+}
+export function HoverCardTrigger(props: any) {
+  const ctx = useContext(Ctx);
+  return <span onMouseEnter={() => ctx?.setShow(true)} onMouseLeave={() => ctx?.setShow(false)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+}
+export function HoverCardContent(props: any) {
+  const ctx = useContext(Ctx);
+  if (!ctx?.show) return null;
+  const side = props.side || "bottom";
+  const pos: Record<string, string> = {
+    top: "left-0 bottom-full mb-2",
+    bottom: "left-0 top-full mt-2",
+    left: "top-0 right-full mr-2",
+    right: "top-0 left-full ml-2",
+  };
+  const defaultCls = "min-w-[200px] rounded-md border bg-popover p-4 text-popover-foreground shadow-md";
+  const cls = ("absolute z-50 " + (pos[side] || pos.bottom) + " " + (props.className || defaultCls)).trim();
+  return <div className={cls} style={props.style} onMouseEnter={() => ctx?.setShow(true)} onMouseLeave={() => ctx?.setShow(false)}>{props.children}</div>;
+}`,
+
   "data-table": `import { cn } from "@/components/ui/_cn";
 import { useState } from "react";
 function parseColDefs(cols) {
