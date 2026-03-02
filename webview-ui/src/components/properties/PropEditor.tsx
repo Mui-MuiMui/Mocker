@@ -258,7 +258,16 @@ const GROUP_ORDER: PropGroup[] = ["common", "flow", "absolute", "component"];
 const COMMON_KEYS = new Set(["width", "height"]);
 
 /** インタラクション共通プロパティ — 対象外コンポーネント以外で常時表示 */
-const INTERACTION_KEYS = new Set(["tooltipText", "tooltipSide", "tooltipTrigger", "contextMenuMocPath", "hoverCardMocPath", "hoverCardSide", "hoverCardTrigger"]);
+const INTERACTION_KEYS = new Set(["tooltipText", "tooltipSide", "tooltipTrigger", "hoverCardMocPath", "hoverCardSide", "hoverCardTrigger", "contextMenuMocPath"]);
+
+/** インタラクション共通プロパティのグループ間セパレーターマーカー（表示順に定義） */
+const INTERACTION_ORDERED: string[] = [
+  "tooltipText", "tooltipSide", "tooltipTrigger",
+  "__sep__",
+  "hoverCardMocPath", "hoverCardSide", "hoverCardTrigger",
+  "__sep__",
+  "contextMenuMocPath",
+];
 
 /** インタラクションプロパティを表示しないコンポーネント（Tooltip/ContextMenu自身・スロット系） */
 const INTERACTION_EXCLUDED_COMPONENTS = new Set([
@@ -441,7 +450,7 @@ export function PropEditor() {
   const isInteractionExcluded = INTERACTION_EXCLUDED_COMPONENTS.has(componentName);
   const interactionEntries: [string, unknown][] = isInteractionExcluded
     ? []
-    : Array.from(INTERACTION_KEYS).map((k) => [k, selectedProps[k] ?? INTERACTION_DEFAULTS[k]]);
+    : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (selectedProps[k] ?? INTERACTION_DEFAULTS[k])]);
 
   // コンポーネントグループ: craftDefaultProps に定義されているキーのうち、レイアウト系・インタラクション系を除いたもの
   const componentEntries: [string, unknown][] = Object.entries(selectedProps).filter(
@@ -1336,11 +1345,15 @@ export function PropEditor() {
             >
               <span className="text-[10px]">{isCollapsed ? "\u25b6" : "\u25bc"}</span>
               {GROUP_LABELS[group]}
-              <span className="ml-auto text-[10px] font-normal opacity-60">{entries.length}</span>
+              <span className="ml-auto text-[10px] font-normal opacity-60">{entries.filter(([k]) => k !== "__sep__").length}</span>
             </button>
             {!isCollapsed && (
               <div className="flex flex-col gap-2">
-                {entries.map(([key, value]) => renderProp(key, value))}
+                {entries.map(([key, value], i) =>
+                  key === "__sep__"
+                    ? <hr key={`sep-${i}`} className="border-[var(--vscode-panel-border,#444)]" />
+                    : renderProp(key, value)
+                )}
               </div>
             )}
           </div>
