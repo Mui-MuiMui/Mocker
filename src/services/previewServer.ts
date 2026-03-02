@@ -1620,33 +1620,35 @@ export function PopoverContent(props: any) {
 const Ctx = createContext<any>(null);
 export function DropdownMenu(props: any) {
   const [open, setOpen] = useState(false);
-  return <Ctx.Provider value={{ open, setOpen }}><div className="relative inline-block">{props.children}</div></Ctx.Provider>;
+  const { style: _style, ...rest } = props;
+  return <Ctx.Provider value={{ open, setOpen }}><div className="relative inline-block" {...rest}>{props.children}</div></Ctx.Provider>;
 }
 export function DropdownMenuTrigger(props: any) {
   const ctx = useContext(Ctx);
-  return <span onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block" }}>{props.children}</span>;
+  const cls = props.className || "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors h-9 px-4 py-2 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground";
+  return <span className={cls} onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-flex" }}>{props.children}</span>;
 }
 export function DropdownMenuContent(props: any) {
   const ctx = useContext(Ctx);
   if (!ctx?.open) return null;
-  const cls = ("absolute left-0 top-full mt-2 z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md " + (props.className || "")).trim();
+  const cls = ("absolute left-0 top-full mt-2 z-50 " + (props.className || "min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md")).trim();
   return <div className={cls} style={props.style}>{props.children}</div>;
 }
 export function DropdownMenuItem(props: any) {
   const base = "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent";
-  return <div className={props.className ? props.className + " relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none" : base}>{props.children}</div>;
+  return <div className={props.className ? "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none " + props.className : base}>{props.children}</div>;
 }
 export function DropdownMenuCheckboxItem(props: any) {
   const [checked, setChecked] = useState(!!props.checked);
   const base = "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent";
-  return <div className={props.className ? props.className + " relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none" : base} onClick={() => setChecked((v: boolean) => !v)}><span className={"absolute left-2 flex h-3.5 w-3.5 items-center justify-center" + (props.checkTextClass ? " " + props.checkTextClass : "")}>{checked ? "✓" : ""}</span>{props.children}</div>;
+  return <div className={props.className ? "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none " + props.className : base} onClick={() => setChecked((v: boolean) => !v)}><span className={"absolute left-2 flex h-3.5 w-3.5 items-center justify-center" + (props.checkTextClass ? " " + props.checkTextClass : "")}>{checked ? "✓" : ""}</span>{props.children}</div>;
 }
 export function DropdownMenuSeparator() { return <div className="my-1 h-px bg-border" />; }
 export function DropdownMenuLabel(props: any) {
   return <div className="px-2 py-1.5 text-xs font-semibold">{props.children}</div>;
 }
 export function DropdownMenuShortcut(props: any) {
-  const cls = ("ml-auto text-xs tracking-widest " + (props.className || "text-muted-foreground")).trim();
+  const cls = props.className || "ml-auto text-xs tracking-widest text-muted-foreground";
   return <span className={cls}>{props.children}</span>;
 }`,
 
