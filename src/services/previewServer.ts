@@ -855,9 +855,27 @@ export function Avatar(props: any) {
   );
 }`,
 
-  breadcrumb: `export function Breadcrumb(props: any) {
-  const { className = "", children, ...rest } = props;
-  return <nav aria-label="breadcrumb" className={className} {...rest}>{children}</nav>;
+  breadcrumb: `export function Breadcrumb({ className = "", children, style, ...rest }) {
+  return <nav aria-label="breadcrumb" className={className} style={style}>{children}</nav>;
+}
+export function BreadcrumbList({ className = "", children, ...rest }) {
+  return <ol className={"flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5 " + className}>{children}</ol>;
+}
+export function BreadcrumbItem({ className = "", children, ...rest }) {
+  return <li className={"inline-flex items-center gap-1.5 " + className} {...rest}>{children}</li>;
+}
+export function BreadcrumbLink({ className = "", href = "#", children, onClick, ...rest }) {
+  const handleClick = onClick ?? ((e) => e.preventDefault());
+  return <a href={href} onClick={handleClick} className={"hover:text-foreground transition-colors " + className}>{children}</a>;
+}
+export function BreadcrumbPage({ className = "", children, ...rest }) {
+  return <span aria-current="page" className={"font-normal text-foreground " + className}>{children}</span>;
+}
+export function BreadcrumbSeparator({ className = "", children, ...rest }) {
+  return <li aria-hidden="true" className={"[&>svg]:size-3.5 " + className}>{children ?? <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>}</li>;
+}
+export function BreadcrumbEllipsis({ className = "", ...rest }) {
+  return <span role="presentation" aria-hidden="true" className={"flex h-9 w-9 items-center justify-center " + className} {...rest}><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg><span className="sr-only">More</span></span>;
 }`,
 
   checkbox: `import { cn } from "@/components/ui/_cn";

@@ -484,7 +484,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftAlert: { title: "Alert", description: "This is an alert message.", variant: "default", icon: "AlertCircle" },
   CraftAspectRatio: { ratio: 1.78, width: "auto", height: "auto" },
   CraftAvatar: { src: "", fallback: "AB", size: "default", width: "auto", height: "auto", tooltipText: "", tooltipSide: "" },
-  CraftBreadcrumb: { items: "Home,Products,Current" },
+  CraftBreadcrumb: { items: "Home,Products,Current", maxVisible: "0" },
   CraftCheckbox: { label: "Accept terms", checked: false, disabled: false, tooltipText: "", tooltipSide: "" },
   CraftCollapsible: { open: false, triggerStyle: "chevron", linkedMocPath: "" },
   CraftPagination: { totalPages: 5, currentPage: 1 },
@@ -577,6 +577,20 @@ export function craftStateToTsx(
       addImport("@/components/ui/accordion", "AccordionItem");
       addImport("@/components/ui/accordion", "AccordionTrigger");
       addImport("@/components/ui/accordion", "AccordionContent");
+    }
+
+    // Collect breadcrumb sub-component imports
+    if (resolvedName === "CraftBreadcrumb") {
+      addImport("@/components/ui/breadcrumb", "BreadcrumbList");
+      addImport("@/components/ui/breadcrumb", "BreadcrumbItem");
+      addImport("@/components/ui/breadcrumb", "BreadcrumbLink");
+      addImport("@/components/ui/breadcrumb", "BreadcrumbPage");
+      addImport("@/components/ui/breadcrumb", "BreadcrumbSeparator");
+      addImport("@/components/ui/breadcrumb", "BreadcrumbEllipsis");
+      addImport("@/components/ui/dropdown-menu", "DropdownMenu");
+      addImport("@/components/ui/dropdown-menu", "DropdownMenuTrigger");
+      addImport("@/components/ui/dropdown-menu", "DropdownMenuContent");
+      addImport("@/components/ui/dropdown-menu", "DropdownMenuItem");
     }
 
     // Collect collapsible sub-component imports
@@ -1120,6 +1134,11 @@ export function craftStateToTsx(
     // Accordion special case: render with AccordionItem/Trigger/Content
     if (resolvedName === "CraftAccordion") {
       return applyCommonWrappers(`${mocComments}\n${renderAccordion(node.props, tag, propsStr, classNameAttr, styleAttr, pad)}`);
+    }
+
+    // Breadcrumb special case: render with BreadcrumbList/Item/Link/Page/Separator/Ellipsis
+    if (resolvedName === "CraftBreadcrumb") {
+      return applyCommonWrappers(`${mocComments}\n${renderBreadcrumb(node.props, classNameAttr, styleAttr, pad)}`);
     }
 
     // Collapsible special case: render with linkedNodes header/content zones + CollapsibleTrigger/Content
@@ -2699,6 +2718,73 @@ function renderAccordion(
   }
 
   lines.push(`${pad}</${tag}>`);
+  return lines.join("\n");
+}
+
+function renderBreadcrumb(
+  props: Record<string, unknown>,
+  classNameAttr: string,
+  styleAttr: string,
+  pad: string,
+): string {
+  const itemList = ((props?.items as string) || "Home,Products,Current")
+    .split(",").map((s) => s.trim()).filter(Boolean);
+  const maxV = parseInt((props?.maxVisible as string) || "0", 10);
+  const shouldCollapse = maxV > 0 && itemList.length > maxV;
+
+  const visibleTail = shouldCollapse ? itemList.slice(-(maxV - 1)) : itemList.slice(1);
+  const collapsed = shouldCollapse ? itemList.slice(1, -(maxV - 1)) : [];
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Breadcrumb${classNameAttr}${styleAttr}>`);
+  lines.push(`${pad}  <BreadcrumbList>`);
+
+  // First item
+  lines.push(`${pad}    <BreadcrumbItem>`);
+  if (itemList.length === 1) {
+    lines.push(`${pad}      <BreadcrumbPage>${escapeJsx(itemList[0])}</BreadcrumbPage>`);
+  } else {
+    lines.push(`${pad}      <BreadcrumbLink href="#">${escapeJsx(itemList[0])}</BreadcrumbLink>`);
+  }
+  lines.push(`${pad}    </BreadcrumbItem>`);
+
+  // Ellipsis with dropdown for collapsed items
+  if (shouldCollapse) {
+    lines.push(`${pad}    <BreadcrumbSeparator />`);
+    lines.push(`${pad}    <BreadcrumbItem>`);
+    lines.push(`${pad}      <DropdownMenu>`);
+    lines.push(`${pad}        <DropdownMenuTrigger className="flex items-center gap-1">`);
+    lines.push(`${pad}          <BreadcrumbEllipsis className="h-4 w-4" />`);
+    lines.push(`${pad}          <span className="sr-only">Toggle menu</span>`);
+    lines.push(`${pad}        </DropdownMenuTrigger>`);
+    lines.push(`${pad}        <DropdownMenuContent align="start">`);
+    for (const label of collapsed) {
+      lines.push(`${pad}          <DropdownMenuItem>${escapeJsx(label)}</DropdownMenuItem>`);
+    }
+    lines.push(`${pad}        </DropdownMenuContent>`);
+    lines.push(`${pad}      </DropdownMenu>`);
+    lines.push(`${pad}    </BreadcrumbItem>`);
+  }
+
+  // Tail items
+  for (let i = 0; i < visibleTail.length; i++) {
+    const label = visibleTail[i];
+    const globalIndex = shouldCollapse
+      ? itemList.length - visibleTail.length + i
+      : i + 1;
+    const isLast = globalIndex === itemList.length - 1;
+    lines.push(`${pad}    <BreadcrumbSeparator />`);
+    lines.push(`${pad}    <BreadcrumbItem>`);
+    if (isLast) {
+      lines.push(`${pad}      <BreadcrumbPage>${escapeJsx(label)}</BreadcrumbPage>`);
+    } else {
+      lines.push(`${pad}      <BreadcrumbLink href="#">${escapeJsx(label)}</BreadcrumbLink>`);
+    }
+    lines.push(`${pad}    </BreadcrumbItem>`);
+  }
+
+  lines.push(`${pad}  </BreadcrumbList>`);
+  lines.push(`${pad}</Breadcrumb>`);
   return lines.join("\n");
 }
 
