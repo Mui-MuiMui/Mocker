@@ -1816,6 +1816,7 @@ function renderContextMenu(node: CraftNodeData, indent: number): string {
   const hoverTextClass = (node.props?.hoverTextClass as string) || "";
   const shortcutTextClass = (node.props?.shortcutTextClass as string) || "";
   const shortcutCls = shortcutTextClass || "text-muted-foreground";
+  const checkTextClass = (node.props?.checkTextClass as string) || "";
 
   // Item hover className: use custom classes if set, otherwise rely on shadcn/ui defaults
   const itemHoverCls = [
@@ -1860,7 +1861,8 @@ function renderContextMenu(node: CraftNodeData, indent: number): string {
         lines.push(`${pad}  <ContextMenuSeparator />`);
       } else if (item.type === "checkbox") {
         const checkedAttr = item.checked ? " checked" : "";
-        lines.push(`${pad}  <ContextMenuCheckboxItem${checkedAttr}${itemClassAttr}>`);
+        const checkTextAttr = checkTextClass ? ` checkTextClass="${escapeAttr(checkTextClass)}"` : "";
+        lines.push(`${pad}  <ContextMenuCheckboxItem${checkedAttr}${itemClassAttr}${checkTextAttr}>`);
         lines.push(`${pad}    ${escapeJsx(item.label || "")}`);
         if (item.shortcut) lines.push(`${pad}    <span className="ml-auto text-xs tracking-widest ${escapeAttr(shortcutCls)}">${escapeJsx(item.shortcut)}</span>`);
         lines.push(`${pad}  </ContextMenuCheckboxItem>`);

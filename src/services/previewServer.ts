@@ -1688,7 +1688,7 @@ export function ContextMenuItem(props: any) {
 export function ContextMenuCheckboxItem(props: any) {
   const [checked, setChecked] = useState(!!props.checked);
   const base = "relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent";
-  return <div className={props.className ? props.className + " relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none" : base} onClick={() => setChecked((v: boolean) => !v)}><span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">{checked ? "✓" : ""}</span>{props.children}</div>;
+  return <div className={props.className ? props.className + " relative flex cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none" : base} onClick={() => setChecked((v: boolean) => !v)}><span className={"absolute left-2 flex h-3.5 w-3.5 items-center justify-center" + (props.checkTextClass ? " " + props.checkTextClass : "")}>{checked ? "✓" : ""}</span>{props.children}</div>;
 }
 export function ContextMenuSeparator() { return <div className="my-1 h-px bg-border" />; }
 export function ContextMenuLabel(props: any) {

@@ -40,6 +40,7 @@ interface CraftContextMenuProps {
   hoverBgClass?: string;
   hoverTextClass?: string;
   shortcutTextClass?: string;
+  checkTextClass?: string;
 }
 
 export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
@@ -55,6 +56,7 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
   hoverBgClass = "",
   hoverTextClass = "",
   shortcutTextClass = "",
+  checkTextClass = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -127,7 +129,7 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
                   onMouseLeave={() => setHoveredItem(null)}
                   onClick={() => toggleChecked(key, item.checked ?? false)}
                 >
-                  <span className="mr-2 w-4 text-center text-xs">{checked ? "✓" : ""}</span>
+                  <span className={cn("mr-2 w-4 text-center text-xs", checkTextClass)}>{checked ? "✓" : ""}</span>
                   <span className="flex-1">{item.label}</span>
                   {item.shortcut && (
                     <span className={cn("ml-auto text-xs", shortcutTextClass || "text-muted-foreground")}>{item.shortcut}</span>
@@ -170,6 +172,7 @@ CraftContextMenu.craft = {
     hoverBgClass: "",
     hoverTextClass: "",
     shortcutTextClass: "",
+    checkTextClass: "",
   },
   rules: {
     canDrag: () => true,
