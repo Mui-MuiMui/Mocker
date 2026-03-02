@@ -216,7 +216,7 @@ export function MenubarMetaEditor({ value, selectedNodeId }: MenubarMetaEditorPr
                           type="text"
                           value={(item as { shortcut?: string }).shortcut ?? ""}
                           onChange={(e) => setItemShortcut(menuIdx, itemIdx, e.target.value)}
-                          className={`${INPUT_CLASS} flex-1`}
+                          className={`${INPUT_CLASS} min-w-0 flex-1`}
                           placeholder="ショートカット"
                         />
                         {item.type === "checkbox" && (

@@ -181,7 +181,7 @@ export const CraftMenubar: UserComponent<CraftMenubarProps> = ({
                   return (
                     <div
                       key={j}
-                      className="flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent"
+                      className="flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent"
                     >
                       <span className="mr-2 w-4 text-center text-xs">{item.checked ? "✓" : ""}</span>
                       <span className="flex-1">{item.label}</span>
@@ -194,7 +194,7 @@ export const CraftMenubar: UserComponent<CraftMenubarProps> = ({
                 return (
                   <div
                     key={j}
-                    className="flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent"
+                    className="flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none hover:bg-accent"
                   >
                     <span className="flex-1">{item.label}</span>
                     {item.shortcut && (

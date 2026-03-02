@@ -124,7 +124,7 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
               return (
                 <div
                   key={j}
-                  className={itemCls(key, "flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none")}
+                  className={itemCls(key, "flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none")}
                   onMouseEnter={() => setHoveredItem(key)}
                   onMouseLeave={() => setHoveredItem(null)}
                   onClick={() => toggleChecked(key, item.checked ?? false)}
@@ -140,7 +140,7 @@ export const CraftContextMenu: UserComponent<CraftContextMenuProps> = ({
             return (
               <div
                 key={j}
-                className={itemCls(key, "flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none")}
+                className={itemCls(key, "flex cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none")}
                 onMouseEnter={() => setHoveredItem(key)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
