@@ -262,6 +262,7 @@ const INTERACTION_KEYS = new Set(["tooltipText", "tooltipSide", "tooltipTrigger"
 
 /** インタラクション共通プロパティのグループ間セパレーターマーカー（表示順に定義） */
 const INTERACTION_ORDERED: string[] = [
+  "__sep__",
   "tooltipText", "tooltipSide", "tooltipTrigger",
   "__sep__",
   "hoverCardMocPath", "hoverCardSide", "hoverCardTrigger",
