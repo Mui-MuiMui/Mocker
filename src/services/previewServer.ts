@@ -514,6 +514,13 @@ export async function startPreviewServer(
       sseClients.add(res);
       req.on("close", () => {
         sseClients.delete(res);
+        if (sseClients.size === 0) {
+          setTimeout(() => {
+            if (sseClients.size === 0) {
+              dispose();
+            }
+          }, 5000);
+        }
       });
       return;
     }
