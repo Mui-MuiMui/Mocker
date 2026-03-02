@@ -296,7 +296,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "ChevronRight",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftCheckbox",
