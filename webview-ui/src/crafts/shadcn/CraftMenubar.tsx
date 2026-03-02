@@ -80,6 +80,7 @@ interface CraftMenubarProps {
   dropdownBorderClass?: string;
   dropdownBorderWidth?: string;
   dropdownShadowClass?: string;
+  dropdownWidth?: string;
   shortcutTextClass?: string;
 }
 
@@ -100,6 +101,7 @@ export const CraftMenubar: UserComponent<CraftMenubarProps> = ({
   dropdownBorderClass = "",
   dropdownBorderWidth = "",
   dropdownShadowClass = "",
+  dropdownWidth = "",
   shortcutTextClass = "",
 }) => {
   const {
@@ -171,6 +173,7 @@ export const CraftMenubar: UserComponent<CraftMenubarProps> = ({
                 dropdownShadowClass || "shadow-md",
                 dropdownTextClass,
               )}
+              style={dropdownWidth ? { width: dropdownWidth } : undefined}
               onMouseLeave={enabled ? undefined : () => setActiveIndex(null)}
             >
               {menu.items.map((item, j) => {
@@ -230,6 +233,7 @@ CraftMenubar.craft = {
     dropdownBorderClass: "",
     dropdownBorderWidth: "",
     dropdownShadowClass: "",
+    dropdownWidth: "",
     shortcutTextClass: "",
   },
   rules: {

@@ -28,14 +28,30 @@ interface MenubarMetaEditorProps {
 }
 
 export function MenubarMetaEditor({ value, selectedNodeId }: MenubarMetaEditorProps) {
-  const { actions } = useEditor((state) => ({ nodes: state.nodes }));
+  const { actions, displayName, panelWidthValue } = useEditor((state) => {
+    const node = state.nodes[selectedNodeId];
+    const name = node?.data?.displayName as string | undefined;
+    // ContextMenu は width prop、Menubar/DropdownMenu は dropdownWidth prop
+    const wv = name === "ContextMenu"
+      ? (node?.data?.props?.width as string | undefined) ?? ""
+      : (node?.data?.props?.dropdownWidth as string | undefined) ?? "";
+    return { nodes: state.nodes, displayName: name, panelWidthValue: wv };
+  });
   const [openMenus, setOpenMenus] = useState<Set<number>>(new Set([0]));
+
+  const widthPropName = displayName === "ContextMenu" ? "width" : "dropdownWidth";
 
   const menus = parseMenuData(value);
 
   function updateMenus(newMenus: MenuData) {
     actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
       props.menuData = JSON.stringify(newMenus);
+    });
+  }
+
+  function updateWidth(val: string) {
+    actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+      props[widthPropName] = val;
     });
   }
 
@@ -246,6 +262,17 @@ export function MenubarMetaEditor({ value, selectedNodeId }: MenubarMetaEditorPr
       <button type="button" className={BTN_CLASS} onClick={addMenu}>
         + メニュー追加
       </button>
+
+      <div className="flex items-center gap-1">
+        <label className="shrink-0 text-xs text-[var(--vscode-descriptionForeground,#888)]">メニュー幅</label>
+        <input
+          type="text"
+          value={panelWidthValue}
+          onChange={(e) => updateWidth(e.target.value)}
+          className={`${INPUT_CLASS} min-w-0 flex-1`}
+          placeholder="例: 200px, 16rem"
+        />
+      </div>
     </div>
   );
 }

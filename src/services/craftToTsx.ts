@@ -2059,6 +2059,8 @@ function renderMenubar(node: CraftNodeData, indent: number): string {
     dropdownTextClass,
   ].filter(Boolean).join(" ");
   const shortcutCls = shortcutTextClass || "text-muted-foreground";
+  const dropdownWidth = (node.props?.dropdownWidth as string) || "";
+  const dropStyleAttr = dropdownWidth ? ` style={{ width: "${escapeAttr(dropdownWidth)}" }}` : "";
 
   const lines: string[] = [];
   lines.push(`${pad}<div className="${escapeAttr(barCls)}"${styleAttr}>`);
@@ -2068,7 +2070,7 @@ function renderMenubar(node: CraftNodeData, indent: number): string {
     lines.push(`${pad}    <button type="button" className="${escapeAttr(btnCls)}">`);
     lines.push(`${pad}      ${escapeJsx(menu.label || "")}`);
     lines.push(`${pad}    </button>`);
-    lines.push(`${pad}    <div className="${escapeAttr(dropCls)}">`);
+    lines.push(`${pad}    <div className="${escapeAttr(dropCls)}"${dropStyleAttr}>`);
     for (const item of (menu.items || [])) {
       if (item.type === "separator") {
         lines.push(`${pad}      <div className="my-1 h-px bg-border" />`);
@@ -2154,6 +2156,8 @@ function renderDropdownMenu(node: CraftNodeData, indent: number): string {
     hoverTextClass ? `hover:${hoverTextClass}` : "",
   ].filter(Boolean).join(" ");
   const itemClassAttr = itemHoverCls ? ` className="${escapeAttr(itemHoverCls)}"` : "";
+  const dropdownWidth = (node.props?.dropdownWidth as string) || "";
+  const dropStyleAttr = dropdownWidth ? ` style={{ width: "${escapeAttr(dropdownWidth)}" }}` : "";
 
   const lines: string[] = [];
   lines.push(`${pad}<DropdownMenu${styleAttr}>`);
@@ -2161,7 +2165,7 @@ function renderDropdownMenu(node: CraftNodeData, indent: number): string {
   lines.push(`${pad}    ${escapeJsx(triggerText)}`);
   lines.push(`${pad}    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="m6 9 6 6 6-6"/></svg>`);
   lines.push(`${pad}  </DropdownMenuTrigger>`);
-  lines.push(`${pad}  <DropdownMenuContent className="${escapeAttr(dropCls)}">`);
+  lines.push(`${pad}  <DropdownMenuContent className="${escapeAttr(dropCls)}"${dropStyleAttr}>`);
 
   for (let sectionIdx = 0; sectionIdx < menus.length; sectionIdx++) {
     const menu = menus[sectionIdx];

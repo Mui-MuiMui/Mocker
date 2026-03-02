@@ -45,6 +45,7 @@ interface CraftDropdownMenuProps {
   dropdownBorderClass?: string;
   dropdownBorderWidth?: string;
   dropdownShadowClass?: string;
+  dropdownWidth?: string;
   // Item styling
   hoverBgClass?: string;
   hoverTextClass?: string;
@@ -68,6 +69,7 @@ export const CraftDropdownMenu: UserComponent<CraftDropdownMenuProps> = ({
   dropdownBorderClass = "",
   dropdownBorderWidth = "",
   dropdownShadowClass = "",
+  dropdownWidth = "",
   hoverBgClass = "",
   hoverTextClass = "",
   shortcutTextClass = "",
@@ -151,6 +153,7 @@ export const CraftDropdownMenu: UserComponent<CraftDropdownMenuProps> = ({
             dropdownShadowClass || "shadow-md",
             dropdownTextClass,
           )}
+          style={dropdownWidth ? { width: dropdownWidth } : undefined}
           onMouseLeave={enabled ? undefined : () => setOpen(false)}
         >
           {menus.flatMap((menu, sectionIdx) => {
@@ -228,6 +231,7 @@ CraftDropdownMenu.craft = {
     dropdownBorderClass: "",
     dropdownBorderWidth: "",
     dropdownShadowClass: "",
+    dropdownWidth: "",
     hoverBgClass: "",
     hoverTextClass: "",
     shortcutTextClass: "",
