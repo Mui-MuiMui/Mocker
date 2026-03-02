@@ -121,36 +121,71 @@ export async function startPreviewServer(
 
   async function compileLinkedMocFiles(craftState: Record<string, unknown>): Promise<void> {
     const mocDir = path.dirname(mocFilePath);
-    const linkedPaths = new Set<string>();
 
-    // Scan all nodes for linkedMocPath, contextMenuMocPath, and linkedMocPaths
-    for (const node of Object.values(craftState)) {
-      const n = node as { props?: Record<string, unknown> };
-      const linkedPath = n?.props?.linkedMocPath as string | undefined;
-      if (linkedPath) {
-        linkedPaths.add(linkedPath);
-      }
-      const contextMenuPath = n?.props?.contextMenuMocPath as string | undefined;
-      if (contextMenuPath) {
-        linkedPaths.add(contextMenuPath);
-      }
-      const linkedMocPathsStr = n?.props?.linkedMocPaths as string | undefined;
-      if (linkedMocPathsStr) {
-        for (const p of linkedMocPathsStr.split(",")) {
-          const trimmed = p.trim();
-          if (trimmed) linkedPaths.add(trimmed);
+    // Collect linked paths from a craftState node tree.
+    // Returns pairs of [relPathFromMocDir, absPath].
+    function collectLinkedPaths(cs: Record<string, unknown>, baseDir: string): [string, string][] {
+      const pairs: [string, string][] = [];
+      for (const node of Object.values(cs)) {
+        const n = node as { props?: Record<string, unknown> };
+        for (const key of ["linkedMocPath", "contextMenuMocPath"]) {
+          const p = n?.props?.[key] as string | undefined;
+          if (p) {
+            const abs = path.resolve(baseDir, p);
+            const rel = path.relative(mocDir, abs).replace(/\\/g, "/");
+            pairs.push([rel, abs]);
+          }
         }
+        const multi = n?.props?.linkedMocPaths as string | undefined;
+        if (multi) {
+          for (const p of multi.split(",").map((s) => s.trim()).filter(Boolean)) {
+            const abs = path.resolve(baseDir, p);
+            const rel = path.relative(mocDir, abs).replace(/\\/g, "/");
+            pairs.push([rel, abs]);
+          }
+        }
+      }
+      return pairs;
+    }
+
+    // BFS: discover all linked .moc files recursively (handles nested chains A→B→C).
+    // visited tracks absPath to prevent infinite loops on circular references.
+    const toProcess = new Map<string, string>(); // relPath → absPath
+    const visited = new Set<string>();
+    const queue: [string, string][] = collectLinkedPaths(craftState, mocDir);
+
+    while (queue.length > 0) {
+      const [relPath, absPath] = queue.shift()!;
+      if (visited.has(absPath)) continue;
+      visited.add(absPath);
+      toProcess.set(relPath, absPath);
+
+      try {
+        const content = new TextDecoder().decode(
+          await vscode.workspace.fs.readFile(vscode.Uri.file(absPath)),
+        );
+        const doc = parseMocFile(content);
+        const cs = doc.editorData?.craftState as Record<string, unknown> | undefined;
+        if (cs) {
+          for (const pair of collectLinkedPaths(cs, path.dirname(absPath))) {
+            if (!visited.has(pair[1])) queue.push(pair);
+          }
+        }
+      } catch (err) {
+        console.warn(`[Momoc] Failed to scan linked .moc: ${relPath}`, err);
       }
     }
 
+    // Pass 1: parse all linked files and register hashes.
+    // All hashes must be registered before inject so nested placeholders resolve correctly.
     linkedAbsPaths.clear();
-    for (const relPath of linkedPaths) {
+    const parsedDocs = new Map<string, { tsx: string }>();
+
+    for (const [relPath, absPath] of toProcess) {
       try {
-        const absPath = path.resolve(mocDir, relPath);
         linkedAbsPaths.add(absPath);
-        const linkedFileUri = vscode.Uri.file(absPath);
         const linkedContent = new TextDecoder().decode(
-          await vscode.workspace.fs.readFile(linkedFileUri),
+          await vscode.workspace.fs.readFile(vscode.Uri.file(absPath)),
         );
         const linkedDoc = parseMocFile(linkedContent);
         // Re-generate TSX from craftState (SSOT) so linked .moc always reflects
@@ -179,7 +214,20 @@ export async function startPreviewServer(
         }
         const hash = crypto.createHash("md5").update(relPath).digest("hex").slice(0, 8);
         linkedHashes.set(relPath, hash);
-        const linkedResult = await compileTsx(linkedTsx, workspaceRoot, [
+        parsedDocs.set(relPath, { tsx: linkedTsx });
+      } catch (err) {
+        console.warn(`[Momoc] Failed to parse linked .moc: ${relPath}`, err);
+      }
+    }
+
+    // Pass 2: inject nested linked component references, then compile.
+    // injectLinkedComponents uses linkedHashes, so all hashes must be registered first (Pass 1).
+    for (const [relPath, { tsx }] of parsedDocs) {
+      const hash = linkedHashes.get(relPath);
+      if (!hash) continue;
+      try {
+        const injected = injectLinkedComponents(tsx);
+        const linkedResult = await compileTsx(injected, workspaceRoot, [
           previewExternalPlugin(),
         ]);
         if (linkedResult.code) {
