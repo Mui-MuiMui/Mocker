@@ -45,7 +45,7 @@ import { CraftDialog } from "./shadcn/CraftDialog";
 import { CraftAlertDialog } from "./shadcn/CraftAlertDialog";
 import { CraftSheet } from "./shadcn/CraftSheet";
 import { CraftDrawer } from "./shadcn/CraftDrawer";
-import { CraftDropdownMenu } from "./shadcn/CraftDropdownMenu";
+import { CraftDropdownMenu, DEFAULT_DROPDOWN_DATA } from "./shadcn/CraftDropdownMenu";
 import { CraftContextMenu, DEFAULT_CONTEXTMENU_DATA } from "./shadcn/CraftContextMenu";
 import { CraftPopover } from "./shadcn/CraftPopover";
 import { CraftHoverCard } from "./shadcn/CraftHoverCard";
@@ -484,6 +484,14 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Menu",
     defaultProps: { menuData: JSON.stringify(DEFAULT_MENUBAR_DATA) },
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftDropdownMenu",
+    label: "Dropdown Menu",
+    category: "shadcn",
+    icon: "ChevronDown",
+    defaultProps: { menuData: JSON.stringify(DEFAULT_DROPDOWN_DATA) },
     enabled: true,
   },
   {
