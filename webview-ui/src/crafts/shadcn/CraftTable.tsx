@@ -236,7 +236,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
     ? ""
     : cn(`border-t${bwSuffix}`, `border-l${bwSuffix}`, borderColorCls);
 
-  function renderRow(logR: number, isStickyRow = false) {
+  function renderRow(logR: number) {
     const physR = rowMap[logR];
     return (
       <tr key={physR}>
@@ -264,13 +264,6 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
           if (rowspan > 1) cellStyle.height = "1px";
 
-          // stickyHeader: apply sticky to each th cell (thead sticky doesn't work inside overflow:auto)
-          if (isStickyRow) {
-            cellStyle.position = "sticky";
-            cellStyle.top = 0;
-            cellStyle.zIndex = 2;
-          }
-
           const CellTag = isHeader ? "th" : "td";
           return (
             <CellTag
@@ -278,7 +271,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
               colSpan={colspan > 1 ? colspan : undefined}
               rowSpan={rowspan > 1 ? rowspan : undefined}
               style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
-              className={cn(cellBorderClass, "p-0 align-top text-left font-normal", isStickyRow && "bg-muted/50")}
+              className={cn(cellBorderClass, "p-0 align-top text-left font-normal")}
             >
               <Element
                 id={cellKey}
@@ -322,14 +315,14 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
         </colgroup>
         {headerRowCount > 0 && (
           <thead className="bg-muted/50">
-            {headerRows.map((_, logR) => renderRow(logR, logR < stickyHeaderNum))}
+            {headerRows.map((_, logR) => renderRow(logR))}
           </thead>
         )}
         {bodyRows.length > 0 && (
           <tbody>
             {bodyRows.map((_, idx) => {
               const logR = headerRowCount + idx;
-              return renderRow(logR, logR < stickyHeaderNum);
+              return renderRow(logR);
             })}
           </tbody>
         )}
