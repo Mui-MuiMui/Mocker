@@ -87,10 +87,10 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className="relative inline-flex flex-col items-start"
+      className={cn("relative inline-flex flex-col", className)}
     >
       <button
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(buttonVariants({ variant, size }))}
         disabled={disabled}
         type="button"
         style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
