@@ -1,4 +1,5 @@
 import { Element, useEditor, useNode, type UserComponent } from "@craftjs/core";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../../utils/cn";
 
 /** 単位なし数値文字列に "px" を付ける。"100" → "100px"、"50%" → "50%"（そのまま） */
@@ -162,6 +163,21 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   const pinnedLeftNum = parseInt(pinnedLeft || "0") || 0;
   const stickyHeaderNum = parseInt(stickyHeader || "0") || 0;
 
+  // sticky行のtop値を動的計測（各行の実際の高さを累積）
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [stickyTops, setStickyTops] = useState<number[]>([]);
+  useEffect(() => {
+    if (stickyHeaderNum <= 0 || !tableRef.current) return;
+    const rows = tableRef.current.querySelectorAll("tr");
+    const tops: number[] = [];
+    let cumulative = 0;
+    for (let i = 0; i < stickyHeaderNum && i < rows.length; i++) {
+      tops.push(cumulative);
+      cumulative += rows[i].getBoundingClientRect().height;
+    }
+    setStickyTops(tops);
+  });
+
   // Compute hidden cells due to colspan/rowspan
   const hiddenCells = new Set<string>();
   for (let logR = 0; logR < rowMap.length; logR++) {
@@ -264,11 +280,12 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
           if (rowspan > 1) cellStyle.height = "1px";
 
-          // stickyHeader: apply sticky to each th cell (thead sticky doesn't work inside overflow:auto)
+          // stickyHeader: apply sticky to each cell (thead sticky doesn't work inside overflow:auto)
           if (isStickyRow) {
             cellStyle.position = "sticky";
-            cellStyle.top = 0;
+            cellStyle.top = stickyTops[logR] ?? 0;
             cellStyle.zIndex = 2;
+            cellStyle.backgroundColor = "hsl(var(--muted))";
           }
 
           const CellTag = isHeader ? "th" : "td";
@@ -310,6 +327,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
         <span className="text-[9px] text-muted-foreground">⠿ Table</span>
       </div>
       <table
+        ref={tableRef}
         className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
         style={{ tableLayout: "fixed", borderSpacing: 0, minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
       >
