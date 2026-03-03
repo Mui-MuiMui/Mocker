@@ -1666,7 +1666,7 @@ function renderTable(
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
       const pinnedBg = isPinned && !bgClass ? "bg-background" : "";
-      const stickyBg = isStickyRow && !bgClass ? "bg-muted/50" : "";
+      const stickyBg = isStickyRow && !bgClass ? "bg-background" : "";
       const cellCls = [bgClass, borderClass, tableBorderClass, pinnedBg, stickyBg].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const stylePartsCell: string[] = [];

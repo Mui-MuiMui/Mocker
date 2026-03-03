@@ -748,6 +748,7 @@ export function Separator(props: any) {
 }`,
 
   table: `import { cn } from "@/components/ui/_cn";
+import { useEffect, useRef } from "react";
 export function Table(props: any) {
   const { className = "", children, style, ...rest } = props;
   const { width, height, minWidth, ...tableStyle } = style || {};
@@ -755,7 +756,22 @@ export function Table(props: any) {
   const innerStyle = Object.fromEntries(Object.entries({ minWidth, ...tableStyle }).filter(([, v]) => v != null));
   const cls = cn("caption-bottom text-sm border-separate", className);
   const mergedInnerStyle = { borderSpacing: 0, ...innerStyle };
-  return <div className="relative overflow-auto" style={Object.keys(wrapperStyle).length ? wrapperStyle : undefined}><table className={cls} style={mergedInnerStyle} {...rest}>{children}</table></div>;
+  const tableRef = useRef<HTMLTableElement>(null);
+  useEffect(() => {
+    if (!tableRef.current) return;
+    // Compute cumulative top for each sticky row and apply
+    const rows = Array.from(tableRef.current.querySelectorAll("tr"));
+    let top = 0;
+    for (const tr of rows) {
+      const cells = Array.from(tr.querySelectorAll("th, td")) as HTMLElement[];
+      if (cells.length === 0) break;
+      const isSticky = cells.some(c => c.style.position === "sticky" && c.style.top !== undefined);
+      if (!isSticky) break;
+      cells.forEach(c => { c.style.top = top + "px"; });
+      top += tr.getBoundingClientRect().height;
+    }
+  });
+  return <div className="relative overflow-auto" style={Object.keys(wrapperStyle).length ? wrapperStyle : undefined}><table ref={tableRef} className={cls} style={mergedInnerStyle} {...rest}>{children}</table></div>;
 }
 export function TableHeader(props: any) {
   const { className = "", children, ...rest } = props;
