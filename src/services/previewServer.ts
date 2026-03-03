@@ -1333,7 +1333,7 @@ export function ToggleGroupItem(props: any) {
 
   // Phase 2: Complex components
   select: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 const SelectCtx = createContext<any>(null);
 export function Select(props: any) {
   const { children, ...rest } = props;
@@ -1346,9 +1346,9 @@ export function SelectTrigger(props: any) {
   const { className = "", children, ...rest } = props;
   const ctx = useContext(SelectCtx);
   const ref = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); }, []);
   const cls = cn("flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1", className);
-  const handleClick = () => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); ctx?.setOpen((o: boolean) => !o); };
-  return <button ref={ref} type="button" className={cls} onClick={handleClick} {...rest}>{children}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6"/></svg></button>;
+  return <button ref={ref} type="button" className={cls} onClick={() => ctx?.setOpen((o: boolean) => !o)} {...rest}>{children}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6"/></svg></button>;
 }
 export function SelectContent(props: any) {
   const { className = "", children, style, ...rest } = props;
@@ -1671,7 +1671,7 @@ export function DrawerContent(props: any) {
 }`,
 
   popover: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { ComboboxCtx } from "@/components/ui/_combobox";
 const Ctx = createContext<any>(null);
 export function Popover(props: any) {
@@ -1685,8 +1685,9 @@ export function Popover(props: any) {
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
   const ref = useRef<HTMLSpanElement>(null);
-  const handleClick = () => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); ctx?.setOpen(!ctx?.open); };
-  return <span ref={ref} onClick={handleClick} style={{ cursor: "pointer", display: "inline-block", width: "100%", ...props.style }}>{props.children}</span>;
+  useEffect(() => { if (ref.current) { const child = ref.current.firstElementChild as HTMLElement | null; ctx?.setTriggerWidth(child ? child.offsetWidth : ref.current.offsetWidth); } }, []);
+  const handleClick = () => { ctx?.setOpen(!ctx?.open); };
+  return <span ref={ref} onClick={handleClick} style={{ cursor: "pointer", display: "inline-block", ...props.style }}>{props.children}</span>;
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
