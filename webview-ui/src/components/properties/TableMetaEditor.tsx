@@ -393,7 +393,7 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
               <span className="w-8 text-[10px] text-[var(--vscode-foreground,#ccc)]">Col {logC}</span>
               <input
                 type="text"
-                value={colWidths[String(physC)] || "auto"}
+                value={colWidths[String(physC)] ?? ""}
                 onChange={(e) => updateMeta(setColWidth(meta, physC, e.target.value))}
                 className={`${INPUT_CLASS} flex-1`}
                 placeholder="auto"

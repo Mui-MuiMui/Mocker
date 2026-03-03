@@ -283,7 +283,14 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       >
         <span className="text-[9px] text-muted-foreground">⠿ Table</span>
       </div>
-      <table className="caption-bottom border-collapse text-sm">
+      <table className="caption-bottom border-collapse text-sm" style={{ tableLayout: "fixed" }}>
+        <colgroup>
+          {colMap.map((physC) => {
+            const w = colWidths[String(physC)];
+            const normalized = normalizeCssSize(w || undefined);
+            return <col key={physC} style={normalized && normalized !== "auto" ? { width: normalized } : undefined} />;
+          })}
+        </colgroup>
         {headerRowCount > 0 && (
           <thead
             className="bg-muted/50"
