@@ -282,7 +282,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
 
   return (
     <div
-      className={cn("overflow-auto", className)}
+      className={cn("overflow-hidden", className)}
       style={Object.keys(wrapperStyle).length > 0 ? wrapperStyle : undefined}
     >
       {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}

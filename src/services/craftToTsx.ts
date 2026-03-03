@@ -1585,6 +1585,14 @@ function renderTable(
   const stickyHeader = !!(node.props?.stickyHeader);
   const pinnedLeftNum = parseInt((node.props?.pinnedLeft as string) || "0") || 0;
 
+  // Compute total column width for minWidth (enables scroll when Table width < total col widths)
+  const totalColWidth = colMap.reduce((sum, physC) => {
+    const w = colWidths[String(physC)] || "";
+    if (!w || w === "auto") return sum;
+    const num = parseFloat(w);
+    return isNaN(num) ? sum : sum + num;
+  }, 0);
+
   // Compute cumulative left offset for pinned columns
   function calcPinnedLeftOffset(upToLogC: number): number {
     let left = 0;
@@ -1599,8 +1607,11 @@ function renderTable(
     return left;
   }
 
+  const extraStyles = totalColWidth > 0 ? { minWidth: `${totalColWidth}px` } : undefined;
+  const styleAttrWithMin = buildStyleAttr(node.props, extraStyles);
+
   const lines: string[] = [];
-  lines.push(`${pad}<Table${classNameAttr}${styleAttr}>`);
+  lines.push(`${pad}<Table${classNameAttr}${styleAttrWithMin}>`);
 
   const tableBorderWidth = (node.props?.borderWidth as string) || "1";
   const tableBorderColor = (node.props?.borderColor as string) || "";
