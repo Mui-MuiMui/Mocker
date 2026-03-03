@@ -69,6 +69,12 @@ interface TableMetaEditorProps {
 
 export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps) {
   const { actions, nodes } = useEditor((state) => ({ nodes: state.nodes }));
+
+  function updateProp(key: string, value: string) {
+    actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
+      props[key] = value;
+    });
+  }
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
@@ -207,14 +213,15 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
 
       {/* Visual grid */}
       <div className="overflow-auto">
-        <table className="border-collapse text-[10px]">
+        <table className="border-collapse text-[10px]" style={{ tableLayout: "fixed" }}>
           <thead>
             <tr>
-              <th className="w-4" />
+              <th style={{ width: 16, minWidth: 16 }} />
               {colMap.map((physC, logC) => (
                 <th
                   key={physC}
-                  className={`h-5 w-6 cursor-pointer border border-[var(--vscode-input-border,#555)] text-center ${
+                  style={{ width: 28, minWidth: 28 }}
+                  className={`h-5 cursor-pointer border border-[var(--vscode-input-border,#555)] text-center ${
                     selectedCol === logC
                       ? "bg-[var(--vscode-button-background,#0e639c)] text-white"
                       : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
@@ -231,7 +238,8 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
             {rowMap.map((physR, logR) => (
               <tr key={physR}>
                 <td
-                  className={`h-[18px] w-4 cursor-pointer border border-[var(--vscode-input-border,#555)] text-center ${
+                  style={{ width: 16, minWidth: 16 }}
+                  className={`h-[18px] cursor-pointer border border-[var(--vscode-input-border,#555)] text-center ${
                     selectedRow === logR
                       ? "bg-[var(--vscode-button-background,#0e639c)] text-white"
                       : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
@@ -242,25 +250,31 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
                   {logR}
                 </td>
                 {colMap.map((physC, logC) => {
-                  const isHidden = hiddenCells.has(`${logR}_${logC}`);
+                  if (hiddenCells.has(`${logR}_${logC}`)) return null;
                   const cellKey = `${logR}_${logC}`;
                   const isSelected = selectedCells.has(cellKey);
                   const slotProps = getSlotProps(physR, physC);
                   const isHeader = !!(slotProps.isHeader);
+                  const colspan = (slotProps.colspan as number) || 1;
+                  const rowspan = (slotProps.rowspan as number) || 1;
+                  const isMerged = colspan > 1 || rowspan > 1;
                   return (
                     <td
                       key={physC}
-                      className={`h-[18px] w-6 cursor-pointer border border-[var(--vscode-input-border,#555)] text-center transition-colors ${
-                        isHidden
-                          ? "bg-[var(--vscode-editor-background,#1e1e1e)] opacity-30"
-                          : isSelected
+                      colSpan={colspan > 1 ? colspan : undefined}
+                      rowSpan={rowspan > 1 ? rowspan : undefined}
+                      style={{ width: 28 * colspan, minWidth: 28 * colspan }}
+                      className={`cursor-pointer border border-[var(--vscode-input-border,#555)] text-center transition-colors ${
+                        isSelected
                           ? "ring-2 ring-inset ring-[var(--vscode-focusBorder,#007fd4)]"
+                          : isMerged
+                          ? "bg-[var(--vscode-button-background,#0e639c)] opacity-50"
                           : isHeader
-                          ? "bg-[var(--vscode-toolbar-hoverBackground,#333)]"
+                          ? "bg-[var(--vscode-badge-background,#4d4d4d)]"
                           : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
                       }`}
-                      onClick={() => !isHidden && toggleCell(logR, logC)}
-                      title={isHidden ? "hidden (merged)" : `cell_${physR}_${physC}`}
+                      onClick={() => toggleCell(logR, logC)}
+                      title={isMerged ? `cell_${physR}_${physC} (${colspan}x${rowspan})` : `cell_${physR}_${physC}`}
                     />
                   );
                 })}
@@ -356,6 +370,56 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
         </div>
       </div>
 
+      {/* Merge/Unmerge — always visible, disabled when nothing selected */}
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-wide text-[var(--vscode-descriptionForeground,#888)]">
+          セルマージ{selectedCells.size > 0 ? ` (${selectedCells.size}セル選択中)` : ""}
+        </span>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            className={btnClass}
+            disabled={selectedCells.size < 2}
+            onClick={mergeSelected}
+          >
+            Merge
+          </button>
+          <button
+            type="button"
+            className={btnClass}
+            disabled={selectedCells.size === 0}
+            onClick={unmergeSelected}
+          >
+            Unmerge
+          </button>
+        </div>
+      </div>
+
+      {/* Scroll lock settings */}
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] uppercase tracking-wide text-[var(--vscode-descriptionForeground,#888)]">スクロール固定</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] text-[var(--vscode-foreground,#ccc)]">ヘッダー固定行数</span>
+          <input
+            type="text"
+            value={String(tableNode?.data?.props?.stickyHeader ?? "")}
+            onChange={(e) => updateProp("stickyHeader", e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="例: 1"
+          />
+        </div>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[10px] text-[var(--vscode-foreground,#ccc)]">左固定列数</span>
+          <input
+            type="text"
+            value={String(tableNode?.data?.props?.pinnedLeft ?? "")}
+            onChange={(e) => updateProp("pinnedLeft", e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="例: 1"
+          />
+        </div>
+      </div>
+
       {/* Column widths */}
       <div className="flex flex-col gap-1">
         <span className="text-[10px] uppercase tracking-wide text-[var(--vscode-descriptionForeground,#888)]">列幅</span>
@@ -365,7 +429,7 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
               <span className="w-8 text-[10px] text-[var(--vscode-foreground,#ccc)]">Col {logC}</span>
               <input
                 type="text"
-                value={colWidths[String(physC)] || "auto"}
+                value={colWidths[String(physC)] ?? ""}
                 onChange={(e) => updateMeta(setColWidth(meta, physC, e.target.value))}
                 className={`${INPUT_CLASS} flex-1`}
                 placeholder="auto"
@@ -374,32 +438,6 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
           ))}
         </div>
       </div>
-
-      {/* Merge/Unmerge */}
-      {selectedCells.size > 0 && (
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] uppercase tracking-wide text-[var(--vscode-descriptionForeground,#888)]">
-            セルマージ ({selectedCells.size}セル選択中)
-          </span>
-          <div className="flex gap-1">
-            <button
-              type="button"
-              className={btnClass}
-              disabled={selectedCells.size < 2}
-              onClick={mergeSelected}
-            >
-              Merge
-            </button>
-            <button
-              type="button"
-              className={btnClass}
-              onClick={unmergeSelected}
-            >
-              Unmerge
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

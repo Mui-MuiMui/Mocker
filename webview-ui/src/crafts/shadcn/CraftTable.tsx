@@ -42,6 +42,9 @@ interface TableCellSlotProps {
   colspan?: number;
   rowspan?: number;
   align?: "left" | "center" | "right";
+  width?: string;
+  height?: string;
+  className?: string;
   children?: React.ReactNode;
 }
 
@@ -53,22 +56,33 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
   colspan = 1,
   rowspan = 1,
   align = "left",
+  width = "auto",
+  height = "auto",
+  className = "",
   children,
 }) => {
   const {
     connectors: { connect },
   } = useNode();
 
+  // align prop (PropEditor) controls horizontal alignment via flex-col
   const alignCls = align === "right" ? "flex flex-col items-end"
     : align === "center" ? "flex flex-col items-center"
     : "";
+
+  const cellStyle: React.CSSProperties = {};
+  const normalizedWidth = normalizeCssSize(width);
+  const normalizedHeight = normalizeCssSize(height);
+  if (normalizedWidth && normalizedWidth !== "auto") cellStyle.width = normalizedWidth;
+  if (normalizedHeight && normalizedHeight !== "auto") cellStyle.height = normalizedHeight;
 
   return (
     <div
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-[20px] p-1", alignCls, bgClass, borderClass)}
+      className={cn("min-h-full p-1", alignCls, bgClass, borderClass, className)}
+      style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
     >
       {children}
     </div>
@@ -84,6 +98,9 @@ TableCellSlot.craft = {
     colspan: 1,
     rowspan: 1,
     align: "left",
+    width: "auto",
+    height: "auto",
+    className: "",
   },
   rules: {
     canDrag: () => false,
@@ -100,6 +117,24 @@ interface CraftTableProps {
   className?: string;
   borderColor?: string;
   borderWidth?: string;
+  stickyHeader?: string;
+  pinnedLeft?: string;
+}
+
+/** colWidths から指定列インデックスまでの累積左オフセットを計算（auto は 0px 扱い） */
+function calcPinnedLeft(colMap: number[], colWidths: Record<string, string>, upToLogC: number): number {
+  let left = 0;
+  for (let i = 0; i < upToLogC; i++) {
+    const physC = colMap[i];
+    const w = colWidths[String(physC)] || "auto";
+    if (w === "auto") {
+      left += 0;
+    } else {
+      const num = parseFloat(w);
+      if (!isNaN(num)) left += num;
+    }
+  }
+  return left;
 }
 
 export const CraftTable: UserComponent<CraftTableProps> = ({
@@ -109,6 +144,8 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   className = "",
   borderColor = "",
   borderWidth = "1",
+  stickyHeader = "",
+  pinnedLeft = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -121,6 +158,9 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
 
   const meta = parseTableMeta(tableMetaRaw || JSON.stringify(DEFAULT_TABLE_META));
   const { rowMap, colMap, colWidths } = meta;
+
+  const pinnedLeftNum = parseInt(pinnedLeft || "0") || 0;
+  const stickyHeaderNum = parseInt(stickyHeader || "0") || 0;
 
   // Compute hidden cells due to colspan/rowspan
   const hiddenCells = new Set<string>();
@@ -165,17 +205,36 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
     else break;
   }
 
-  const tableStyle: React.CSSProperties = {};
+  // Wrapper style: width/height only when not auto
+  const wrapperStyle: React.CSSProperties = {};
   const normalizedWidth = normalizeCssSize(width);
   const normalizedHeight = normalizeCssSize(height);
-  if (normalizedWidth && normalizedWidth !== "auto") tableStyle.width = normalizedWidth;
-  if (normalizedHeight && normalizedHeight !== "auto") tableStyle.height = normalizedHeight;
+  if (normalizedWidth && normalizedWidth !== "auto") wrapperStyle.width = normalizedWidth;
+  if (normalizedHeight && normalizedHeight !== "auto") wrapperStyle.height = normalizedHeight;
 
-  const bwClass = borderWidth === "0" ? "border-0"
-    : borderWidth === "2" ? "border-2"
-    : borderWidth === "4" ? "border-4"
-    : "border";
-  const cellBorderClass = cn(bwClass, borderColor || "border-border");
+  // Compute total column width for table min-width (enables overflow scroll when wrapper is narrower)
+  const totalColWidth = colMap.reduce((sum, physC) => {
+    const w = colWidths[String(physC)] || "";
+    if (!w || w === "auto") return sum;
+    const num = parseFloat(w);
+    return isNaN(num) ? sum : sum + num;
+  }, 0);
+
+  // border-separate + border-spacing:0 is used for sticky column compatibility.
+  // Each cell gets right+bottom border; the table itself gets top+left border.
+  const borderColorCls = borderColor || "border-border";
+  const bwSuffix = borderWidth === "0" ? "-0"
+    : borderWidth === "2" ? "-2"
+    : borderWidth === "4" ? "-4"
+    : "";
+  // Cell border: right + bottom only (prevents double borders with border-separate)
+  const cellBorderClass = borderWidth === "0"
+    ? "border-r-0 border-b-0"
+    : cn(`border-r${bwSuffix}`, `border-b${bwSuffix}`, borderColorCls);
+  // Table outer border: top + left only
+  const tableOuterBorderClass = borderWidth === "0"
+    ? ""
+    : cn(`border-t${bwSuffix}`, `border-l${bwSuffix}`, borderColorCls);
 
   function renderRow(logR: number) {
     const physR = rowMap[logR];
@@ -202,6 +261,9 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           const normalizedCellHeight = normalizeCssSize(cellHeight);
           if (normalizedCellHeight && normalizedCellHeight !== "auto") cellStyle.height = normalizedCellHeight;
 
+          // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
+          if (rowspan > 1) cellStyle.height = "1px";
+
           const CellTag = isHeader ? "th" : "td";
           return (
             <CellTag
@@ -209,7 +271,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
               colSpan={colspan > 1 ? colspan : undefined}
               rowSpan={rowspan > 1 ? rowspan : undefined}
               style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
-              className={cn(cellBorderClass, "p-0 align-top")}
+              className={cn(cellBorderClass, "p-0 align-top text-left font-normal")}
             >
               <Element
                 id={cellKey}
@@ -228,8 +290,8 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
 
   return (
     <div
-      className={cn("w-full overflow-auto", className)}
-      style={tableStyle}
+      className={cn("overflow-auto", className)}
+      style={Object.keys(wrapperStyle).length > 0 ? wrapperStyle : undefined}
     >
       {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
       <div
@@ -240,7 +302,17 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       >
         <span className="text-[9px] text-muted-foreground">⠿ Table</span>
       </div>
-      <table className="w-full caption-bottom border-collapse text-sm">
+      <table
+        className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
+        style={{ tableLayout: "fixed", borderSpacing: 0, width: "100%", minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
+      >
+        <colgroup>
+          {colMap.map((physC) => {
+            const w = colWidths[String(physC)];
+            const normalized = normalizeCssSize(w || undefined);
+            return <col key={physC} style={normalized && normalized !== "auto" ? { width: normalized } : undefined} />;
+          })}
+        </colgroup>
         {headerRowCount > 0 && (
           <thead className="bg-muted/50">
             {headerRows.map((_, logR) => renderRow(logR))}
@@ -248,7 +320,10 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
         )}
         {bodyRows.length > 0 && (
           <tbody>
-            {bodyRows.map((_, idx) => renderRow(headerRowCount + idx))}
+            {bodyRows.map((_, idx) => {
+              const logR = headerRowCount + idx;
+              return renderRow(logR);
+            })}
           </tbody>
         )}
       </table>
@@ -265,6 +340,8 @@ CraftTable.craft = {
     className: "",
     borderColor: "",
     borderWidth: "1",
+    stickyHeader: "",
+    pinnedLeft: "",
   },
   rules: {
     canDrag: () => true,

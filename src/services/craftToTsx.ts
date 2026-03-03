@@ -499,7 +499,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftToggle: { text: "Toggle", variant: "default", pressed: false, size: "default", disabled: false, icon: "", tooltipText: "", tooltipSide: "" },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single", variant: "default", size: "default", disabled: false, gap: "1", orientation: "horizontal", tooltipText: "", tooltipSide: "", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "" },
   // Phase 2
-  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
+  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "", contentWidth: "" },
   CraftCalendar: { todayBgClass: "", todayTextClass: "" },
   CraftDatePicker: { mode: "date", dateFormat: "yyyy/MM/dd", placeholder: "日付を選択...", editable: false, disabled: false,
     calendarBorderClass: "", calendarShadowClass: "", todayBgClass: "", todayTextClass: "", todayBorderClass: "", todayShadowClass: "",
@@ -522,7 +522,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftNavigationMenu: {},
   CraftMenubar: { menuData: DEFAULT_MENUBAR_DATA_STR },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
-  CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
+  CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", contentWidth: "" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
   CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
 };
@@ -1216,7 +1216,7 @@ export function craftStateToTsx(
 
     // Combobox special case: render with Popover + Command structure
     if (resolvedName === "CraftCombobox") {
-      rendered = `${mocComments}\n${renderCombobox(node.props, styleAttr, pad)}`;
+      rendered = `${mocComments}\n${renderCombobox(node.props, classNameAttr, styleAttr, pad)}`;
       return applyCommonWrappers(rendered);
     }
 
@@ -1582,18 +1582,59 @@ function renderTable(
     else break;
   }
 
-  const lines: string[] = [];
-  lines.push(`${pad}<Table${classNameAttr}${styleAttr}>`);
+  const stickyHeaderNum = parseInt((node.props?.stickyHeader as string) || "0") || 0;
+  const pinnedLeftNum = parseInt((node.props?.pinnedLeft as string) || "0") || 0;
+
+  // Compute total column width for minWidth (enables scroll when Table width < total col widths)
+  const totalColWidth = colMap.reduce((sum, physC) => {
+    const w = colWidths[String(physC)] || "";
+    if (!w || w === "auto") return sum;
+    const num = parseFloat(w);
+    return isNaN(num) ? sum : sum + num;
+  }, 0);
+
+  // Compute cumulative left offset for pinned columns
+  function calcPinnedLeftOffset(upToLogC: number): number {
+    let left = 0;
+    for (let i = 0; i < upToLogC; i++) {
+      const physC = colMap[i];
+      const w = colWidths[String(physC)] || "auto";
+      if (w !== "auto") {
+        const num = parseFloat(w);
+        if (!isNaN(num)) left += num;
+      }
+    }
+    return left;
+  }
 
   const tableBorderWidth = (node.props?.borderWidth as string) || "1";
   const tableBorderColor = (node.props?.borderColor as string) || "";
-  const tableBwClass = tableBorderWidth === "0" ? "border-0"
-    : tableBorderWidth === "2" ? "border-2"
-    : tableBorderWidth === "4" ? "border-4"
-    : "border";
-  const tableBorderClass = [tableBwClass, tableBorderColor || "border-border"].filter(Boolean).join(" ");
+  const borderColorCls = tableBorderColor || "border-border";
+  const bwSuffix = tableBorderWidth === "0" ? "-0"
+    : tableBorderWidth === "2" ? "-2"
+    : tableBorderWidth === "4" ? "-4"
+    : "";
+  // border-separate pattern: cell gets right+bottom, table gets top+left outer border
+  const tableBorderClass = tableBorderWidth === "0"
+    ? "border-r-0 border-b-0"
+    : `border-r${bwSuffix} border-b${bwSuffix} ${borderColorCls}`;
+  const tableOuterBorderClass = tableBorderWidth === "0"
+    ? ""
+    : `border-t${bwSuffix} border-l${bwSuffix} ${borderColorCls}`;
 
-  function renderRow(logR: number, rowIndent: number): void {
+  const extraStyles: Record<string, string> = { borderSpacing: "0" };
+  if (totalColWidth > 0) extraStyles.minWidth = `${totalColWidth}px`;
+  const styleAttrWithMin = buildStyleAttr(node.props, extraStyles);
+
+  // Combine user className with outer border class (top+left)
+  const outerBorderAttr = tableOuterBorderClass
+    ? ` className="${escapeAttr([tableOuterBorderClass, className].filter(Boolean).join(" "))}"`
+    : classNameAttr;
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Table${outerBorderAttr}${styleAttrWithMin}>`);
+
+  function renderRow(logR: number, rowIndent: number, isStickyRow = false): void {
     const rowPad = "  ".repeat(rowIndent);
     const physR = rowMap[logR];
     lines.push(`${rowPad}<TableRow>`);
@@ -1611,15 +1652,22 @@ function renderTable(
       const cellWidth = (slotNode?.props?.width as string) || "";
       const cellHeight = (slotNode?.props?.height as string) || "";
       const cellAlign = (slotNode?.props?.align as string) || "left";
+      const slotClassName = (slotNode?.props?.className as string) || "";
       const colWidth = colWidths[String(physC)] || "";
       const cellTag = isHeader ? "TableHead" : "TableCell";
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
-      // alignCls must go on an inner div, NOT on the td (display:flex on td breaks rowspan/colspan)
+      // alignCls and slotClassName go on an inner div, NOT on the td (display:flex on td breaks rowspan/colspan)
+      // align prop uses flex-col for horizontal alignment; slotClassName carries TailwindEditor classes as-is
       const alignCls = cellAlign === "right" ? "flex flex-col items-end"
         : cellAlign === "center" ? "flex flex-col items-center"
         : "";
-      const cellCls = [bgClass, borderClass, tableBorderClass].filter(Boolean).join(" ");
+      const innerDivCls = ["min-h-full p-1", alignCls, slotClassName].filter(Boolean).join(" ");
+      const isPinned = logC < pinnedLeftNum;
+      // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
+      const pinnedBg = isPinned && !bgClass ? "bg-background" : "";
+      const stickyBg = isStickyRow && !bgClass ? "bg-background" : "";
+      const cellCls = [bgClass, borderClass, tableBorderClass, pinnedBg, stickyBg].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const stylePartsCell: string[] = [];
       const rawEffectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
@@ -1629,19 +1677,30 @@ function renderTable(
       if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
       const normalizedCellHeight = normalizeCssSize(cellHeight || undefined);
       if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
+      if (isStickyRow && isPinned) {
+        // corner cell: sticky both top and left
+        stylePartsCell.push(`position: "sticky"`);
+        stylePartsCell.push(`top: 0`);
+        stylePartsCell.push(`left: ${calcPinnedLeftOffset(logC)}`);
+        stylePartsCell.push(`zIndex: 3`);
+      } else if (isStickyRow) {
+        stylePartsCell.push(`position: "sticky"`);
+        stylePartsCell.push(`top: 0`);
+        stylePartsCell.push(`zIndex: 2`);
+      } else if (isPinned) {
+        stylePartsCell.push(`position: "sticky"`);
+        stylePartsCell.push(`left: ${calcPinnedLeftOffset(logC)}`);
+        stylePartsCell.push(`zIndex: 1`);
+      }
       const cellStyleAttr = stylePartsCell.length > 0 ? ` style={{ ${stylePartsCell.join(", ")} }}` : "";
       const slotChildren = slotNode
         ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, rowIndent + 3)).filter(Boolean)
         : [];
       if (slotChildren.length > 0) {
         lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr}>`);
-        if (alignCls) {
-          lines.push(`${rowPad}    <div className="${alignCls}">`);
-          for (const child of slotChildren) lines.push(child);
-          lines.push(`${rowPad}    </div>`);
-        } else {
-          for (const child of slotChildren) lines.push(child);
-        }
+        lines.push(`${rowPad}    <div className="${escapeAttr(innerDivCls)}">`);
+        for (const child of slotChildren) lines.push(child);
+        lines.push(`${rowPad}    </div>`);
         lines.push(`${rowPad}  </${cellTag}>`);
       } else {
         lines.push(`${rowPad}  <${cellTag}${colSpanAttr}${rowSpanAttr}${classAttr}${cellStyleAttr} />`);
@@ -1653,7 +1712,7 @@ function renderTable(
   if (headerRowCount > 0) {
     lines.push(`${pad}  <TableHeader>`);
     for (let logR = 0; logR < headerRowCount; logR++) {
-      renderRow(logR, indent + 2);
+      renderRow(logR, indent + 2, logR < stickyHeaderNum);
     }
     lines.push(`${pad}  </TableHeader>`);
   }
@@ -1662,7 +1721,7 @@ function renderTable(
   if (bodyRowCount > 0) {
     lines.push(`${pad}  <TableBody>`);
     for (let logR = headerRowCount; logR < rowMap.length; logR++) {
-      renderRow(logR, indent + 2);
+      renderRow(logR, indent + 2, logR < stickyHeaderNum);
     }
     lines.push(`${pad}  </TableBody>`);
   }
@@ -2614,6 +2673,8 @@ function renderSelect(
   const tooltipText = props?.tooltipText as string | undefined;
   const tooltipSide = props?.tooltipSide as string | undefined;
   const sideAttr = tooltipSide ? ` side="${tooltipSide}"` : "";
+  const contentWidth = (props?.contentWidth as string) || "";
+  const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
 
   const lines: string[] = [];
   lines.push(`${pad}<${tag}>`);
@@ -2635,7 +2696,7 @@ function renderSelect(
     lines.push(`${pad}    <SelectValue placeholder="${escapeAttr(placeholder)}" />`);
     lines.push(`${pad}  </SelectTrigger>`);
   }
-  lines.push(`${pad}  <SelectContent>`);
+  lines.push(`${pad}  <SelectContent${contentStyleAttr}>`);
   for (const item of items) {
     lines.push(`${pad}    <SelectItem value="${escapeAttr(item)}">${escapeJsx(item)}</SelectItem>`);
   }
@@ -2646,22 +2707,28 @@ function renderSelect(
 
 function renderCombobox(
   props: Record<string, unknown>,
+  classNameAttr: string,
   styleAttr: string,
   pad: string,
 ): string {
   const items = ((props?.items as string) || "Apple,Banana,Cherry").split(",").map((s) => s.trim());
   const placeholder = (props?.placeholder as string) || "Select an option...";
   const linkedMocPath = (props?.linkedMocPath as string) || "";
+  const contentWidth = (props?.contentWidth as string) || "";
+  const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
+
+  const userClass = classNameAttr.match(/className="([^"]*)"/)?.[ 1] ?? "";
+  const buttonClassName = ["w-full justify-between", userClass].filter(Boolean).join(" ");
 
   const lines: string[] = [];
   lines.push(`${pad}<Popover>`);
   lines.push(`${pad}  <PopoverTrigger asChild>`);
-  lines.push(`${pad}    <Button variant="outline" role="combobox" className="w-full justify-between"${styleAttr}>`);
+  lines.push(`${pad}    <Button variant="outline" role="combobox" className="${buttonClassName}"${styleAttr}>`);
   lines.push(`${pad}      ${escapeJsx(placeholder)}`);
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
   lines.push(`${pad}    </Button>`);
   lines.push(`${pad}  </PopoverTrigger>`);
-  lines.push(`${pad}  <PopoverContent className="p-0">`);
+  lines.push(`${pad}  <PopoverContent className="p-0"${contentStyleAttr}>`);
   lines.push(`${pad}    <Command>`);
   lines.push(`${pad}      <CommandInput placeholder="Search..." />`);
   lines.push(`${pad}      <CommandList>`);

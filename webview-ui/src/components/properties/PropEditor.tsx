@@ -324,6 +324,8 @@ const COMPONENT_EXCLUDED_PROPS: Record<string, Set<string>> = {
   AspectRatio: new Set(["keepAspectRatio"]),
   // Avatar: width/height はドラッグリサイズ用に内部で保持するが PropEditor には非表示
   Avatar: new Set(["width", "height"]),
+  // Table: stickyHeader/pinnedLeft は TableMetaEditor 内で編集するため PropEditor からは非表示
+  Table: new Set(["stickyHeader", "pinnedLeft"]),
 };
 
 export function PropEditor() {
@@ -453,16 +455,22 @@ export function PropEditor() {
     ? []
     : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (selectedProps[k] ?? INTERACTION_DEFAULTS[k])]);
 
-  // コンポーネントグループ: craftDefaultProps に定義されているキーのうち、レイアウト系・インタラクション系を除いたもの
-  const componentEntries: [string, unknown][] = Object.entries(selectedProps).filter(
+  // コンポーネントグループ: craftDefaultProps に定義されているキーをベースに（selectedProps になければデフォルト値を使用）
+  // craftDefaultProps ベースにすることで、後から追加された prop も既存ノードで表示される
+  const componentEntries: [string, unknown][] = Object.entries(craftDefaultProps ?? selectedProps).filter(
     ([key]) =>
       key !== "children" &&
       key !== "className" &&
       !LAYOUT_ALL_KEYS.has(key) &&
       !INTERACTION_KEYS.has(key) &&
-      !excludedProps.has(key) &&
-      (craftDefaultProps ? key in craftDefaultProps : true),
-  );
+      !excludedProps.has(key),
+  ).map(([key, defaultVal]) => {
+    const selectedVal = selectedProps[key];
+    // selectedProps の値の型が craftDefaultProps のデフォルト値と一致する場合のみ使用
+    // 型不一致（旧boolean等）は無効値として破棄しデフォルト値を使う
+    const val = typeof selectedVal === typeof defaultVal ? selectedVal : defaultVal;
+    return [key, val];
+  });
 
   const grouped = new Map<PropGroup, [string, unknown][]>([
     ["common", [...commonEntries, ...interactionEntries]],

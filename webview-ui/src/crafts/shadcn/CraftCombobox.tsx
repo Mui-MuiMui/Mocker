@@ -11,6 +11,7 @@ interface CraftComboboxProps {
   width?: string;
   height?: string;
   className?: string;
+  contentWidth?: string;
 }
 
 export const CraftCombobox: UserComponent<CraftComboboxProps> = ({
@@ -18,6 +19,7 @@ export const CraftCombobox: UserComponent<CraftComboboxProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  contentWidth = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -50,6 +52,7 @@ CraftCombobox.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    contentWidth: "",
   },
   rules: {
     canDrag: () => true,

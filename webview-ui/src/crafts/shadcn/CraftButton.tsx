@@ -87,13 +87,13 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className="relative inline-flex flex-col items-start"
+      className={cn("relative inline-flex flex-col", className)}
+      style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       <button
-        className={cn(buttonVariants({ variant, size }), className)}
+        className={cn(buttonVariants({ variant, size }), width !== "auto" && "w-full", height !== "auto" && "h-full")}
         disabled={disabled}
         type="button"
-        style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
       >
         {text}
         {linkedMocPath && (
