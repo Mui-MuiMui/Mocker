@@ -1658,11 +1658,11 @@ function renderTable(
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
       // alignCls and slotClassName go on an inner div, NOT on the td (display:flex on td breaks rowspan/colspan)
-      // The inner div is always flex flex-col so that items-* and justify-* from slotClassName work correctly
-      const alignItemsCls = cellAlign === "right" ? "items-end"
-        : cellAlign === "center" ? "items-center"
-        : "items-start";
-      const innerDivCls = ["h-full flex flex-col p-1", alignItemsCls, slotClassName].filter(Boolean).join(" ");
+      // align prop uses flex-col for horizontal alignment; slotClassName carries TailwindEditor classes as-is
+      const alignCls = cellAlign === "right" ? "flex flex-col items-end"
+        : cellAlign === "center" ? "flex flex-col items-center"
+        : "";
+      const innerDivCls = ["h-full p-1", alignCls, slotClassName].filter(Boolean).join(" ");
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
       const pinnedBg = isPinned && !bgClass ? "bg-background" : "";

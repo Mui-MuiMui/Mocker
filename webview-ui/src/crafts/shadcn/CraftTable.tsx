@@ -65,10 +65,10 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
     connectors: { connect },
   } = useNode();
 
-  // align prop controls horizontal alignment of children within the cell
-  const alignItemsCls = align === "right" ? "items-end"
-    : align === "center" ? "items-center"
-    : "items-start";
+  // align prop (PropEditor) controls horizontal alignment via flex-col
+  const alignCls = align === "right" ? "flex flex-col items-end"
+    : align === "center" ? "flex flex-col items-center"
+    : "";
 
   const cellStyle: React.CSSProperties = {};
   const normalizedWidth = normalizeCssSize(width);
@@ -81,7 +81,7 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-[20px] h-full p-1 flex flex-col", alignItemsCls, bgClass, borderClass, className)}
+      className={cn("min-h-[20px] h-full p-1", alignCls, bgClass, borderClass, className)}
       style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
     >
       {children}
