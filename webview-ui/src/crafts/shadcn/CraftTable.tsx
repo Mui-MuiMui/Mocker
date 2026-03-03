@@ -293,40 +293,42 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       className={cn("overflow-auto", className)}
       style={Object.keys(wrapperStyle).length > 0 ? wrapperStyle : undefined}
     >
-      {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
-      <div
-        ref={(ref) => {
-          if (ref) connect(drag(ref));
-        }}
-        className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100"
-      >
-        <span className="text-[9px] text-muted-foreground">⠿ Table</span>
-      </div>
-      <table
-        className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
-        style={{ tableLayout: "fixed", borderSpacing: 0, minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
-      >
-        <colgroup>
-          {colMap.map((physC) => {
-            const w = colWidths[String(physC)];
-            const normalized = normalizeCssSize(w || undefined);
-            return <col key={physC} style={normalized && normalized !== "auto" ? { width: normalized } : undefined} />;
-          })}
-        </colgroup>
-        {headerRowCount > 0 && (
-          <thead className="bg-muted/50">
-            {headerRows.map((_, logR) => renderRow(logR))}
-          </thead>
-        )}
-        {bodyRows.length > 0 && (
-          <tbody>
-            {bodyRows.map((_, idx) => {
-              const logR = headerRowCount + idx;
-              return renderRow(logR);
+      <div className="w-fit">
+        {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
+        <div
+          ref={(ref) => {
+            if (ref) connect(drag(ref));
+          }}
+          className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100"
+        >
+          <span className="text-[9px] text-muted-foreground">⠿ Table</span>
+        </div>
+        <table
+          className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
+          style={{ tableLayout: "fixed", borderSpacing: 0, minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
+        >
+          <colgroup>
+            {colMap.map((physC) => {
+              const w = colWidths[String(physC)];
+              const normalized = normalizeCssSize(w || undefined);
+              return <col key={physC} style={normalized && normalized !== "auto" ? { width: normalized } : undefined} />;
             })}
-          </tbody>
-        )}
-      </table>
+          </colgroup>
+          {headerRowCount > 0 && (
+            <thead className="bg-muted/50">
+              {headerRows.map((_, logR) => renderRow(logR))}
+            </thead>
+          )}
+          {bodyRows.length > 0 && (
+            <tbody>
+              {bodyRows.map((_, idx) => {
+                const logR = headerRowCount + idx;
+                return renderRow(logR);
+              })}
+            </tbody>
+          )}
+        </table>
+      </div>
     </div>
   );
 };
