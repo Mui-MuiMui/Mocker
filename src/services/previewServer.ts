@@ -759,15 +759,17 @@ export function Table(props: any) {
   const tableRef = useRef<HTMLTableElement>(null);
   useEffect(() => {
     if (!tableRef.current) return;
-    // Compute cumulative top for each sticky row and apply
+    // Compute cumulative top for each sticky header row and apply
+    // Only update cells that already have position:sticky with a top value (stickyHeader cells)
+    // pinnedLeft-only cells (left sticky, no top) must not be affected
     const rows = Array.from(tableRef.current.querySelectorAll("tr"));
     let top = 0;
     for (const tr of rows) {
       const cells = Array.from(tr.querySelectorAll("th, td")) as HTMLElement[];
       if (cells.length === 0) break;
-      const isSticky = cells.some(c => c.style.position === "sticky" && c.style.top !== undefined);
-      if (!isSticky) break;
-      cells.forEach(c => { c.style.top = top + "px"; });
+      const stickyCells = cells.filter(c => c.style.position === "sticky" && c.style.top !== "");
+      if (stickyCells.length === 0) break;
+      stickyCells.forEach(c => { c.style.top = top + "px"; });
       top += tr.getBoundingClientRect().height;
     }
   });
