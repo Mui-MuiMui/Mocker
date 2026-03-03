@@ -71,8 +71,6 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   ResizablePanelSlot: {},
   Table: {
     borderWidth: ["0", "1", "2", "4"],
-    stickyHeader: ["", "1", "2", "3", "4"],
-    pinnedLeft: ["", "0", "1", "2", "3", "4"],
   },
   TableCellSlot: {
     align: ["left", "center", "right"],
@@ -455,16 +453,16 @@ export function PropEditor() {
     ? []
     : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (selectedProps[k] ?? INTERACTION_DEFAULTS[k])]);
 
-  // コンポーネントグループ: craftDefaultProps に定義されているキーのうち、レイアウト系・インタラクション系を除いたもの
-  const componentEntries: [string, unknown][] = Object.entries(selectedProps).filter(
+  // コンポーネントグループ: craftDefaultProps に定義されているキーをベースに（selectedProps になければデフォルト値を使用）
+  // craftDefaultProps ベースにすることで、後から追加された prop も既存ノードで表示される
+  const componentEntries: [string, unknown][] = Object.entries(craftDefaultProps ?? selectedProps).filter(
     ([key]) =>
       key !== "children" &&
       key !== "className" &&
       !LAYOUT_ALL_KEYS.has(key) &&
       !INTERACTION_KEYS.has(key) &&
-      !excludedProps.has(key) &&
-      (craftDefaultProps ? key in craftDefaultProps : true),
-  );
+      !excludedProps.has(key),
+  ).map(([key, defaultVal]) => [key, key in selectedProps ? selectedProps[key] : defaultVal]);
 
   const grouped = new Map<PropGroup, [string, unknown][]>([
     ["common", [...commonEntries, ...interactionEntries]],
