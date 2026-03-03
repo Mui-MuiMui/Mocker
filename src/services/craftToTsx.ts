@@ -1634,7 +1634,7 @@ function renderTable(
   const lines: string[] = [];
   lines.push(`${pad}<Table${outerBorderAttr}${styleAttrWithMin}>`);
 
-  function renderRow(logR: number, rowIndent: number): void {
+  function renderRow(logR: number, rowIndent: number, isStickyRow = false): void {
     const rowPad = "  ".repeat(rowIndent);
     const physR = rowMap[logR];
     lines.push(`${rowPad}<TableRow>`);
@@ -1666,7 +1666,8 @@ function renderTable(
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
       const pinnedBg = isPinned && !bgClass ? "bg-background" : "";
-      const cellCls = [bgClass, borderClass, tableBorderClass, pinnedBg].filter(Boolean).join(" ");
+      const stickyBg = isStickyRow && !bgClass ? "bg-muted/50" : "";
+      const cellCls = [bgClass, borderClass, tableBorderClass, pinnedBg, stickyBg].filter(Boolean).join(" ");
       const classAttr = cellCls ? ` className="${escapeAttr(cellCls)}"` : "";
       const stylePartsCell: string[] = [];
       const rawEffectiveWidth = (cellWidth && cellWidth !== "auto") ? cellWidth
@@ -1676,7 +1677,17 @@ function renderTable(
       if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
       const normalizedCellHeight = normalizeCssSize(cellHeight || undefined);
       if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
-      if (isPinned) {
+      if (isStickyRow && isPinned) {
+        // corner cell: sticky both top and left
+        stylePartsCell.push(`position: "sticky"`);
+        stylePartsCell.push(`top: 0`);
+        stylePartsCell.push(`left: ${calcPinnedLeftOffset(logC)}`);
+        stylePartsCell.push(`zIndex: 3`);
+      } else if (isStickyRow) {
+        stylePartsCell.push(`position: "sticky"`);
+        stylePartsCell.push(`top: 0`);
+        stylePartsCell.push(`zIndex: 2`);
+      } else if (isPinned) {
         stylePartsCell.push(`position: "sticky"`);
         stylePartsCell.push(`left: ${calcPinnedLeftOffset(logC)}`);
         stylePartsCell.push(`zIndex: 1`);
@@ -1699,10 +1710,9 @@ function renderTable(
   }
 
   if (headerRowCount > 0) {
-    const stickyAttr = stickyHeader ? ` className="sticky top-0 z-[2] bg-muted/50"` : "";
-    lines.push(`${pad}  <TableHeader${stickyAttr}>`);
+    lines.push(`${pad}  <TableHeader>`);
     for (let logR = 0; logR < headerRowCount; logR++) {
-      renderRow(logR, indent + 2);
+      renderRow(logR, indent + 2, stickyHeader);
     }
     lines.push(`${pad}  </TableHeader>`);
   }
