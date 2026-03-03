@@ -1667,7 +1667,7 @@ export function DrawerContent(props: any) {
 }`,
 
   popover: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { ComboboxCtx } from "@/components/ui/_combobox";
 const Ctx = createContext<any>(null);
 export function Popover(props: any) {
@@ -1675,23 +1675,19 @@ export function Popover(props: any) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [search, setSearch] = useState("");
-  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
-  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen, triggerWidth, setTriggerWidth }}><div className="relative inline-grid" style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
+  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen }}><div className="relative inline-grid" style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
 }
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
-  const ref = useRef<HTMLSpanElement>(null);
-  const handleClick = () => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); ctx?.setOpen(!ctx?.open); };
-  return <span ref={ref} onClick={handleClick} style={{ cursor: "pointer", display: "inline-block", width: "100%", ...props.style }}>{props.children}</span>;
+  return <span onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block", width: "100%", ...props.style }}>{props.children}</span>;
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
   const comboCtx = useContext(ComboboxCtx);
   if (!ctx?.open) return null;
-  const minWidth = ctx?.triggerWidth ? \`\${ctx.triggerWidth}px\` : undefined;
   const cls = cn("absolute left-0 top-full mt-1 z-50 rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
   const handleClose = () => { ctx.setOpen(false); };
-  return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={{ minWidth, ...props.style }} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
+  return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={props.style} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
 }`,
 
   "dropdown-menu": `import { createContext, useContext, useState } from "react";

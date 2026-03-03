@@ -9,6 +9,7 @@ interface CraftSelectProps {
   width?: string;
   height?: string;
   className?: string;
+  contentWidth?: string;
 }
 
 export const CraftSelect: UserComponent<CraftSelectProps> = ({
@@ -19,6 +20,7 @@ export const CraftSelect: UserComponent<CraftSelectProps> = ({
   width = "auto",
   height = "auto",
   className = "",
+  contentWidth = "",
 }) => {
   const {
     connectors: { connect, drag },
@@ -50,6 +52,7 @@ CraftSelect.craft = {
     width: "auto",
     height: "auto",
     className: "",
+    contentWidth: "",
   },
   rules: {
     canDrag: () => true,

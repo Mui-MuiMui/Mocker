@@ -499,7 +499,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftToggle: { text: "Toggle", variant: "default", pressed: false, size: "default", disabled: false, icon: "", tooltipText: "", tooltipSide: "" },
   CraftToggleGroup: { items: "Bold,Italic,Underline", type: "single", variant: "default", size: "default", disabled: false, gap: "1", orientation: "horizontal", tooltipText: "", tooltipSide: "", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "" },
   // Phase 2
-  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "" },
+  CraftSelect: { items: "Option 1,Option 2,Option 3", placeholder: "Select an option", tooltipText: "", tooltipSide: "", contentWidth: "" },
   CraftCalendar: { todayBgClass: "", todayTextClass: "" },
   CraftDatePicker: { mode: "date", dateFormat: "yyyy/MM/dd", placeholder: "日付を選択...", editable: false, disabled: false,
     calendarBorderClass: "", calendarShadowClass: "", todayBgClass: "", todayTextClass: "", todayBorderClass: "", todayShadowClass: "",
@@ -522,7 +522,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftNavigationMenu: {},
   CraftMenubar: { menuData: DEFAULT_MENUBAR_DATA_STR },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
-  CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
+  CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", contentWidth: "" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
   CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
 };
@@ -2614,6 +2614,8 @@ function renderSelect(
   const tooltipText = props?.tooltipText as string | undefined;
   const tooltipSide = props?.tooltipSide as string | undefined;
   const sideAttr = tooltipSide ? ` side="${tooltipSide}"` : "";
+  const contentWidth = (props?.contentWidth as string) || "";
+  const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
 
   const lines: string[] = [];
   lines.push(`${pad}<${tag}>`);
@@ -2635,7 +2637,7 @@ function renderSelect(
     lines.push(`${pad}    <SelectValue placeholder="${escapeAttr(placeholder)}" />`);
     lines.push(`${pad}  </SelectTrigger>`);
   }
-  lines.push(`${pad}  <SelectContent>`);
+  lines.push(`${pad}  <SelectContent${contentStyleAttr}>`);
   for (const item of items) {
     lines.push(`${pad}    <SelectItem value="${escapeAttr(item)}">${escapeJsx(item)}</SelectItem>`);
   }
@@ -2653,6 +2655,8 @@ function renderCombobox(
   const items = ((props?.items as string) || "Apple,Banana,Cherry").split(",").map((s) => s.trim());
   const placeholder = (props?.placeholder as string) || "Select an option...";
   const linkedMocPath = (props?.linkedMocPath as string) || "";
+  const contentWidth = (props?.contentWidth as string) || "";
+  const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
 
   const userClass = classNameAttr.match(/className="([^"]*)"/)?.[ 1] ?? "";
   const buttonClassName = ["w-full justify-between", userClass].filter(Boolean).join(" ");
@@ -2665,7 +2669,7 @@ function renderCombobox(
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
   lines.push(`${pad}    </Button>`);
   lines.push(`${pad}  </PopoverTrigger>`);
-  lines.push(`${pad}  <PopoverContent className="p-0">`);
+  lines.push(`${pad}  <PopoverContent className="p-0"${contentStyleAttr}>`);
   lines.push(`${pad}    <Command>`);
   lines.push(`${pad}      <CommandInput placeholder="Search..." />`);
   lines.push(`${pad}      <CommandList>`);
