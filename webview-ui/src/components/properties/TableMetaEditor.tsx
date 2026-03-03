@@ -270,7 +270,7 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
                           : isMerged
                           ? "bg-[var(--vscode-button-background,#0e639c)] opacity-50"
                           : isHeader
-                          ? "bg-[var(--vscode-toolbar-hoverBackground,#333)]"
+                          ? "bg-[var(--vscode-badge-background,#4d4d4d)]"
                           : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
                       }`}
                       onClick={() => toggleCell(logR, logC)}
