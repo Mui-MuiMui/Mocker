@@ -755,7 +755,7 @@ export function Table(props: any) {
   const wrapperStyle = Object.fromEntries(Object.entries({ width, height }).filter(([, v]) => v != null));
   const innerStyle = Object.fromEntries(Object.entries({ minWidth, ...tableStyle }).filter(([, v]) => v != null));
   const cls = cn("caption-bottom text-sm border-separate", className);
-  const mergedInnerStyle = { borderSpacing: 0, ...innerStyle };
+  const mergedInnerStyle = { borderSpacing: 0, width: "100%", ...innerStyle };
   const tableRef = useRef<HTMLTableElement>(null);
   useEffect(() => {
     if (!tableRef.current) return;

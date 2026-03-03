@@ -290,7 +290,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
 
   return (
     <div
-      className={cn("inline-block overflow-auto", className)}
+      className={cn("overflow-auto", className)}
       style={Object.keys(wrapperStyle).length > 0 ? wrapperStyle : undefined}
     >
       {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
@@ -304,7 +304,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       </div>
       <table
         className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
-        style={{ tableLayout: "fixed", borderSpacing: 0, minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
+        style={{ tableLayout: "fixed", borderSpacing: 0, width: "100%", minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
       >
         <colgroup>
           {colMap.map((physC) => {
