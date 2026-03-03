@@ -44,6 +44,7 @@ interface TableCellSlotProps {
   align?: "left" | "center" | "right";
   width?: string;
   height?: string;
+  className?: string;
   children?: React.ReactNode;
 }
 
@@ -57,6 +58,7 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
   align = "left",
   width = "auto",
   height = "auto",
+  className = "",
   children,
 }) => {
   const {
@@ -78,7 +80,7 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-[20px] h-full p-1", alignCls, bgClass, borderClass)}
+      className={cn("min-h-[20px] h-full p-1", alignCls, bgClass, borderClass, className)}
       style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
     >
       {children}
@@ -97,6 +99,7 @@ TableCellSlot.craft = {
     align: "left",
     width: "auto",
     height: "auto",
+    className: "",
   },
   rules: {
     canDrag: () => false,
@@ -266,7 +269,7 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
               colSpan={colspan > 1 ? colspan : undefined}
               rowSpan={rowspan > 1 ? rowspan : undefined}
               style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
-              className={cn(cellBorderClass, "p-0 align-top")}
+              className={cn(cellBorderClass, "p-0 align-top text-left font-normal")}
             >
               <Element
                 id={cellKey}
