@@ -78,7 +78,7 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-[20px] p-1", alignCls, bgClass, borderClass)}
+      className={cn("min-h-[20px] h-full p-1", alignCls, bgClass, borderClass)}
       style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
     >
       {children}
@@ -207,6 +207,14 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   if (normalizedWidth && normalizedWidth !== "auto") wrapperStyle.width = normalizedWidth;
   if (normalizedHeight && normalizedHeight !== "auto") wrapperStyle.height = normalizedHeight;
 
+  // Compute total column width for table min-width (enables overflow scroll when wrapper is narrower)
+  const totalColWidth = colMap.reduce((sum, physC) => {
+    const w = colWidths[String(physC)] || "";
+    if (!w || w === "auto") return sum;
+    const num = parseFloat(w);
+    return isNaN(num) ? sum : sum + num;
+  }, 0);
+
   const bwClass = borderWidth === "0" ? "border-0"
     : borderWidth === "2" ? "border-2"
     : borderWidth === "4" ? "border-4"
@@ -244,6 +252,9 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
             cellStyle.left = calcPinnedLeft(colMap, colWidths, logC);
             cellStyle.zIndex = 1;
           }
+
+          // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
+          if (rowspan > 1) cellStyle.height = "1px";
 
           const CellTag = isHeader ? "th" : "td";
           return (
@@ -283,7 +294,10 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       >
         <span className="text-[9px] text-muted-foreground">⠿ Table</span>
       </div>
-      <table className="caption-bottom border-collapse text-sm" style={{ tableLayout: "fixed" }}>
+      <table
+        className="caption-bottom border-collapse text-sm"
+        style={{ tableLayout: "fixed", minWidth: totalColWidth > 0 ? totalColWidth : undefined }}
+      >
         <colgroup>
           {colMap.map((physC) => {
             const w = colWidths[String(physC)];
