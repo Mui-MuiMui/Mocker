@@ -1333,26 +1333,30 @@ export function ToggleGroupItem(props: any) {
 
   // Phase 2: Complex components
   select: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 const SelectCtx = createContext<any>(null);
 export function Select(props: any) {
   const { children, ...rest } = props;
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
-  return <SelectCtx.Provider value={{ value, setValue, open, setOpen }}><div className="relative inline-grid" {...rest}>{children}</div></SelectCtx.Provider>;
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
+  return <SelectCtx.Provider value={{ value, setValue, open, setOpen, triggerWidth, setTriggerWidth }}><div className="relative inline-grid" {...rest}>{children}</div></SelectCtx.Provider>;
 }
 export function SelectTrigger(props: any) {
   const { className = "", children, ...rest } = props;
   const ctx = useContext(SelectCtx);
+  const ref = useRef<HTMLButtonElement>(null);
   const cls = cn("flex h-9 w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1", className);
-  return <button type="button" className={cls} onClick={() => ctx?.setOpen((o: boolean) => !o)} {...rest}>{children}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6"/></svg></button>;
+  const handleClick = () => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); ctx?.setOpen((o: boolean) => !o); };
+  return <button ref={ref} type="button" className={cls} onClick={handleClick} {...rest}>{children}<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 opacity-50"><path d="m6 9 6 6 6-6"/></svg></button>;
 }
 export function SelectContent(props: any) {
-  const { className = "", children, ...rest } = props;
+  const { className = "", children, style, ...rest } = props;
   const ctx = useContext(SelectCtx);
   if (!ctx?.open) return null;
-  const cls = cn("absolute top-full left-0 z-50 mt-1 max-h-60 w-full min-w-[8rem] overflow-auto rounded-md border border-gray-300 bg-popover p-1 text-popover-foreground shadow-lg", className);
-  return <div className={cls} {...rest}>{children}</div>;
+  const effectiveWidth = style?.width ?? (ctx?.triggerWidth ? \`\${ctx.triggerWidth}px\` : undefined);
+  const cls = cn("absolute top-full left-0 z-50 mt-1 max-h-60 min-w-[8rem] overflow-auto rounded-md border border-gray-300 bg-popover p-1 text-popover-foreground shadow-lg", className);
+  return <div className={cls} style={{ width: effectiveWidth, ...style }} {...rest}>{children}</div>;
 }
 export function SelectItem(props: any) {
   const { value, className = "", children, ...rest } = props;
@@ -1667,7 +1671,7 @@ export function DrawerContent(props: any) {
 }`,
 
   popover: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import { ComboboxCtx } from "@/components/ui/_combobox";
 const Ctx = createContext<any>(null);
 export function Popover(props: any) {
@@ -1675,19 +1679,23 @@ export function Popover(props: any) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [search, setSearch] = useState("");
-  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen }}><div className="relative inline-grid" style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
+  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen, triggerWidth, setTriggerWidth }}><div className="relative inline-grid" style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
 }
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
-  return <span onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block", width: "100%", ...props.style }}>{props.children}</span>;
+  const ref = useRef<HTMLSpanElement>(null);
+  const handleClick = () => { if (ref.current) ctx?.setTriggerWidth(ref.current.offsetWidth); ctx?.setOpen(!ctx?.open); };
+  return <span ref={ref} onClick={handleClick} style={{ cursor: "pointer", display: "inline-block", width: "100%", ...props.style }}>{props.children}</span>;
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
   const comboCtx = useContext(ComboboxCtx);
   if (!ctx?.open) return null;
+  const effectiveWidth = props.style?.width ?? (ctx?.triggerWidth ? \`\${ctx.triggerWidth}px\` : undefined);
   const cls = cn("absolute left-0 top-full mt-1 z-50 rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
   const handleClose = () => { ctx.setOpen(false); };
-  return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={props.style} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
+  return <><div className="fixed inset-0 z-40" onClick={handleClose} /><div className={cls} style={{ width: effectiveWidth, ...props.style }} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>;
 }`,
 
   "dropdown-menu": `import { createContext, useContext, useState } from "react";
