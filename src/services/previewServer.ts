@@ -285,6 +285,7 @@ export async function startPreviewServer(
   function buildImportMap(): string {
     const imports: Record<string, string> = {
       "react": "https://esm.sh/react@19",
+      "react-dom": "https://esm.sh/react-dom@19",
       "react-dom/client": "https://esm.sh/react-dom@19/client",
       "react/jsx-runtime": "https://esm.sh/react@19/jsx-runtime",
     };
