@@ -613,11 +613,40 @@ export function craftStateToTsx(
       addImport("@/components/ui/select", "SelectValue");
     }
 
+    // Collect command sub-component imports
+    if (resolvedName === "CraftCommand") {
+      addImport("@/components/ui/command", "Command");
+      addImport("@/components/ui/command", "CommandEmpty");
+      addImport("@/components/ui/command", "CommandGroup");
+      addImport("@/components/ui/command", "CommandInput");
+      addImport("@/components/ui/command", "CommandItem");
+      addImport("@/components/ui/command", "CommandList");
+      addImport("@/components/ui/command", "CommandSeparator");
+      addImport("lucide-react", "Search");
+      // Collect icons from commandData
+      try {
+        const defs = JSON.parse((node.props?.commandData as string) || "[]");
+        function collectIcons(arr: unknown[]): void {
+          for (const def of arr) {
+            const d = def as Record<string, unknown>;
+            if (d.type === "item" && typeof d.icon === "string" && d.icon) {
+              addImport("lucide-react", d.icon);
+            }
+            if (d.type === "group" && Array.isArray(d.items)) {
+              collectIcons(d.items as unknown[]);
+            }
+          }
+        }
+        if (Array.isArray(defs)) collectIcons(defs);
+      } catch {
+        // ignore
+      }
+    }
+
     // Collect combobox sub-component imports
     if (resolvedName === "CraftCombobox") {
       addImport("@/components/ui/popover", "PopoverContent");
       addImport("@/components/ui/popover", "PopoverTrigger");
-      addImport("@/components/ui/button", "Button");
       addImport("@/components/ui/command", "Command");
       addImport("@/components/ui/command", "CommandEmpty");
       addImport("@/components/ui/command", "CommandGroup");
@@ -1214,6 +1243,12 @@ export function craftStateToTsx(
       return applyCommonWrappers(rendered);
     }
 
+    // Command special case
+    if (resolvedName === "CraftCommand") {
+      rendered = `${mocComments}\n${renderCommand(node.props, classNameAttr, styleAttr, pad)}`;
+      return applyCommonWrappers(rendered);
+    }
+
     // Combobox special case: render with Popover + Command structure
     if (resolvedName === "CraftCombobox") {
       rendered = `${mocComments}\n${renderCombobox(node.props, classNameAttr, styleAttr, pad)}`;
@@ -1651,18 +1686,14 @@ function renderTable(
       const borderClass = (slotNode?.props?.borderClass as string) || "";
       const cellWidth = (slotNode?.props?.width as string) || "";
       const cellHeight = (slotNode?.props?.height as string) || "";
-      const cellAlign = (slotNode?.props?.align as string) || "left";
       const slotClassName = (slotNode?.props?.className as string) || "";
       const colWidth = colWidths[String(physC)] || "";
       const cellTag = isHeader ? "TableHead" : "TableCell";
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
-      // alignCls and slotClassName go on an inner div, NOT on the td (display:flex on td breaks rowspan/colspan)
-      // align prop uses flex-col for horizontal alignment; slotClassName carries TailwindEditor classes as-is
-      const alignCls = cellAlign === "right" ? "flex flex-col items-end"
-        : cellAlign === "center" ? "flex flex-col items-center"
-        : "";
-      const innerDivCls = ["min-h-full p-1", alignCls, slotClassName].filter(Boolean).join(" ");
+      // inner div uses flex (flex-row) so items-* controls vertical alignment and justify-* controls horizontal
+      // h-full works because td has height:1px (1px trick makes h-full expand to full td height)
+      const innerDivCls = ["flex h-full p-1", slotClassName].filter(Boolean).join(" ");
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
       const pinnedBg = isPinned && !bgClass ? "bg-background" : "";
@@ -1676,7 +1707,8 @@ function renderTable(
       const effectiveWidth = normalizeCssSize(rawEffectiveWidth || undefined) || "";
       if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
       const normalizedCellHeight = normalizeCssSize(cellHeight || undefined);
-      if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
+      // 1px trick: td height:1px allows inner div h-full to expand to actual td height
+      stylePartsCell.push(`height: "${(normalizedCellHeight && normalizedCellHeight !== "auto") ? normalizedCellHeight : "1px"}"`)
       if (isStickyRow && isPinned) {
         // corner cell: sticky both top and left
         stylePartsCell.push(`position: "sticky"`);
@@ -2705,6 +2737,131 @@ function renderSelect(
   return lines.join("\n");
 }
 
+type CommandItemDefLocal =
+  | { type: "item"; label: string; icon?: string; shortcut?: string }
+  | { type: "separator" }
+  | { type: "group"; label: string; items: CommandItemDefLocal[] };
+
+function renderCommandItems(
+  defs: CommandItemDefLocal[],
+  pad: string,
+  itemCls: string,
+  iconCls: string,
+  shortcutCls: string,
+  groupHeadingCls: string,
+  separatorCls: string,
+): string[] {
+  const lines: string[] = [];
+  for (const def of defs) {
+    if (def.type === "separator") {
+      lines.push(`${pad}<CommandSeparator className="${escapeAttr(separatorCls)}" />`);
+    } else if (def.type === "group") {
+      lines.push(`${pad}<CommandGroup heading="${escapeAttr(def.label)}">`);
+      lines.push(...renderCommandItems(def.items, pad + "  ", itemCls, iconCls, shortcutCls, groupHeadingCls, separatorCls));
+      lines.push(`${pad}</CommandGroup>`);
+    } else {
+      // type === "item"
+      lines.push(`${pad}<CommandItem value="${escapeAttr(def.label)}" className="${escapeAttr(itemCls)}">`);
+      if (def.icon) {
+        lines.push(`${pad}  <${escapeAttr(def.icon)} className="${escapeAttr(iconCls)}" />`);
+      } else {
+        lines.push(`${pad}  <span className="h-4 w-4 shrink-0" />`);
+      }
+      lines.push(`${pad}  <span className="flex-1">${escapeJsx(def.label)}</span>`);
+      if (def.shortcut) {
+        lines.push(`${pad}  <span className="${escapeAttr(shortcutCls)}">${escapeJsx(def.shortcut)}</span>`);
+      }
+      lines.push(`${pad}</CommandItem>`);
+    }
+  }
+  return lines;
+}
+
+function renderCommand(
+  props: Record<string, unknown>,
+  classNameAttr: string,
+  styleAttr: string,
+  pad: string,
+): string {
+  const placeholder = (props?.placeholder as string) || "Type a command or search...";
+
+  // Style props
+  const itemBgClass = (props?.itemBgClass as string) || "";
+  const itemTextClass = (props?.itemTextClass as string) || "";
+  const itemBorderClass = (props?.itemBorderClass as string) || "";
+  const itemBorderWidth = (props?.itemBorderWidth as string) || "";
+  const itemShadowClass = (props?.itemShadowClass as string) || "";
+  const hoverBgClass = (props?.hoverBgClass as string) || "";
+  const hoverTextClass = (props?.hoverTextClass as string) || "";
+  const iconClass = (props?.iconClass as string) || "";
+  const shortcutTextClass = (props?.shortcutTextClass as string) || "";
+  const groupHeadingClass = (props?.groupHeadingClass as string) || "";
+
+  const itemBwClass =
+    itemBorderWidth === "0" ? "border-0"
+    : itemBorderWidth === "2" ? "border-2"
+    : itemBorderWidth === "4" ? "border-4"
+    : itemBorderWidth === "8" ? "border-8"
+    : itemBorderWidth === "1" ? "border"
+    : "";
+
+  const itemCls = [
+    "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none",
+    itemBgClass, itemTextClass, itemBwClass, itemBorderClass, itemShadowClass,
+    hoverBgClass ? `hover:${hoverBgClass}` : "hover:bg-accent",
+    hoverTextClass ? `hover:${hoverTextClass}` : "hover:text-accent-foreground",
+  ].filter(Boolean).join(" ");
+
+  const iconCls = ["h-4 w-4 shrink-0", iconClass || "opacity-60"].filter(Boolean).join(" ");
+  const shortcutCls = ["ml-auto text-xs tracking-widest", shortcutTextClass || "text-muted-foreground"].filter(Boolean).join(" ");
+  const groupHeadingCls = groupHeadingClass || "text-muted-foreground";
+
+  // Input border styling
+  const inputBorderClass = (props?.inputBorderClass as string) || "";
+  const inputBorderWidth = (props?.inputBorderWidth as string) || "";
+  const inputBwClass =
+    inputBorderWidth === "0" ? "border-0"
+    : inputBorderWidth === "2" ? "border-2"
+    : inputBorderWidth === "4" ? "border-4"
+    : inputBorderWidth === "8" ? "border-8"
+    : inputBorderWidth === "1" ? "border"
+    : "";
+  const inputRoundedClass = (props?.inputRoundedClass as string) || "";
+  const inputCls = ["flex items-center border-b px-3", inputBorderClass, inputBwClass, inputRoundedClass].filter(Boolean).join(" ");
+
+  // Separator styling
+  const separatorClass = (props?.separatorClass as string) || "";
+  const separatorShadowClass = (props?.separatorShadowClass as string) || "";
+  const separatorBorderClass = (props?.separatorBorderClass as string) || "";
+  const separatorBorderWidth = (props?.separatorBorderWidth as string) || "";
+  const sepBwClass =
+    separatorBorderWidth === "0" ? "border-0"
+    : separatorBorderWidth === "2" ? "border-2"
+    : separatorBorderWidth === "4" ? "border-4"
+    : separatorBorderWidth === "8" ? "border-8"
+    : separatorBorderWidth === "1" ? "border"
+    : "";
+  const separatorCls = ["-mx-1 h-px", separatorClass || "bg-border", separatorShadowClass, sepBwClass, separatorBorderClass].filter(Boolean).join(" ");
+
+  let defs: CommandItemDefLocal[] = [];
+  try {
+    const parsed = JSON.parse((props?.commandData as string) || "[]");
+    if (Array.isArray(parsed)) defs = parsed as CommandItemDefLocal[];
+  } catch {
+    defs = [];
+  }
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Command${classNameAttr}${styleAttr}>`);
+  lines.push(`${pad}  <CommandInput placeholder="${escapeAttr(placeholder)}" className="${escapeAttr(inputCls)}" />`);
+  lines.push(`${pad}  <CommandList>`);
+  lines.push(`${pad}    <CommandEmpty>No results found.</CommandEmpty>`);
+  lines.push(...renderCommandItems(defs, pad + "    ", itemCls, iconCls, shortcutCls, groupHeadingCls, separatorCls));
+  lines.push(`${pad}  </CommandList>`);
+  lines.push(`${pad}</Command>`);
+  return lines.join("\n");
+}
+
 function renderCombobox(
   props: Record<string, unknown>,
   classNameAttr: string,
@@ -2716,17 +2873,30 @@ function renderCombobox(
   const linkedMocPath = (props?.linkedMocPath as string) || "";
   const contentWidth = (props?.contentWidth as string) || "";
   const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
+  const width = normalizeCssSize((props?.width as string) || "auto") || "auto";
+  const height = normalizeCssSize((props?.height as string) || "auto") || "auto";
 
+  // width は <Popover> ラッパー (inline-grid な div) に渡す。height は <button> に渡す。
+  // auto の場合は編集画面の w-full 挙動に合わせて 100% を渡す。
+  const popoverWidth = width !== "auto" ? width : "100%";
+  const popoverStyleAttr = ` style={{ width: "${escapeAttr(popoverWidth)}" }}`;
+  const buttonStyleAttr = height !== "auto" ? ` style={{ height: "${escapeAttr(height)}" }}` : "";
+  // w-full は PopoverTrigger(span[inline-block]) 自体に幅を持たせるため不要。width は Popover に委ねる。
   const userClass = classNameAttr.match(/className="([^"]*)"/)?.[ 1] ?? "";
-  const buttonClassName = ["w-full justify-between", userClass].filter(Boolean).join(" ");
+  const buttonClassName = [
+    "inline-flex w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+    userClass,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const lines: string[] = [];
-  lines.push(`${pad}<Popover>`);
+  lines.push(`${pad}<Popover${popoverStyleAttr}>`);
   lines.push(`${pad}  <PopoverTrigger asChild>`);
-  lines.push(`${pad}    <Button variant="outline" role="combobox" className="${buttonClassName}"${styleAttr}>`);
+  lines.push(`${pad}    <button type="button" role="combobox" className="${buttonClassName}"${buttonStyleAttr}>`);
   lines.push(`${pad}      ${escapeJsx(placeholder)}`);
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
-  lines.push(`${pad}    </Button>`);
+  lines.push(`${pad}    </button>`);
   lines.push(`${pad}  </PopoverTrigger>`);
   lines.push(`${pad}  <PopoverContent className="p-0"${contentStyleAttr}>`);
   lines.push(`${pad}    <Command>`);

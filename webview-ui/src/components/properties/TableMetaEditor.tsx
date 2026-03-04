@@ -227,9 +227,9 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
                       : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
                   }`}
                   onClick={() => selectCol(logC)}
-                  title={`Col ${logC}`}
+                  title={`Col ${logC + 1}`}
                 >
-                  {logC}
+                  {logC + 1}
                 </th>
               ))}
             </tr>
@@ -245,9 +245,9 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
                       : "hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
                   }`}
                   onClick={() => selectRow(logR)}
-                  title={`Row ${logR}`}
+                  title={`Row ${logR + 1}`}
                 >
-                  {logR}
+                  {logR + 1}
                 </td>
                 {colMap.map((physC, logC) => {
                   if (hiddenCells.has(`${logR}_${logC}`)) return null;
@@ -426,7 +426,7 @@ export function TableMetaEditor({ value, selectedNodeId }: TableMetaEditorProps)
         <div className="flex flex-col gap-1">
           {colMap.map((physC, logC) => (
             <div key={physC} className="flex items-center gap-1">
-              <span className="w-8 text-[10px] text-[var(--vscode-foreground,#ccc)]">Col {logC}</span>
+              <span className="w-8 text-[10px] text-[var(--vscode-foreground,#ccc)]">Col {logC + 1}</span>
               <input
                 type="text"
                 value={colWidths[String(physC)] ?? ""}

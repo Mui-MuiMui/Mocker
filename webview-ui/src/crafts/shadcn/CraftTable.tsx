@@ -41,7 +41,6 @@ interface TableCellSlotProps {
   borderClass?: string;
   colspan?: number;
   rowspan?: number;
-  align?: "left" | "center" | "right";
   width?: string;
   height?: string;
   className?: string;
@@ -55,7 +54,6 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
   borderClass = "",
   colspan = 1,
   rowspan = 1,
-  align = "left",
   width = "auto",
   height = "auto",
   className = "",
@@ -65,24 +63,19 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
     connectors: { connect },
   } = useNode();
 
-  // align prop (PropEditor) controls horizontal alignment via flex-col
-  const alignCls = align === "right" ? "flex flex-col items-end"
-    : align === "center" ? "flex flex-col items-center"
-    : "";
-
   const cellStyle: React.CSSProperties = {};
   const normalizedWidth = normalizeCssSize(width);
   const normalizedHeight = normalizeCssSize(height);
   if (normalizedWidth && normalizedWidth !== "auto") cellStyle.width = normalizedWidth;
-  if (normalizedHeight && normalizedHeight !== "auto") cellStyle.height = normalizedHeight;
+  cellStyle.height = (normalizedHeight && normalizedHeight !== "auto") ? normalizedHeight : "100%";
 
   return (
     <div
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-full p-1", alignCls, bgClass, borderClass, className)}
-      style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
+      className={cn("flex p-1", bgClass, borderClass, className)}
+      style={cellStyle}
     >
       {children}
     </div>
@@ -97,7 +90,6 @@ TableCellSlot.craft = {
     borderClass: "",
     colspan: 1,
     rowspan: 1,
-    align: "left",
     width: "auto",
     height: "auto",
     className: "",
@@ -259,9 +251,15 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           const effectiveWidth = normalizeCssSize(rawEffectiveWidth);
           if (effectiveWidth) cellStyle.width = effectiveWidth;
           const normalizedCellHeight = normalizeCssSize(cellHeight);
-          if (normalizedCellHeight && normalizedCellHeight !== "auto") cellStyle.height = normalizedCellHeight;
+          if (normalizedCellHeight && normalizedCellHeight !== "auto" && normalizedCellHeight !== "100%") {
+            cellStyle.height = normalizedCellHeight;
+          } else {
+            // td/th に height を設定しないと内側の div で height:100% が効かないため 1px トリックを適用
+            // auto / 100% どちらも内側 div を伸ばす意図なので同様に扱う
+            cellStyle.height = "1px";
+          }
 
-          // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
+          // rowspan セルも同様
           if (rowspan > 1) cellStyle.height = "1px";
 
           const CellTag = isHeader ? "th" : "td";

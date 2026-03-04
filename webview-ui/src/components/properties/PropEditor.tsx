@@ -6,6 +6,7 @@ import { TableMetaEditor } from "./TableMetaEditor";
 import { TabMetaEditor } from "./TabMetaEditor";
 import { ResizableMetaEditor } from "./ResizableMetaEditor";
 import { MenubarMetaEditor } from "./MenubarMetaEditor";
+import { CommandMetaEditor } from "./CommandMetaEditor";
 import { ColumnDefsEditor } from "./ColumnDefsEditor";
 import { useEditorStore } from "../../stores/editorStore";
 
@@ -72,9 +73,6 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Table: {
     borderWidth: ["0", "1", "2", "4"],
   },
-  TableCellSlot: {
-    align: ["left", "center", "right"],
-  },
   Switch: {
     variant: ["default", "card"],
     size: ["default", "sm"],
@@ -123,6 +121,10 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   "Data Table": {
     filterType: ["none", "header", "bar"],
   },
+  Command: {
+    itemShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    separatorShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
 };
 
 /** Property names rendered as a button group (toggle buttons) per component. */
@@ -151,6 +153,12 @@ const BUTTON_GROUP_PROPS: Record<string, Record<string, string[]>> = {
     pageSize: ["", "5", "10", "20", "50"],
     pinnedLeft: ["", "0", "1", "2", "3"],
   },
+  Command: {
+    itemBorderWidth: ["", "0", "1", "2", "4", "8"],
+    inputBorderWidth: ["", "0", "1", "2", "4", "8"],
+    inputRoundedClass: ["", "rounded-none", "rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-2xl", "rounded-full"],
+    separatorBorderWidth: ["", "0", "1", "2", "4", "8"],
+  },
 };
 
 const INPUT_CLASS =
@@ -166,13 +174,13 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "hoverCar
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
-const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass"]);
+const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass", "itemBgClass", "separatorClass"]);
 
 /** Props that use the Tailwind border class palette picker UI (stores "border-red-500" style class names). */
-const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "triggerBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass", "cardBorderClass"]);
+const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "triggerBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass", "cardBorderClass", "itemBorderClass", "inputBorderClass", "separatorBorderClass"]);
 
 /** Props that use the Tailwind text class palette picker UI (stores "text-red-500" style class names). */
-const TAILWIND_TEXT_PALETTE_PROPS = new Set(["todayTextClass", "hoverTextClass", "buttonTextClass", "triggerTextClass", "dropdownTextClass", "shortcutTextClass", "checkTextClass", "panelTextClass", "activeTextClass", "selectedTextClass", "headerTextClass", "headerHoverTextClass", "sortIconClass", "filterIconClass"]);
+const TAILWIND_TEXT_PALETTE_PROPS = new Set(["todayTextClass", "hoverTextClass", "buttonTextClass", "triggerTextClass", "dropdownTextClass", "shortcutTextClass", "checkTextClass", "panelTextClass", "activeTextClass", "selectedTextClass", "headerTextClass", "headerHoverTextClass", "sortIconClass", "filterIconClass", "itemTextClass", "iconClass", "groupHeadingClass"]);
 
 /**
  * Tailwind CSS color palette (hex) — same data as TailwindEditor.tsx.
@@ -546,6 +554,17 @@ export function PropEditor() {
     if (key === "menuData" && selectedNodeId) {
       return (
         <MenubarMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for commandData (command structure editor)
+    if (key === "commandData" && selectedNodeId) {
+      return (
+        <CommandMetaEditor
           key={key}
           value={String(value ?? "")}
           selectedNodeId={selectedNodeId}
