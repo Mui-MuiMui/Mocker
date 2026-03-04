@@ -259,10 +259,11 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           const effectiveWidth = normalizeCssSize(rawEffectiveWidth);
           if (effectiveWidth) cellStyle.width = effectiveWidth;
           const normalizedCellHeight = normalizeCssSize(cellHeight);
-          if (normalizedCellHeight && normalizedCellHeight !== "auto") {
+          if (normalizedCellHeight && normalizedCellHeight !== "auto" && normalizedCellHeight !== "100%") {
             cellStyle.height = normalizedCellHeight;
           } else {
             // td/th に height を設定しないと内側の div で height:100% が効かないため 1px トリックを適用
+            // auto / 100% どちらも内側 div を伸ばす意図なので同様に扱う
             cellStyle.height = "1px";
           }
 
