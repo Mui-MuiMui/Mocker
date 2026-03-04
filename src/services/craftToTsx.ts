@@ -2715,22 +2715,25 @@ function renderCombobox(
   const linkedMocPath = (props?.linkedMocPath as string) || "";
   const contentWidth = (props?.contentWidth as string) || "";
   const contentStyleAttr = contentWidth ? ` style={{ width: "${escapeAttr(contentWidth)}" }}` : "";
-  const width = (props?.width as string) || "auto";
+  const width = normalizeCssSize((props?.width as string) || "auto") || "auto";
+  const height = normalizeCssSize((props?.height as string) || "auto") || "auto";
 
+  // width は <Popover> ラッパー (inline-grid な div) に渡す。height は <button> に渡す。
+  const popoverStyleAttr = width !== "auto" ? ` style={{ width: "${escapeAttr(width)}" }}` : "";
+  const buttonStyleAttr = height !== "auto" ? ` style={{ height: "${escapeAttr(height)}" }}` : "";
+  // w-full は PopoverTrigger(span[inline-block]) 自体に幅を持たせるため不要。width は Popover に委ねる。
   const userClass = classNameAttr.match(/className="([^"]*)"/)?.[ 1] ?? "";
-  const wClass = width === "100%" ? "w-full" : "";
   const buttonClassName = [
-    "inline-flex items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-    wClass,
+    "inline-flex w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
     userClass,
   ]
     .filter(Boolean)
     .join(" ");
 
   const lines: string[] = [];
-  lines.push(`${pad}<Popover>`);
+  lines.push(`${pad}<Popover${popoverStyleAttr}>`);
   lines.push(`${pad}  <PopoverTrigger asChild>`);
-  lines.push(`${pad}    <button type="button" role="combobox" className="${buttonClassName}"${styleAttr}>`);
+  lines.push(`${pad}    <button type="button" role="combobox" className="${buttonClassName}"${buttonStyleAttr}>`);
   lines.push(`${pad}      ${escapeJsx(placeholder)}`);
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
   lines.push(`${pad}    </button>`);

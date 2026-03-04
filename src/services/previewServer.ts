@@ -1733,7 +1733,7 @@ export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => { if (ref.current) { const child = ref.current.firstElementChild as HTMLElement | null; ctx.triggerRef.current = child ?? ref.current; } }, []);
-  return <span ref={ref} onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "inline-block", ...props.style }}>{props.children}</span>;
+  return <span ref={ref} onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "block", width: "100%", ...props.style }}>{props.children}</span>;
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
