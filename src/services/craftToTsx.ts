@@ -1660,7 +1660,7 @@ function renderTable(
       // align prop uses flex-col for horizontal alignment; slotClassName carries TailwindEditor classes as-is
       const alignCls = cellAlign === "right" ? "flex flex-col items-end"
         : cellAlign === "center" ? "flex flex-col items-center"
-        : "";
+        : "flex flex-col items-start";
       const innerDivCls = ["min-h-full p-1", alignCls, slotClassName].filter(Boolean).join(" ");
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)

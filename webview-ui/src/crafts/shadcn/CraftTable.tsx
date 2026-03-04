@@ -68,7 +68,7 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
   // align prop (PropEditor) controls horizontal alignment via flex-col
   const alignCls = align === "right" ? "flex flex-col items-end"
     : align === "center" ? "flex flex-col items-center"
-    : "";
+    : "flex flex-col items-start";
 
   const cellStyle: React.CSSProperties = {};
   const normalizedWidth = normalizeCssSize(width);
