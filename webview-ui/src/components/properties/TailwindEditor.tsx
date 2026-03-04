@@ -68,6 +68,8 @@ const CONTENT_VALIGN_OPTIONS = [
   { label: "End", cls: "items-end" },
 ];
 
+const FIXED_HEADER_CLASSES = ["fixed", "top-0", "inset-x-0", "z-50"];
+
 /* ---- Tailwind Color Palette ---- */
 
 const PALETTE_FAMILIES = [
@@ -333,6 +335,24 @@ export function TailwindEditor() {
             ))}
           </div>
         </TailwindSection>
+
+        <div className="border-t border-[var(--vscode-panel-border,#444)] my-1" />
+
+        <div className="flex items-center gap-2">
+          <ClassButton
+            label="Fixed Header"
+            active={FIXED_HEADER_CLASSES.every((c) => activeSet.has(c))}
+            onClick={() => {
+              const isActive = FIXED_HEADER_CLASSES.every((c) => activeSet.has(c));
+              const filtered = classes.filter((c) => !FIXED_HEADER_CLASSES.includes(c));
+              if (isActive) {
+                updateClassName(filtered.join(" "));
+              } else {
+                updateClassName([...filtered, ...FIXED_HEADER_CLASSES].join(" "));
+              }
+            }}
+          />
+        </div>
       </TailwindCategory>
 
       <TailwindCategory title="Font" collapsed={collapsedCategories.has("font")} onToggle={() => toggleCategory("font")}>
