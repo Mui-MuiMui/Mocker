@@ -2826,7 +2826,8 @@ function renderCommand(
     : inputBorderWidth === "8" ? "border-8"
     : inputBorderWidth === "1" ? "border"
     : "";
-  const inputCls = ["flex items-center border-b px-3", inputBorderClass, inputBwClass].filter(Boolean).join(" ");
+  const inputRoundedClass = (props?.inputRoundedClass as string) || "";
+  const inputCls = ["flex items-center border-b px-3", inputBorderClass, inputBwClass, inputRoundedClass].filter(Boolean).join(" ");
 
   // Separator styling
   const separatorClass = (props?.separatorClass as string) || "";

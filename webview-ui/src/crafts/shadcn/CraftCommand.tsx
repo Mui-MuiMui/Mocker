@@ -60,6 +60,7 @@ interface CraftCommandProps {
   // Input border styling
   inputBorderClass?: string;
   inputBorderWidth?: string;
+  inputRoundedClass?: string;
   // Separator styling
   separatorClass?: string;
   separatorShadowClass?: string;
@@ -85,6 +86,7 @@ export const CraftCommand: UserComponent<CraftCommandProps> = ({
   groupHeadingClass = "",
   inputBorderClass = "",
   inputBorderWidth = "",
+  inputRoundedClass = "",
   separatorClass = "",
   separatorShadowClass = "",
   separatorBorderClass = "",
@@ -181,7 +183,7 @@ export const CraftCommand: UserComponent<CraftCommandProps> = ({
       className={cn("flex flex-col overflow-hidden rounded-md border bg-popover text-popover-foreground", className)}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
-      <div className={cn("flex items-center border-b px-3", inputBorderClass, inputBwClass)}>
+      <div className={cn("flex items-center border-b px-3", inputBorderClass, inputBwClass, inputRoundedClass)}>
         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
         <input
           type="text"
@@ -217,6 +219,7 @@ CraftCommand.craft = {
     groupHeadingClass: "",
     inputBorderClass: "",
     inputBorderWidth: "",
+    inputRoundedClass: "",
     separatorClass: "",
     separatorShadowClass: "",
     separatorBorderClass: "",

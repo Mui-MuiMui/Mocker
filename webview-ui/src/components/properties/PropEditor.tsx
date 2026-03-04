@@ -156,6 +156,7 @@ const BUTTON_GROUP_PROPS: Record<string, Record<string, string[]>> = {
   Command: {
     itemBorderWidth: ["", "0", "1", "2", "4", "8"],
     inputBorderWidth: ["", "0", "1", "2", "4", "8"],
+    inputRoundedClass: ["", "rounded-none", "rounded-sm", "rounded-md", "rounded-lg", "rounded-xl", "rounded-2xl", "rounded-full"],
     separatorBorderWidth: ["", "0", "1", "2", "4", "8"],
   },
 };
