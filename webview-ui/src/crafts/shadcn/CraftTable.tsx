@@ -74,15 +74,15 @@ export const TableCellSlot: UserComponent<TableCellSlotProps> = ({
   const normalizedWidth = normalizeCssSize(width);
   const normalizedHeight = normalizeCssSize(height);
   if (normalizedWidth && normalizedWidth !== "auto") cellStyle.width = normalizedWidth;
-  if (normalizedHeight && normalizedHeight !== "auto") cellStyle.height = normalizedHeight;
+  cellStyle.height = (normalizedHeight && normalizedHeight !== "auto") ? normalizedHeight : "100%";
 
   return (
     <div
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className={cn("min-h-full p-1", alignCls, bgClass, borderClass, className)}
-      style={Object.keys(cellStyle).length > 0 ? cellStyle : undefined}
+      className={cn("p-1", alignCls, bgClass, borderClass, className)}
+      style={cellStyle}
     >
       {children}
     </div>
@@ -259,9 +259,14 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
           const effectiveWidth = normalizeCssSize(rawEffectiveWidth);
           if (effectiveWidth) cellStyle.width = effectiveWidth;
           const normalizedCellHeight = normalizeCssSize(cellHeight);
-          if (normalizedCellHeight && normalizedCellHeight !== "auto") cellStyle.height = normalizedCellHeight;
+          if (normalizedCellHeight && normalizedCellHeight !== "auto") {
+            cellStyle.height = normalizedCellHeight;
+          } else {
+            // td/th に height を設定しないと内側の div で height:100% が効かないため 1px トリックを適用
+            cellStyle.height = "1px";
+          }
 
-          // td/th needs height:1px so that inner div with height:100% stretches to the cell's actual height
+          // rowspan セルも同様
           if (rowspan > 1) cellStyle.height = "1px";
 
           const CellTag = isHeader ? "th" : "td";
