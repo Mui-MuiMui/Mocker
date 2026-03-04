@@ -1656,7 +1656,8 @@ function renderTable(
       const colSpanAttr = colspan > 1 ? ` colSpan={${colspan}}` : "";
       const rowSpanAttr = rowspan > 1 ? ` rowSpan={${rowspan}}` : "";
       // inner div uses flex (flex-row) so items-* controls vertical alignment and justify-* controls horizontal
-      const innerDivCls = ["flex min-h-full p-1", slotClassName].filter(Boolean).join(" ");
+      // h-full works because td has height:1px (1px trick makes h-full expand to full td height)
+      const innerDivCls = ["flex h-full p-1", slotClassName].filter(Boolean).join(" ");
       const isPinned = logC < pinnedLeftNum;
       // bg-background is a fallback for pinned cells only when no bgClass is set (prevents transparent sticky cells)
       const pinnedBg = isPinned && !bgClass ? "bg-background" : "";
@@ -1670,7 +1671,8 @@ function renderTable(
       const effectiveWidth = normalizeCssSize(rawEffectiveWidth || undefined) || "";
       if (effectiveWidth) stylePartsCell.push(`width: "${effectiveWidth}"`);
       const normalizedCellHeight = normalizeCssSize(cellHeight || undefined);
-      if (normalizedCellHeight && normalizedCellHeight !== "auto") stylePartsCell.push(`height: "${normalizedCellHeight}"`);
+      // 1px trick: td height:1px allows inner div h-full to expand to actual td height
+      stylePartsCell.push(`height: "${(normalizedCellHeight && normalizedCellHeight !== "auto") ? normalizedCellHeight : "1px"}"`)
       if (isStickyRow && isPinned) {
         // corner cell: sticky both top and left
         stylePartsCell.push(`position: "sticky"`);
