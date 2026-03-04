@@ -186,7 +186,8 @@ export const CraftCommand: UserComponent<CraftCommandProps> = ({
         <input
           type="text"
           placeholder={placeholder}
-          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          readOnly
+          className="flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground"
         />
       </div>
       <div className="max-h-[300px] overflow-y-auto overflow-x-hidden p-1">
