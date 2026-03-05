@@ -3,19 +3,65 @@ import { useEditor, type NodeTree, type Node } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { Trash2, Copy, Scissors, ClipboardPaste, CopyPlus } from "lucide-react";
+import { resolvers } from "../../crafts/resolvers";
 
 interface MenuPosition {
   x: number;
   y: number;
 }
 
-// Clipboard store (module-level since we can't use system clipboard for Craft nodes)
-interface ClipboardEntry {
-  tree: NodeTree; // コピー時点のスナップショット（freshIds済み）
-  isCut: boolean;
-  sourceNodeId: string; // cut の場合に削除するID
+const CLIP_PREFIX = "@moc-clipdata:";
+
+/** NodeTree を JSON シリアライズ可能な形式に変換（type: 関数 → コンポーネント名文字列） */
+function serializeTree(tree: NodeTree): string {
+  const serializable = {
+    rootNodeId: tree.rootNodeId,
+    nodes: Object.fromEntries(
+      Object.entries(tree.nodes).map(([id, node]) => {
+        const typeFn = node.data.type as unknown as ((...args: unknown[]) => unknown) & { resolvedName?: string };
+        const typeName =
+          Object.entries(resolvers).find(([, fn]) => fn === typeFn)?.[0] ??
+          typeFn?.resolvedName ??
+          (typeof typeFn === "string" ? typeFn : "CraftDiv");
+        return [
+          id,
+          {
+            ...node,
+            data: { ...node.data, type: typeName },
+            dom: null,
+            events: { selected: false, dragged: false, hovered: false },
+          },
+        ];
+      }),
+    ),
+  };
+  return CLIP_PREFIX + JSON.stringify(serializable);
 }
-let clipboard: ClipboardEntry | null = null;
+
+/** JSON 文字列から NodeTree を復元（type: 文字列 → コンポーネント関数） */
+function deserializeTree(text: string): NodeTree | null {
+  if (!text.startsWith(CLIP_PREFIX)) return null;
+  try {
+    const raw = JSON.parse(text.slice(CLIP_PREFIX.length)) as {
+      rootNodeId: string;
+      nodes: Record<string, Node & { data: { type: string } }>;
+    };
+    const nodes: Record<string, Node> = {};
+    for (const [id, node] of Object.entries(raw.nodes)) {
+      const typeFn = resolvers[node.data.type as keyof typeof resolvers];
+      if (!typeFn) return null; // 未知のコンポーネントは拒否
+      nodes[id] = {
+        ...node,
+        data: { ...node.data, type: typeFn },
+        dom: null,
+        _hydrationTimestamp: Date.now(),
+      } as unknown as Node;
+    }
+    return { rootNodeId: raw.rootNodeId, nodes };
+  } catch {
+    return null;
+  }
+}
 
 /** Generate a short random ID similar to Craft.js's internal getRandomId */
 function freshId(): string {
@@ -76,6 +122,7 @@ function cloneTreeWithFreshIds(tree: NodeTree): NodeTree {
 export function ContextMenu() {
   const { t } = useTranslation();
   const [menuPos, setMenuPos] = useState<MenuPosition | null>(null);
+  const [hasClipboard, setHasClipboard] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { actions, selected, query } = useEditor((state) => {
@@ -123,7 +170,9 @@ export function ContextMenu() {
     try {
       const nodeTree = queryRef.current.node(sel).toNodeTree();
       const freshTree = cloneTreeWithFreshIds(nodeTree);
-      clipboard = { tree: freshTree, isCut: false, sourceNodeId: sel };
+      navigator.clipboard.writeText(serializeTree(freshTree)).then(() => {
+        setHasClipboard(true);
+      }).catch(() => {/* ignore */});
     } catch {
       // Node may not exist
     }
@@ -134,9 +183,16 @@ export function ContextMenu() {
     const sel = selectedRef.current;
     if (!sel) return;
     try {
-      const nodeTree = queryRef.current.node(sel).toNodeTree();
+      const nodeHelper = queryRef.current.node(sel);
+      if (nodeHelper.isRoot() || nodeHelper.isTopLevelNode()) return;
+      if (!nodeHelper.isDeletable()) return;
+      const nodeTree = nodeHelper.toNodeTree();
       const freshTree = cloneTreeWithFreshIds(nodeTree);
-      clipboard = { tree: freshTree, isCut: true, sourceNodeId: sel };
+      navigator.clipboard.writeText(serializeTree(freshTree)).then(() => {
+        setHasClipboard(true);
+        // 切り取り：クリップボード書き込み確認後に元ノードを削除
+        actionsRef.current.delete(sel);
+      }).catch(() => {/* ignore */});
     } catch {
       // Node may not exist
     }
@@ -144,39 +200,27 @@ export function ContextMenu() {
   }, []);
 
   const pasteClipboard = useCallback(() => {
-    if (!clipboard || !selectedRef.current) return;
-    try {
-      const sel = selectedRef.current;
-      const selNode = queryRef.current.node(sel).get();
+    if (!selectedRef.current) return;
+    navigator.clipboard.readText().then((text) => {
+      const tree = deserializeTree(text);
+      if (!tree) return;
+      try {
+        const sel = selectedRef.current;
+        if (!sel) return;
+        const selNode = queryRef.current.node(sel).get();
 
-      // Canvas (子を受け入れ可能) なら子として、そうでなければ親に兄弟として追加
-      const isCanvas = selNode?.data?.isCanvas;
-      const parentId = isCanvas ? sel : selNode?.data?.parent;
-      if (!parentId) return;
+        // Canvas (子を受け入れ可能) なら子として、そうでなければ親に兄弟として追加
+        const isCanvas = selNode?.data?.isCanvas;
+        const parentId = isCanvas ? sel : selNode?.data?.parent;
+        if (!parentId) return;
 
-      // Clone the snapshot again for fresh IDs (supports repeated paste)
-      const pasteTree = cloneTreeWithFreshIds(clipboard.tree);
-      const isCut = clipboard.isCut;
-      const nodeToDelete = isCut ? clipboard.sourceNodeId : null;
-
-      if (isCut) {
-        clipboard = null;
+        // 毎回 fresh IDs で貼り付け（連続貼り付け対応）
+        const pasteTree = cloneTreeWithFreshIds(tree);
+        actionsRef.current.addNodeTree(pasteTree, parentId);
+      } catch {
+        // target can't accept children
       }
-
-      // cut の場合はペースト前に元ノードを削除（コピー済みのため安全）
-      if (nodeToDelete) {
-        try {
-          actionsRef.current.delete(nodeToDelete);
-        } catch {
-          // Cut source may have already been removed
-        }
-      }
-
-      // Add clone
-      actionsRef.current.addNodeTree(pasteTree, parentId);
-    } catch {
-      // Clipboard node no longer exists or target can't accept children
-    }
+    }).catch(() => {/* clipboard read failed */});
     setMenuPos(null);
   }, []);
 
@@ -281,7 +325,7 @@ export function ContextMenu() {
         label={t("contextMenu.paste")}
         shortcut="Ctrl+V"
         onClick={pasteClipboard}
-        disabled={!clipboard}
+        disabled={!hasClipboard}
       />
       <MenuItem
         icon={<CopyPlus size={14} />}
