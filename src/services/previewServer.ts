@@ -128,7 +128,7 @@ export async function startPreviewServer(
       const pairs: [string, string][] = [];
       for (const node of Object.values(cs)) {
         const n = node as { props?: Record<string, unknown> };
-        for (const key of ["linkedMocPath", "contextMenuMocPath"]) {
+        for (const key of ["linkedMocPath", "contextMenuMocPath", "hoverCardMocPath"]) {
           const p = n?.props?.[key] as string | undefined;
           if (p) {
             const abs = path.resolve(baseDir, p);
@@ -702,7 +702,8 @@ export function Button(props: any) {
     </div>;
   }
   const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
-  return <button className={cls} role={role} style={style} {...rest}>{children}</button>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <button className={cls} role={role} style={style} {...rest} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   input: `import { cn } from "@/components/ui/_cn";
@@ -723,7 +724,8 @@ export function Card(props: any) {
 export function Label(props: any) {
   const { className = "", style, children, ...rest } = props;
   const cls = cn("text-sm font-medium leading-none", className);
-  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</label>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   badge: `import { cn } from "@/components/ui/_cn";
@@ -736,7 +738,8 @@ export function Badge(props: any) {
     outline: "text-foreground",
   };
   const cls = cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors", v[variant] || v.default, className);
-  return <span className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</span>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <span className={cls} style={{ whiteSpace: "pre-line", ...rest }} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   separator: `import { cn } from "@/components/ui/_cn";
@@ -1129,9 +1132,9 @@ export function DatePicker(props) {
 
   progress: `import { cn } from "@/components/ui/_cn";
 export function Progress(props: any) {
-  const { className = "", value = 0, ...rest } = props;
+  const { className = "", value = 0, indicatorClass = "", ...rest } = props;
   const cls = cn("relative h-2 w-full overflow-hidden rounded-full bg-primary/20", className);
-  return <div role="progressbar" className={cls} {...rest}><div className="h-full w-full flex-1 bg-primary transition-all" style={{ transform: \`translateX(-\${100 - (value || 0)}%)\` }} /></div>;
+  return <div role="progressbar" className={cls} {...rest}><div className={cn("h-full w-full flex-1 transition-all", indicatorClass || "bg-primary")} style={{ transform: \`translateX(-\${100 - (value || 0)}%)\` }} /></div>;
 }`,
 
   "radio-group": `import { cn } from "@/components/ui/_cn";
@@ -1163,13 +1166,6 @@ export function ScrollArea(props: any) {
   const { className = "", children, ...rest } = props;
   const cls = cn("relative overflow-auto rounded-md border", className);
   return <div className={cls} {...rest}>{children}</div>;
-}`,
-
-  skeleton: `import { cn } from "@/components/ui/_cn";
-export function Skeleton(props: any) {
-  const { className = "", ...rest } = props;
-  const cls = cn("animate-pulse rounded-md bg-primary/10", className);
-  return <div className={cls} {...rest} />;
 }`,
 
   slider: `import { cn } from "@/components/ui/_cn";
@@ -1211,6 +1207,11 @@ export function Slider(props: any) {
 
   switch: `import { cn } from "@/components/ui/_cn";
 import { useState } from "react";
+const KBD_STYLE = "pointer-events:none;display:inline-flex;height:1.25rem;align-items:center;gap:0.25rem;border-radius:0.25rem;border:1px solid;padding-left:0.375rem;padding-right:0.375rem;font-family:monospace;font-size:0.625rem;font-weight:500;background:var(--muted,#f1f5f9);color:var(--muted-foreground,#64748b);user-select:none";
+function kbdHtml(text: string): string {
+  if (!text.includes("<kbd>")) return text;
+  return text.replace(/<kbd>(.*?)<\\/kbd>/g, function(_: string, inner: string) { return '<kbd style="' + KBD_STYLE + '">' + inner + '</kbd>'; });
+}
 export function Switch(props: any) {
   const { className = "", checked: initialChecked = false, disabled, description = "", invalid = false, size = "default", variant = "default", checkedClassName = "", uncheckedClassName = "", cardBorderColor = "", cardBgColor = "", descriptionColor = "", labelColor = "", children, ...rest } = props;
   const [checked, setChecked] = useState(initialChecked);
@@ -1233,8 +1234,8 @@ export function Switch(props: any) {
   );
   const labelContent = (children || description) && (
     <div className="flex flex-col">
-      {children && <span className="text-sm font-medium leading-none select-none" style={{ ...labelStyle, whiteSpace: "pre-line" }}>{children}</span>}
-      {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }}>{description}</p>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ ...labelStyle, whiteSpace: "pre-line" }} {...(typeof children === "string" && children.includes("<kbd>") ? { dangerouslySetInnerHTML: { __html: kbdHtml(children) } } : { children })} />}
+      {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }} {...(description.includes("<kbd>") ? { dangerouslySetInnerHTML: { __html: kbdHtml(description) } } : { children: description })} />}
     </div>
   );
   if (variant === "card") {
@@ -1630,7 +1631,8 @@ export function TooltipContent(props: any) {
     top: "translate(-50%, -100%)", bottom: "translate(-50%, 0)", left: "translate(-100%, -50%)", right: "translate(0, -50%)"
   };
   const cls = \`fixed z-[9999] rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-pre-wrap w-max \${props.className || ""}\`.trim();
-  return createPortal(<div className={cls} style={{ top: pos.top, left: pos.left, transform: transformMap[side] }}>{props.children}</div>, document.body);
+  const hasKbd = typeof props.children === "string" && props.children.includes("<kbd>");
+  return createPortal(<div className={cls} style={{ top: pos.top, left: pos.left, transform: transformMap[side] }} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: props.children } } : { children: props.children })} />, document.body);
 }`,
 
   dialog: `import { createContext, useContext, useState } from "react";

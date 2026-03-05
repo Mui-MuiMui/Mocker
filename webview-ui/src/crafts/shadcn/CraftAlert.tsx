@@ -2,6 +2,7 @@ import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
 import * as Icons from "lucide-react";
+import { renderKbd } from "../../utils/renderKbd";
 
 const alertVariants = cva(
   "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
@@ -53,8 +54,8 @@ export const CraftAlert: UserComponent<CraftAlertProps> = ({
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
       {IconComponent && <IconComponent className="h-4 w-4" />}
-      {title && <h5 className="mb-1 font-medium leading-none tracking-tight" style={{ whiteSpace: "pre-line" }}>{title}</h5>}
-      {description && <div className="text-sm [&_p]:leading-relaxed" style={{ whiteSpace: "pre-line" }}>{description}</div>}
+      {title && <h5 className="mb-1 font-medium leading-none tracking-tight" style={{ whiteSpace: "pre-line" }}>{renderKbd(title)}</h5>}
+      {description && <div className="text-sm [&_p]:leading-relaxed" style={{ whiteSpace: "pre-line" }}>{renderKbd(description)}</div>}
     </div>
   );
 };

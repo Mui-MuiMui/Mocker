@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftLabelProps {
   text?: string;
@@ -44,7 +45,7 @@ export const CraftLabel: UserComponent<CraftLabelProps> = ({
           : {}),
       }}
     >
-      {text}
+      {renderKbd(text)}
     </label>
   );
 };

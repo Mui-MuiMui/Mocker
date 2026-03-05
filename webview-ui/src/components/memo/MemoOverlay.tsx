@@ -120,11 +120,14 @@ function MemoSticker({
     e.preventDefault();
     const container = scrollContentRef.current;
     if (!container) return;
+    const scrollEl = container.parentElement;
     const rect = container.getBoundingClientRect();
+    const scrollLeft = scrollEl?.scrollLeft ?? 0;
+    const scrollTop = scrollEl?.scrollTop ?? 0;
     setIsDragging(true);
     dragOffsetRef.current = {
-      x: e.clientX - rect.left - position.x,
-      y: e.clientY - rect.top - position.y,
+      x: e.clientX - rect.left + scrollLeft - position.x,
+      y: e.clientY - rect.top + scrollTop - position.y,
     };
   };
 
@@ -132,10 +135,13 @@ function MemoSticker({
     (e: MouseEvent) => {
       const container = scrollContentRef.current;
       if (!container) return;
+      const scrollEl = container.parentElement;
       const rect = container.getBoundingClientRect();
+      const scrollLeft = scrollEl?.scrollLeft ?? 0;
+      const scrollTop = scrollEl?.scrollTop ?? 0;
       const newPos = {
-        x: e.clientX - rect.left - dragOffsetRef.current.x,
-        y: e.clientY - rect.top - dragOffsetRef.current.y,
+        x: e.clientX - rect.left + scrollLeft - dragOffsetRef.current.x,
+        y: e.clientY - rect.top + scrollTop - dragOffsetRef.current.y,
       };
       setPosition(newPos);
     },

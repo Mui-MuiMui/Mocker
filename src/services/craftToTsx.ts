@@ -210,7 +210,7 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     tag: "Progress",
     importFrom: "@/components/ui/progress",
     importName: "Progress",
-    propsMap: ["value", "className"],
+    propsMap: ["value", "className", "indicatorClass"],
     isContainer: false,
   },
   CraftRadioGroup: {
@@ -226,13 +226,6 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     importName: "ScrollArea",
     propsMap: ["className"],
     isContainer: true,
-  },
-  CraftSkeleton: {
-    tag: "Skeleton",
-    importFrom: "@/components/ui/skeleton",
-    importName: "Skeleton",
-    propsMap: ["className"],
-    isContainer: false,
   },
   CraftSlider: {
     tag: "Slider",
@@ -488,10 +481,9 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftCheckbox: { label: "Accept terms", checked: false, disabled: false, tooltipText: "", tooltipSide: "" },
   CraftCollapsible: { open: false, triggerStyle: "chevron", linkedMocPath: "" },
   CraftPagination: { totalPages: 5, currentPage: 1 },
-  CraftProgress: { value: 50 },
+  CraftProgress: { value: 50, indicatorClass: "" },
   CraftRadioGroup: { items: "Option A,Option B,Option C", value: "Option A", orientation: "vertical", variant: "default", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", tooltipText: "", tooltipSide: "" },
   CraftScrollArea: {},
-  CraftSkeleton: { width: "100%", height: "20px" },
   CraftSlider: { value: 50, min: 0, max: 100, step: 1, fillClassName: "", trackClassName: "", tooltipText: "", tooltipSide: "" },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false, description: "", invalid: false, size: "default", variant: "default", checkedClassName: "", uncheckedClassName: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", labelColor: "", tooltipText: "", tooltipSide: "" },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
@@ -645,8 +637,10 @@ export function craftStateToTsx(
 
     // Collect combobox sub-component imports
     if (resolvedName === "CraftCombobox") {
+      addImport("@/components/ui/popover", "Popover");
       addImport("@/components/ui/popover", "PopoverContent");
       addImport("@/components/ui/popover", "PopoverTrigger");
+      addImport("@/components/ui/button", "Button");
       addImport("@/components/ui/command", "Command");
       addImport("@/components/ui/command", "CommandEmpty");
       addImport("@/components/ui/command", "CommandGroup");
@@ -887,7 +881,7 @@ export function craftStateToTsx(
       rendered,
       `${pad}    </TooltipTrigger>`,
       `${pad}    <TooltipContent${sideAttr}>`,
-      `${pad}      <p className="whitespace-pre-wrap">${tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
+      `${pad}      <p className="whitespace-pre-wrap">${tooltipText.includes("<kbd>") ? kbdTextToJsx(tooltipText) : tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
       `${pad}    </TooltipContent>`,
       `${pad}  </Tooltip>`,
       `${pad}</TooltipProvider>`,
@@ -1115,8 +1109,8 @@ export function craftStateToTsx(
       const innerChildren = children.map((id) => renderNode(id, indent + 2)).filter(Boolean);
       const cardBody = [];
       if (title) {
-        const escapedTitle = title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
-        const escapedDesc = desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
+        const escapedTitle = title.includes("<kbd>") ? kbdTextToJsx(title) : title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
+        const escapedDesc = desc.includes("<kbd>") ? kbdTextToJsx(desc) : desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
         cardBody.push(`${pad}    <div className="p-6">`);
         cardBody.push(`${pad}      <h3 className="text-lg font-semibold whitespace-pre-line">${escapedTitle}</h3>`);
         if (desc) {
@@ -1149,11 +1143,11 @@ export function craftStateToTsx(
       const alertBody: string[] = [];
       alertBody.push(`${pad}  <${icon} className="h-4 w-4" />`);
       if (title) {
-        const escapedTitle = title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
+        const escapedTitle = title.includes("<kbd>") ? kbdTextToJsx(title) : title.includes("\n") ? `{"${escapeJsString(title)}"}` : escapeJsx(title);
         alertBody.push(`${pad}  <h5 className="mb-1 font-medium leading-none tracking-tight whitespace-pre-line">${escapedTitle}</h5>`);
       }
       if (desc) {
-        const escapedDesc = desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
+        const escapedDesc = desc.includes("<kbd>") ? kbdTextToJsx(desc) : desc.includes("\n") ? `{"${escapeJsString(desc)}"}` : escapeJsx(desc);
         alertBody.push(`${pad}  <div className="text-sm [&_p]:leading-relaxed whitespace-pre-line">${escapedDesc}</div>`);
       }
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>\n${alertBody.join("\n")}\n${pad}</${tag}>`;
@@ -1372,8 +1366,8 @@ export function craftStateToTsx(
       return applyCommonWrappers(rendered);
     }
 
-    // Self-closing for Progress, Slider, Skeleton
-    if (resolvedName === "CraftProgress" || resolvedName === "CraftSlider" || resolvedName === "CraftSkeleton") {
+    // Self-closing for Progress, Slider
+    if (resolvedName === "CraftProgress" || resolvedName === "CraftSlider") {
       return applyCommonWrappers(`${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`);
     }
 
@@ -1401,9 +1395,11 @@ export function craftStateToTsx(
 
     // Text content
     if (textContent) {
-      const escapedTextContent = textContent.includes("\n")
-        ? `{"${escapeJsString(textContent)}"}`
-        : escapeJsx(textContent);
+      const escapedTextContent = textContent.includes("<kbd>")
+        ? kbdTextToJsx(textContent)
+        : textContent.includes("\n")
+          ? `{"${escapeJsString(textContent)}"}`
+          : escapeJsx(textContent);
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr}>${escapedTextContent}</${tag}>`;
       // Apply overlay wrapper for CraftButton (must be inside tooltip)
       if (resolvedName === "CraftButton") {
@@ -1485,7 +1481,12 @@ function buildPropsString(resolvedName: string, props: Record<string, unknown>, 
     } else if (typeof val === "number") {
       parts.push(`${key}={${val}}`);
     } else {
-      parts.push(`${key}="${escapeAttr(String(val))}"`);
+      const strVal = String(val);
+      if (strVal.includes("<kbd>")) {
+        parts.push(`${key}={"${escapeJsString(strVal)}"}`);
+      } else {
+        parts.push(`${key}="${escapeAttr(strVal)}"`);
+      }
     }
   }
 
@@ -2883,20 +2884,15 @@ function renderCombobox(
   const buttonStyleAttr = height !== "auto" ? ` style={{ height: "${escapeAttr(height)}" }}` : "";
   // w-full は PopoverTrigger(span[inline-block]) 自体に幅を持たせるため不要。width は Popover に委ねる。
   const userClass = classNameAttr.match(/className="([^"]*)"/)?.[ 1] ?? "";
-  const buttonClassName = [
-    "inline-flex w-full items-center justify-between whitespace-nowrap rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-    userClass,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const buttonClassName = ["w-full justify-between", userClass].filter(Boolean).join(" ");
 
   const lines: string[] = [];
   lines.push(`${pad}<Popover${popoverStyleAttr}>`);
   lines.push(`${pad}  <PopoverTrigger asChild>`);
-  lines.push(`${pad}    <button type="button" role="combobox" className="${buttonClassName}"${buttonStyleAttr}>`);
+  lines.push(`${pad}    <Button variant="outline" role="combobox" className="${buttonClassName}"${buttonStyleAttr}>`);
   lines.push(`${pad}      ${escapeJsx(placeholder)}`);
   lines.push(`${pad}      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />`);
-  lines.push(`${pad}    </button>`);
+  lines.push(`${pad}    </Button>`);
   lines.push(`${pad}  </PopoverTrigger>`);
   lines.push(`${pad}  <PopoverContent className="p-0"${contentStyleAttr}>`);
   lines.push(`${pad}    <Command>`);
@@ -3027,6 +3023,24 @@ function renderBreadcrumb(
 
 function escapeJsx(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/{/g, "&#123;").replace(/}/g, "&#125;");
+}
+
+const KBD_CLASS = "pointer-events-none inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground select-none";
+
+/**
+ * <kbd>...</kbd> を含む文字列を JSX フラグメント文字列に変換する。
+ * 例: "Save <kbd>Ctrl</kbd>" → '<>Save <kbd className="...">Ctrl</kbd></>'
+ */
+function kbdTextToJsx(text: string): string {
+  const parts = text.split(/(<kbd>.*?<\/kbd>)/g);
+  const jsxParts = parts.map((part) => {
+    const match = part.match(/^<kbd>(.*?)<\/kbd>$/);
+    if (match) {
+      return `<kbd className="${KBD_CLASS}">${escapeJsx(match[1])}</kbd>`;
+    }
+    return escapeJsx(part);
+  });
+  return `<>${jsxParts.join("")}</>`;
 }
 
 function escapeAttr(text: string): string {

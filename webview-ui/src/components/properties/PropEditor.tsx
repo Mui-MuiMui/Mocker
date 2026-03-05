@@ -167,6 +167,9 @@ const INPUT_CLASS =
 /** Props that support multiline text input (rendered as textarea). */
 const MULTILINE_PROPS = new Set(["text", "title", "description", "placeholder", "label", "triggerText", "tooltipText", "toastText"]);
 
+/** Props that support kbd tag insertion (display props where <kbd> makes sense). */
+const KBD_PROPS = new Set(["text", "title", "description", "label", "triggerText", "tooltipText", "toastText"]);
+
 /** Props that use the .moc file browse UI (text input + browse button). */
 const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "hoverCardMocPath"]);
 
@@ -174,7 +177,7 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "hoverCar
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
-const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass", "itemBgClass", "separatorClass"]);
+const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass", "itemBgClass", "separatorClass", "indicatorClass"]);
 
 /** Props that use the Tailwind border class palette picker UI (stores "border-red-500" style class names). */
 const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "triggerBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass", "cardBorderClass", "itemBorderClass", "inputBorderClass", "separatorBorderClass"]);
@@ -1325,12 +1328,40 @@ export function PropEditor() {
             className={`${INPUT_CLASS} w-full`}
           />
         ) : MULTILINE_PROPS.has(key) ? (
-          <textarea
-            value={String(value ?? "")}
-            onChange={(e) => handlePropChange(key, e.target.value)}
-            rows={2}
-            className={`${INPUT_CLASS} w-full resize-y`}
-          />
+          <div className="flex flex-col gap-1">
+            {KBD_PROPS.has(key) && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  title="<kbd> タグを挿入"
+                  className="rounded px-1.5 py-0.5 text-[10px] bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)] border border-[var(--vscode-input-border,#3c3c3c)]"
+                  onClick={() => {
+                    const ta = document.querySelector<HTMLTextAreaElement>(`textarea[data-prop-key="${key}"]`);
+                    if (!ta) return;
+                    const start = ta.selectionStart ?? 0;
+                    const end = ta.selectionEnd ?? 0;
+                    const current = String(value ?? "");
+                    const insert = "<kbd>Ctrl</kbd>";
+                    const next = current.slice(0, start) + insert + current.slice(end);
+                    handlePropChange(key, next);
+                    requestAnimationFrame(() => {
+                      ta.focus();
+                      ta.setSelectionRange(start + 5, start + 9);
+                    });
+                  }}
+                >
+                  kbd
+                </button>
+              </div>
+            )}
+            <textarea
+              data-prop-key={key}
+              value={String(value ?? "")}
+              onChange={(e) => handlePropChange(key, e.target.value)}
+              rows={2}
+              className={`${INPUT_CLASS} w-full resize-y`}
+            />
+          </div>
         ) : (
           <input
             type="text"
