@@ -149,8 +149,9 @@ export function ContextMenu() {
       const sel = selectedRef.current;
       const selNode = queryRef.current.node(sel).get();
 
-      // Paste as sibling: add to the selected node's parent
-      const parentId = selNode?.data?.parent;
+      // Canvas (子を受け入れ可能) なら子として、そうでなければ親に兄弟として追加
+      const isCanvas = selNode?.data?.isCanvas;
+      const parentId = isCanvas ? sel : selNode?.data?.parent;
       if (!parentId) return;
 
       // Clone the snapshot again for fresh IDs (supports repeated paste)
@@ -162,19 +163,17 @@ export function ContextMenu() {
         clipboard = null;
       }
 
+      // cut の場合はペースト前に元ノードを削除（コピー済みのため安全）
+      if (nodeToDelete) {
+        try {
+          actionsRef.current.delete(nodeToDelete);
+        } catch {
+          // Cut source may have already been removed
+        }
+      }
+
       // Add clone
       actionsRef.current.addNodeTree(pasteTree, parentId);
-
-      // For cut: delete original in next frame so Craft.js state settles
-      if (nodeToDelete) {
-        requestAnimationFrame(() => {
-          try {
-            actionsRef.current.delete(nodeToDelete);
-          } catch {
-            // Cut source may have already been removed
-          }
-        });
-      }
     } catch {
       // Clipboard node no longer exists or target can't accept children
     }
