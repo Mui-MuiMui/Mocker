@@ -128,7 +128,7 @@ export async function startPreviewServer(
       const pairs: [string, string][] = [];
       for (const node of Object.values(cs)) {
         const n = node as { props?: Record<string, unknown> };
-        for (const key of ["linkedMocPath", "contextMenuMocPath"]) {
+        for (const key of ["linkedMocPath", "contextMenuMocPath", "hoverCardMocPath"]) {
           const p = n?.props?.[key] as string | undefined;
           if (p) {
             const abs = path.resolve(baseDir, p);
