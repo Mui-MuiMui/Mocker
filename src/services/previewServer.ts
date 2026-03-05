@@ -1229,8 +1229,8 @@ export function Switch(props: any) {
   );
   const labelContent = (children || description) && (
     <div className="flex flex-col">
-      {children && <span className="text-sm font-medium leading-none select-none" style={{ ...labelStyle, whiteSpace: "pre-line" }}>{children}</span>}
-      {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }}>{description}</p>}
+      {children && <span className="text-sm font-medium leading-none select-none" style={{ ...labelStyle, whiteSpace: "pre-line" }} {...(typeof children === "string" && children.includes("<kbd>") ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />}
+      {description && <p className="text-[0.8rem] text-muted-foreground" style={{ ...descStyle, whiteSpace: "pre-line" }} {...(description.includes("<kbd>") ? { dangerouslySetInnerHTML: { __html: description } } : { children: description })} />}
     </div>
   );
   if (variant === "card") {

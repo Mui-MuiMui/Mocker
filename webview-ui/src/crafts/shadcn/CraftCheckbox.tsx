@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftCheckboxProps {
   label?: string;
@@ -50,7 +51,7 @@ export const CraftCheckbox: UserComponent<CraftCheckboxProps> = ({
       </button>
       {label && (
         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={{ whiteSpace: "pre-line" }}>
-          {label}
+          {renderKbd(label)}
         </label>
       )}
     </div>

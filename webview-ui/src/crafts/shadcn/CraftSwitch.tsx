@@ -1,6 +1,7 @@
 import React from "react";
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftSwitchProps {
   label?: string;
@@ -92,11 +93,11 @@ export const CraftSwitch: UserComponent<CraftSwitchProps> = ({
     <div className="flex flex-col">
       {label && (
         <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" style={labelStyle}>
-          {label}
+          {renderKbd(label)}
         </label>
       )}
       {description && (
-        <p className="text-[0.8rem] text-muted-foreground" style={descStyle}>{description}</p>
+        <p className="text-[0.8rem] text-muted-foreground" style={descStyle}>{renderKbd(description)}</p>
       )}
     </div>
   );

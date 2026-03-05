@@ -2,6 +2,7 @@ import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
 import * as Icons from "lucide-react";
+import { renderKbd } from "../../utils/renderKbd";
 
 const toggleVariants = cva(
   "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -82,7 +83,7 @@ export const CraftToggle: UserComponent<CraftToggleProps> = ({
         style={{ width: hasCustomWidth ? "100%" : undefined, height: hasCustomHeight ? "100%" : undefined, whiteSpace: "pre-line" }}
       >
         {IconComponent && <IconComponent className="h-4 w-4" style={{ fill: pressed ? "currentColor" : undefined }} />}
-        {text}
+        {renderKbd(text)}
       </button>
     </div>
   );

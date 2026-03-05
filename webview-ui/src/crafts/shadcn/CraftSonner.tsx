@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftSonnerProps {
   triggerText?: string;
@@ -32,10 +33,10 @@ export const CraftSonner: UserComponent<CraftSonnerProps> = ({
         type="button"
         className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-fit"
       >
-        {triggerText}
+        {renderKbd(triggerText)}
       </button>
       <div className="rounded-lg border bg-background p-4 shadow-lg">
-        <div className="text-sm font-semibold">{text}</div>
+        <div className="text-sm font-semibold">{renderKbd(text)}</div>
       </div>
     </div>
   );
