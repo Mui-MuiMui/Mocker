@@ -10,8 +10,12 @@ interface MenuPosition {
 }
 
 // Clipboard store (module-level since we can't use system clipboard for Craft nodes)
-let clipboardNodeId: string | null = null;
-let clipboardAction: "copy" | "cut" | null = null;
+interface ClipboardEntry {
+  tree: NodeTree; // コピー時点のスナップショット（freshIds済み）
+  isCut: boolean;
+  sourceNodeId: string; // cut の場合に削除するID
+}
+let clipboard: ClipboardEntry | null = null;
 
 /** Generate a short random ID similar to Craft.js's internal getRandomId */
 function freshId(): string {
@@ -116,21 +120,31 @@ export function ContextMenu() {
   const copySelected = useCallback(() => {
     const sel = selectedRef.current;
     if (!sel) return;
-    clipboardNodeId = sel;
-    clipboardAction = "copy";
+    try {
+      const nodeTree = queryRef.current.node(sel).toNodeTree();
+      const freshTree = cloneTreeWithFreshIds(nodeTree);
+      clipboard = { tree: freshTree, isCut: false, sourceNodeId: sel };
+    } catch {
+      // Node may not exist
+    }
     setMenuPos(null);
   }, []);
 
   const cutSelected = useCallback(() => {
     const sel = selectedRef.current;
     if (!sel) return;
-    clipboardNodeId = sel;
-    clipboardAction = "cut";
+    try {
+      const nodeTree = queryRef.current.node(sel).toNodeTree();
+      const freshTree = cloneTreeWithFreshIds(nodeTree);
+      clipboard = { tree: freshTree, isCut: true, sourceNodeId: sel };
+    } catch {
+      // Node may not exist
+    }
     setMenuPos(null);
   }, []);
 
   const pasteClipboard = useCallback(() => {
-    if (!clipboardNodeId || !selectedRef.current) return;
+    if (!clipboard || !selectedRef.current) return;
     try {
       const sel = selectedRef.current;
       const selNode = queryRef.current.node(sel).get();
@@ -139,19 +153,17 @@ export function ContextMenu() {
       const parentId = selNode?.data?.parent;
       if (!parentId) return;
 
-      // Capture the tree BEFORE any mutations
-      const nodeTree = queryRef.current.node(clipboardNodeId).toNodeTree();
-      const freshTree = cloneTreeWithFreshIds(nodeTree);
-      const isCut = clipboardAction === "cut";
-      const nodeToDelete = isCut ? clipboardNodeId : null;
+      // Clone the snapshot again for fresh IDs (supports repeated paste)
+      const pasteTree = cloneTreeWithFreshIds(clipboard.tree);
+      const isCut = clipboard.isCut;
+      const nodeToDelete = isCut ? clipboard.sourceNodeId : null;
 
       if (isCut) {
-        clipboardNodeId = null;
-        clipboardAction = null;
+        clipboard = null;
       }
 
-      // Add clone first
-      actionsRef.current.addNodeTree(freshTree, parentId);
+      // Add clone
+      actionsRef.current.addNodeTree(pasteTree, parentId);
 
       // For cut: delete original in next frame so Craft.js state settles
       if (nodeToDelete) {
@@ -270,7 +282,7 @@ export function ContextMenu() {
         label={t("contextMenu.paste")}
         shortcut="Ctrl+V"
         onClick={pasteClipboard}
-        disabled={!clipboardNodeId}
+        disabled={!clipboard}
       />
       <MenuItem
         icon={<CopyPlus size={14} />}
