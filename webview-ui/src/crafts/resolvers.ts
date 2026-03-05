@@ -24,7 +24,6 @@ import { CraftPagination } from "./shadcn/CraftPagination";
 import { CraftProgress } from "./shadcn/CraftProgress";
 import { CraftRadioGroup } from "./shadcn/CraftRadioGroup";
 import { CraftScrollArea } from "./shadcn/CraftScrollArea";
-import { CraftSkeleton } from "./shadcn/CraftSkeleton";
 import { CraftSlider } from "./shadcn/CraftSlider";
 import { CraftSwitch } from "./shadcn/CraftSwitch";
 import { CraftTabs, TabContentSlot } from "./shadcn/CraftTabs";
@@ -85,7 +84,6 @@ export const resolvers = {
   CraftProgress,
   CraftRadioGroup,
   CraftScrollArea,
-  CraftSkeleton,
   CraftSlider,
   CraftSwitch,
   CraftTabs,
@@ -347,14 +345,6 @@ export const paletteItems: PaletteItem[] = [
     defaultProps: {},
     isCanvas: true,
     enabled: true,
-  },
-  {
-    resolverKey: "CraftSkeleton",
-    label: "Skeleton",
-    category: "shadcn",
-    icon: "RectangleHorizontal",
-    defaultProps: {},
-    enabled: false,
   },
   {
     resolverKey: "CraftSlider",

@@ -227,13 +227,6 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: true,
   },
-  CraftSkeleton: {
-    tag: "Skeleton",
-    importFrom: "@/components/ui/skeleton",
-    importName: "Skeleton",
-    propsMap: ["className"],
-    isContainer: false,
-  },
   CraftSlider: {
     tag: "Slider",
     importFrom: "@/components/ui/slider",
@@ -491,7 +484,6 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftProgress: { value: 50 },
   CraftRadioGroup: { items: "Option A,Option B,Option C", value: "Option A", orientation: "vertical", variant: "default", descriptions: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", tooltipText: "", tooltipSide: "" },
   CraftScrollArea: {},
-  CraftSkeleton: { width: "100%", height: "20px" },
   CraftSlider: { value: 50, min: 0, max: 100, step: 1, fillClassName: "", trackClassName: "", tooltipText: "", tooltipSide: "" },
   CraftSwitch: { label: "Toggle", checked: false, disabled: false, description: "", invalid: false, size: "default", variant: "default", checkedClassName: "", uncheckedClassName: "", cardBorderColor: "", cardBgColor: "", descriptionColor: "", labelColor: "", tooltipText: "", tooltipSide: "" },
   CraftTabs: { items: "Tab 1,Tab 2,Tab 3" },
@@ -1374,8 +1366,8 @@ export function craftStateToTsx(
       return applyCommonWrappers(rendered);
     }
 
-    // Self-closing for Progress, Slider, Skeleton
-    if (resolvedName === "CraftProgress" || resolvedName === "CraftSlider" || resolvedName === "CraftSkeleton") {
+    // Self-closing for Progress, Slider
+    if (resolvedName === "CraftProgress" || resolvedName === "CraftSlider") {
       return applyCommonWrappers(`${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`);
     }
 

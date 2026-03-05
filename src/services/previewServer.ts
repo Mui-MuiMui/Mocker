@@ -1165,13 +1165,6 @@ export function ScrollArea(props: any) {
   return <div className={cls} {...rest}>{children}</div>;
 }`,
 
-  skeleton: `import { cn } from "@/components/ui/_cn";
-export function Skeleton(props: any) {
-  const { className = "", ...rest } = props;
-  const cls = cn("animate-pulse rounded-md bg-primary/10", className);
-  return <div className={cls} {...rest} />;
-}`,
-
   slider: `import { cn } from "@/components/ui/_cn";
 import { useState, useRef } from "react";
 export function Slider(props: any) {
