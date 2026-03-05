@@ -1481,7 +1481,12 @@ function buildPropsString(resolvedName: string, props: Record<string, unknown>, 
     } else if (typeof val === "number") {
       parts.push(`${key}={${val}}`);
     } else {
-      parts.push(`${key}="${escapeAttr(String(val))}"`);
+      const strVal = String(val);
+      if (strVal.includes("<kbd>")) {
+        parts.push(`${key}={"${escapeJsString(strVal)}"}`);
+      } else {
+        parts.push(`${key}="${escapeAttr(strVal)}"`);
+      }
     }
   }
 
