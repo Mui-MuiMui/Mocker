@@ -327,7 +327,7 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Loader",
     defaultProps: {},
-    enabled: false,
+    enabled: true,
   },
   {
     resolverKey: "CraftRadioGroup",
