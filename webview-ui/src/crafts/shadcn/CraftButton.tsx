@@ -1,6 +1,7 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
+import { renderKbd } from "../../utils/renderKbd";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -95,7 +96,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
         disabled={disabled}
         type="button"
       >
-        {text}
+        {renderKbd(text)}
         {linkedMocPath && (
           <span className="ml-1 opacity-60" title={linkedMocPath}>
             &#128279;

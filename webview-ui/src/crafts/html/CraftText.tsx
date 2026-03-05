@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftTextProps {
   text: string;
@@ -30,7 +31,7 @@ export const CraftText: UserComponent<CraftTextProps> = ({
       className={cn(className)}
       style={{ whiteSpace: "pre-line", width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined }}
     >
-      {text}
+      {renderKbd(text)}
     </Tag>
   );
 };

@@ -1,6 +1,7 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
+import { renderKbd } from "../../utils/renderKbd";
 
 const badgeVariants = cva(
   "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
@@ -50,7 +51,7 @@ export const CraftBadge: UserComponent<CraftBadgeProps> = ({
       className={cn(badgeVariants({ variant }), className)}
       style={{ width: width !== "auto" ? width : undefined, height: height !== "auto" ? height : undefined, whiteSpace: "pre-line" }}
     >
-      {text}
+      {renderKbd(text)}
     </span>
   );
 };

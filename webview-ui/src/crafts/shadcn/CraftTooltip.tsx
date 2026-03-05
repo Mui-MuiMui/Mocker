@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { renderKbd } from "../../utils/renderKbd";
 
 interface CraftTooltipProps {
   triggerText?: string;
@@ -32,10 +33,10 @@ export const CraftTooltip: UserComponent<CraftTooltipProps> = ({
         type="button"
         className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2"
       >
-        {triggerText}
+        {renderKbd(triggerText)}
       </button>
       <div className="z-50 overflow-hidden rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground animate-in fade-in-0 zoom-in-95">
-        {text}
+        {renderKbd(text)}
       </div>
     </div>
   );

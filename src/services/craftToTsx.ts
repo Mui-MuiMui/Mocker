@@ -881,7 +881,7 @@ export function craftStateToTsx(
       rendered,
       `${pad}    </TooltipTrigger>`,
       `${pad}    <TooltipContent${sideAttr}>`,
-      `${pad}      <p className="whitespace-pre-wrap">${tooltipText.includes("\n") ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
+      `${pad}      <p className="whitespace-pre-wrap">${(tooltipText.includes("\n") || tooltipText.includes("<kbd>")) ? `{"${escapeJsString(tooltipText)}"}` : escapeJsx(tooltipText)}</p>`,
       `${pad}    </TooltipContent>`,
       `${pad}  </Tooltip>`,
       `${pad}</TooltipProvider>`,
@@ -1395,7 +1395,7 @@ export function craftStateToTsx(
 
     // Text content
     if (textContent) {
-      const escapedTextContent = textContent.includes("\n")
+      const escapedTextContent = (textContent.includes("\n") || textContent.includes("<kbd>"))
         ? `{"${escapeJsString(textContent)}"}`
         : escapeJsx(textContent);
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr}>${escapedTextContent}</${tag}>`;

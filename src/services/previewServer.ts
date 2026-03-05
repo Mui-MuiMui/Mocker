@@ -702,7 +702,8 @@ export function Button(props: any) {
     </div>;
   }
   const cls = cn("inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors", v[variant] || v.default, s[size] || s.default, className);
-  return <button className={cls} role={role} style={style} {...rest}>{children}</button>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <button className={cls} role={role} style={style} {...rest} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   input: `import { cn } from "@/components/ui/_cn";
@@ -723,7 +724,8 @@ export function Card(props: any) {
 export function Label(props: any) {
   const { className = "", style, children, ...rest } = props;
   const cls = cn("text-sm font-medium leading-none", className);
-  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</label>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <label className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   badge: `import { cn } from "@/components/ui/_cn";
@@ -736,7 +738,8 @@ export function Badge(props: any) {
     outline: "text-foreground",
   };
   const cls = cn("inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors", v[variant] || v.default, className);
-  return <span className={cls} style={{ whiteSpace: "pre-line", ...style }} {...rest}>{children}</span>;
+  const hasKbd = typeof children === "string" && children.includes("<kbd>");
+  return <span className={cls} style={{ whiteSpace: "pre-line", ...rest }} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: children } } : { children })} />;
 }`,
 
   separator: `import { cn } from "@/components/ui/_cn";
@@ -1623,7 +1626,8 @@ export function TooltipContent(props: any) {
     top: "translate(-50%, -100%)", bottom: "translate(-50%, 0)", left: "translate(-100%, -50%)", right: "translate(0, -50%)"
   };
   const cls = \`fixed z-[9999] rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-pre-wrap w-max \${props.className || ""}\`.trim();
-  return createPortal(<div className={cls} style={{ top: pos.top, left: pos.left, transform: transformMap[side] }}>{props.children}</div>, document.body);
+  const hasKbd = typeof props.children === "string" && props.children.includes("<kbd>");
+  return createPortal(<div className={cls} style={{ top: pos.top, left: pos.left, transform: transformMap[side] }} {...(hasKbd ? { dangerouslySetInnerHTML: { __html: props.children } } : { children: props.children })} />, document.body);
 }`,
 
   dialog: `import { createContext, useContext, useState } from "react";
