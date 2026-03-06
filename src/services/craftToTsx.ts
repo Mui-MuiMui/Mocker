@@ -906,104 +906,7 @@ export function craftStateToTsx(
     ].join("\n");
   }
 
-  /** Wrap rendered element with overlay if CraftButton has overlayType set */
-  function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: string): string {
-    const overlayType = props?.overlayType as string | undefined;
-    if (!overlayType || overlayType === "none") return rendered;
-
-    const linkedMocPath = props?.linkedMocPath as string | undefined;
-    const contentComment = linkedMocPath
-      ? `{/* linked: ${escapeJsx(linkedMocPath)} */}`
-      : "{/* overlay content */}";
-
-    // Build style attribute for overlay size
-    const overlayWidth = props?.overlayWidth as string | undefined;
-    const overlayHeight = props?.overlayHeight as string | undefined;
-    const styleParts: string[] = [];
-    if (overlayWidth) styleParts.push(`maxWidth: "${overlayWidth}"`);
-    if (overlayHeight) styleParts.push(`maxHeight: "${overlayHeight}", overflow: "auto"`);
-    const styleAttr = styleParts.length > 0 ? ` style={{ ${styleParts.join(", ")} }}` : "";
-
-    // Build className attribute for overlay content styling
-    const overlayClassName = props?.overlayClassName as string | undefined;
-    const classAttr = overlayClassName ? ` className="${escapeAttr(overlayClassName)}"` : "";
-
-    switch (overlayType) {
-      case "dialog":
-        return [
-          `${pad}<Dialog>`,
-          `${pad}  <DialogTrigger asChild>`,
-          rendered,
-          `${pad}  </DialogTrigger>`,
-          `${pad}  <DialogContent${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}  </DialogContent>`,
-          `${pad}</Dialog>`,
-        ].join("\n");
-      case "alert-dialog":
-        return [
-          `${pad}<AlertDialog>`,
-          `${pad}  <AlertDialogTrigger asChild>`,
-          rendered,
-          `${pad}  </AlertDialogTrigger>`,
-          `${pad}  <AlertDialogContent${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}    <AlertDialogCancel>Cancel</AlertDialogCancel>`,
-          `${pad}    <AlertDialogAction>Continue</AlertDialogAction>`,
-          `${pad}  </AlertDialogContent>`,
-          `${pad}</AlertDialog>`,
-        ].join("\n");
-      case "sheet": {
-        const side = (props?.sheetSide as string) || "right";
-        const sideAttr = side !== "right" ? ` side="${side}"` : "";
-        return [
-          `${pad}<Sheet>`,
-          `${pad}  <SheetTrigger asChild>`,
-          rendered,
-          `${pad}  </SheetTrigger>`,
-          `${pad}  <SheetContent${sideAttr}${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}  </SheetContent>`,
-          `${pad}</Sheet>`,
-        ].join("\n");
-      }
-      case "drawer":
-        return [
-          `${pad}<Drawer>`,
-          `${pad}  <DrawerTrigger asChild>`,
-          rendered,
-          `${pad}  </DrawerTrigger>`,
-          `${pad}  <DrawerContent${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}  </DrawerContent>`,
-          `${pad}</Drawer>`,
-        ].join("\n");
-      case "popover":
-        return [
-          `${pad}<Popover>`,
-          `${pad}  <PopoverTrigger asChild>`,
-          rendered,
-          `${pad}  </PopoverTrigger>`,
-          `${pad}  <PopoverContent${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}  </PopoverContent>`,
-          `${pad}</Popover>`,
-        ].join("\n");
-      case "dropdown-menu":
-        return [
-          `${pad}<DropdownMenu>`,
-          `${pad}  <DropdownMenuTrigger asChild>`,
-          rendered,
-          `${pad}  </DropdownMenuTrigger>`,
-          `${pad}  <DropdownMenuContent${classAttr}${styleAttr}>`,
-          `${pad}    ${contentComment}`,
-          `${pad}  </DropdownMenuContent>`,
-          `${pad}</DropdownMenu>`,
-        ].join("\n");
-      default:
-        return rendered;
-    }
-  }
+  // wrapWithOverlay は module scope に移動 (renderButtonGroup からも呼び出し可能)
 
   /** Wrap rendered container with context menu if contextMenuMocPath is set */
   function wrapWithContextMenu(rendered: string, props: Record<string, unknown>, pad: string): string {
@@ -2733,6 +2636,103 @@ function renderToggleGroup(
   return lines.join("\n");
 }
 
+/** Wrap rendered element with overlay (module scope — accessible from renderButtonGroup and renderNode) */
+function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: string): string {
+  const overlayType = props?.overlayType as string | undefined;
+  if (!overlayType || overlayType === "none") return rendered;
+
+  const linkedMocPath = props?.linkedMocPath as string | undefined;
+  const contentComment = linkedMocPath
+    ? `{/* linked: ${escapeJsx(linkedMocPath)} */}`
+    : "{/* overlay content */}";
+
+  const overlayWidth = props?.overlayWidth as string | undefined;
+  const overlayHeight = props?.overlayHeight as string | undefined;
+  const styleParts: string[] = [];
+  if (overlayWidth) styleParts.push(`maxWidth: "${overlayWidth}"`);
+  if (overlayHeight) styleParts.push(`maxHeight: "${overlayHeight}", overflow: "auto"`);
+  const styleAttr = styleParts.length > 0 ? ` style={{ ${styleParts.join(", ")} }}` : "";
+
+  const overlayClassName = props?.overlayClassName as string | undefined;
+  const classAttr = overlayClassName ? ` className="${escapeAttr(overlayClassName)}"` : "";
+
+  switch (overlayType) {
+    case "dialog":
+      return [
+        `${pad}<Dialog>`,
+        `${pad}  <DialogTrigger asChild>`,
+        rendered,
+        `${pad}  </DialogTrigger>`,
+        `${pad}  <DialogContent${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}  </DialogContent>`,
+        `${pad}</Dialog>`,
+      ].join("\n");
+    case "alert-dialog":
+      return [
+        `${pad}<AlertDialog>`,
+        `${pad}  <AlertDialogTrigger asChild>`,
+        rendered,
+        `${pad}  </AlertDialogTrigger>`,
+        `${pad}  <AlertDialogContent${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}    <AlertDialogCancel>Cancel</AlertDialogCancel>`,
+        `${pad}    <AlertDialogAction>Continue</AlertDialogAction>`,
+        `${pad}  </AlertDialogContent>`,
+        `${pad}</AlertDialog>`,
+      ].join("\n");
+    case "sheet": {
+      const side = (props?.sheetSide as string) || "right";
+      const sideAttr = side !== "right" ? ` side="${side}"` : "";
+      return [
+        `${pad}<Sheet>`,
+        `${pad}  <SheetTrigger asChild>`,
+        rendered,
+        `${pad}  </SheetTrigger>`,
+        `${pad}  <SheetContent${sideAttr}${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}  </SheetContent>`,
+        `${pad}</Sheet>`,
+      ].join("\n");
+    }
+    case "drawer":
+      return [
+        `${pad}<Drawer>`,
+        `${pad}  <DrawerTrigger asChild>`,
+        rendered,
+        `${pad}  </DrawerTrigger>`,
+        `${pad}  <DrawerContent${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}  </DrawerContent>`,
+        `${pad}</Drawer>`,
+      ].join("\n");
+    case "popover":
+      return [
+        `${pad}<Popover>`,
+        `${pad}  <PopoverTrigger asChild>`,
+        rendered,
+        `${pad}  </PopoverTrigger>`,
+        `${pad}  <PopoverContent${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}  </PopoverContent>`,
+        `${pad}</Popover>`,
+      ].join("\n");
+    case "dropdown-menu":
+      return [
+        `${pad}<DropdownMenu>`,
+        `${pad}  <DropdownMenuTrigger asChild>`,
+        rendered,
+        `${pad}  </DropdownMenuTrigger>`,
+        `${pad}  <DropdownMenuContent${classAttr}${styleAttr}>`,
+        `${pad}    ${contentComment}`,
+        `${pad}  </DropdownMenuContent>`,
+        `${pad}</DropdownMenu>`,
+      ].join("\n");
+    default:
+      return rendered;
+  }
+}
+
 function renderButtonGroup(
   props: Record<string, unknown>,
   propsStr: string,
@@ -2766,8 +2766,9 @@ function renderButtonGroup(
     const variantAttr = btn.variant && btn.variant !== "default" ? ` variant="${escapeAttr(btn.variant)}"` : "";
     const sizeAttr = btn.size && btn.size !== "default" ? ` size="${escapeAttr(btn.size)}"` : "";
     const disabledAttr = btn.disabled ? " disabled" : "";
+    const pos = btn.toastPosition || "bottom-right";
     const toastOnClick = btn.toastText && (!btn.overlayType || btn.overlayType === "none")
-      ? ` onClick={() => toast("${escapeAttr(btn.toastText)}")}`
+      ? ` onClick={() => toast("${escapeAttr(btn.toastText)}", { position: "${pos}" })}`
       : "";
     const btnRendered = `${pad}  <Button${variantAttr}${sizeAttr}${disabledAttr}${toastOnClick}>${escapeJsx(btn.text)}</Button>`;
 

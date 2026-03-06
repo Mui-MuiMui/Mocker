@@ -257,17 +257,33 @@ export function ButtonGroupMetaEditor({ value, selectedNodeId }: ButtonGroupMeta
                   </div>
                 </>
               ) : (
-                /* toastText (none のみ) */
-                <div className="flex flex-col gap-0.5">
-                  <label className="text-[11px] text-[var(--vscode-descriptionForeground,#888)]">toastText</label>
-                  <input
-                    type="text"
-                    value={btn.toastText ?? ""}
-                    onChange={(e) => updateButton(idx, { toastText: e.target.value })}
-                    className={`${INPUT_CLASS} w-full`}
-                    placeholder="クリック時のトーストメッセージ"
-                  />
-                </div>
+                /* toastText / toastPosition (none のみ) */
+                <>
+                  <div className="flex flex-col gap-0.5">
+                    <label className="text-[11px] text-[var(--vscode-descriptionForeground,#888)]">toastText</label>
+                    <input
+                      type="text"
+                      value={btn.toastText ?? ""}
+                      onChange={(e) => updateButton(idx, { toastText: e.target.value })}
+                      className={`${INPUT_CLASS} w-full`}
+                      placeholder="クリック時のトーストメッセージ"
+                    />
+                  </div>
+                  {btn.toastText && (
+                    <div className="flex items-center gap-1">
+                      <label className="shrink-0 text-[11px] text-[var(--vscode-descriptionForeground,#888)]">位置</label>
+                      <select
+                        value={btn.toastPosition ?? "bottom-right"}
+                        onChange={(e) => updateButton(idx, { toastPosition: e.target.value as ButtonDef["toastPosition"] })}
+                        className={`${INPUT_CLASS} flex-1`}
+                      >
+                        {["bottom-right", "bottom-left", "top-right", "top-left"].map((v) => (
+                          <option key={v} value={v}>{v}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
