@@ -364,8 +364,11 @@ function SizeInput({
   const [isAuto, setIsAuto] = useState(parsed.isAuto);
   const [num, setNum] = useState(parsed.num);
   const [unit, setUnit] = useState<SizeUnit>(parsed.unit);
+  const prevValueRef = useRef(value);
 
   useEffect(() => {
+    if (prevValueRef.current === value) return;
+    prevValueRef.current = value;
     const p = parseSizeValue(value);
     setIsAuto(p.isAuto);
     setNum(p.num);
