@@ -347,16 +347,10 @@ export async function startPreviewServer(
     }
     /* Toggle: icon fill when pressed */
     [data-toggle-pressed] svg.lucide { fill: currentColor; }
-    /* Typography variant font weights (Tailwind v4 preflight resets to inherit) */
-    .font-extrabold { font-weight: 800; }
-    .font-semibold  { font-weight: 600; }
-    .font-medium    { font-weight: 500; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style type="text/tailwindcss">
     @import "tailwindcss";
-    /* Typography variant classes — pre-generate for @tailwindcss/browser */
-    @source inline("scroll-m-20 font-extrabold font-semibold font-medium tracking-tight leading-7 list-disc list-decimal font-mono italic");
     @theme {
       --color-background: oklch(1 0 0);
       --color-foreground: oklch(0.145 0 0);
