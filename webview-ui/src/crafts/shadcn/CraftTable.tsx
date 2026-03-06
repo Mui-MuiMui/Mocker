@@ -286,10 +286,11 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
   const headerRows = rowMap.slice(0, headerRowCount);
   const bodyRows = rowMap.slice(headerRowCount);
 
+  const hasWidth = Object.keys(wrapperStyle).length > 0;
   return (
     <div
-      className={cn("overflow-auto", className)}
-      style={Object.keys(wrapperStyle).length > 0 ? wrapperStyle : undefined}
+      className={cn(hasWidth ? "block" : "inline-grid", "overflow-auto", className)}
+      style={hasWidth ? wrapperStyle : undefined}
     >
       {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
       <div

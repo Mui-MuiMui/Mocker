@@ -25,7 +25,7 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn("relative w-full", className)}
+      className={cn(width && width !== "auto" ? "block" : "inline-grid", "relative", className)}
       style={{ width: width && width !== "auto" ? width : undefined, height: height && height !== "auto" ? height : undefined }}
     >
       <div className="overflow-hidden rounded-lg">

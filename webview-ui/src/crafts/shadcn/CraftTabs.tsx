@@ -113,7 +113,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn(isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, className)}
+      className={cn(width && width !== "auto" ? "block" : "inline-grid", isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, className)}
       style={{
         width: width && width !== "auto" ? width : undefined,
         height: height && height !== "auto" ? height : undefined,
