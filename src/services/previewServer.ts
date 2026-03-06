@@ -351,6 +351,8 @@ export async function startPreviewServer(
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style type="text/tailwindcss">
     @import "tailwindcss";
+    /* Typography variant classes — pre-generate for @tailwindcss/browser */
+    @source inline("scroll-m-20 font-extrabold font-semibold font-medium tracking-tight leading-7 list-disc list-decimal font-mono italic");
     @theme {
       --color-background: oklch(1 0 0);
       --color-foreground: oklch(0.145 0 0);
