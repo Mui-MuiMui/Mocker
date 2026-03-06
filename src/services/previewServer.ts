@@ -1731,7 +1731,8 @@ export function Popover(props: any) {
   const [value, setValue] = useState("");
   const [search, setSearch] = useState("");
   const triggerRef = useRef<HTMLElement | null>(null);
-  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen, triggerRef }}><div className="inline-grid" style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
+  const wrapperCls = style?.width ? "block" : "inline-grid";
+  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen, triggerRef }}><div className={wrapperCls} style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
 }
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
