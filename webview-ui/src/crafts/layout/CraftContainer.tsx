@@ -66,9 +66,9 @@ const gridColsMap: Record<number, string> = {
 
 export const CraftContainer: UserComponent<CraftContainerProps> = ({
   display = "flex",
-  flexDirection = "column",
+  flexDirection = "row",
   justifyContent = "start",
-  alignItems = "stretch",
+  alignItems = "start",
   gap = "4",
   gridCols = 3,
   linkedMocPath = "",
@@ -124,9 +124,9 @@ CraftContainer.craft = {
   displayName: "Container",
   props: {
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row",
     justifyContent: "start",
-    alignItems: "stretch",
+    alignItems: "start",
     gap: "4",
     gridCols: 3,
     linkedMocPath: "",

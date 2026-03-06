@@ -313,9 +313,9 @@ const LAYOUT_ALL_KEYS = new Set([...COMMON_KEYS, ...FLOW_KEYS, ...ABSOLUTE_KEYS]
 /** フロー配置のデフォルト値 (selectedProps に無い場合に使用) */
 const FLOW_DEFAULTS: Record<string, unknown> = {
   display: "flex",
-  flexDirection: "column",
+  flexDirection: "row",
   justifyContent: "start",
-  alignItems: "stretch",
+  alignItems: "start",
   gap: "4",
   gridCols: 3,
 };
