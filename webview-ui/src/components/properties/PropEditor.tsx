@@ -126,6 +126,9 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
     itemShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
     separatorShadowClass: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
   },
+  Typography: {
+    variant: ["h1", "h2", "h3", "h4", "p", "blockquote", "ul", "ol", "code", "lead", "large", "small", "muted"],
+  },
 };
 
 /** Property names rendered as a button group (toggle buttons) per component. */
@@ -1197,6 +1200,57 @@ export function PropEditor() {
             className={`${INPUT_CLASS} w-full`}
             placeholder="text-gray-700 ..."
           />
+        </div>
+      );
+    }
+
+    // Custom UI for Typography items: per-item text input with add/remove buttons
+    if (componentName === "Typography" && key === "items") {
+      const currentItems = String(value ?? "").split(",").map((s) => s.trim());
+
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            items
+          </label>
+          <div className="flex flex-col gap-1">
+            {currentItems.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1">
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(e) => {
+                    const next = [...currentItems];
+                    next[idx] = e.target.value;
+                    handlePropChange(key, next.join(","));
+                  }}
+                  className={`${INPUT_CLASS} flex-1`}
+                  placeholder={`Item ${idx + 1}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = currentItems.filter((_, i) => i !== idx);
+                    handlePropChange(key, next.join(","));
+                  }}
+                  className="px-1 py-0.5 text-[11px] text-[var(--vscode-descriptionForeground,#888)] hover:text-[var(--vscode-errorForeground,#f44)]"
+                  title="削除"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              const next = [...currentItems, `Item ${currentItems.length + 1}`];
+              handlePropChange(key, next.join(","));
+            }}
+            className="mt-1 rounded border border-dashed border-[var(--vscode-button-border,transparent)] bg-[var(--vscode-button-secondaryBackground,#3a3d41)] px-2 py-0.5 text-[11px] text-[var(--vscode-button-secondaryForeground,#ccc)] hover:opacity-90"
+          >
+            + アイテム追加
+          </button>
         </div>
       );
     }

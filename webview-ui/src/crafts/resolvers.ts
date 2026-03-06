@@ -53,6 +53,7 @@ import { CraftMenubar, DEFAULT_MENUBAR_DATA } from "./shadcn/CraftMenubar";
 import { CraftCommand } from "./shadcn/CraftCommand";
 import { CraftTooltip } from "./shadcn/CraftTooltip";
 import { CraftSonner } from "./shadcn/CraftSonner";
+import { CraftTypography } from "./shadcn/CraftTypography";
 
 export const resolvers = {
   CraftDiv,
@@ -116,6 +117,7 @@ export const resolvers = {
   CraftCommand,
   CraftTooltip,
   CraftSonner,
+  CraftTypography,
 };
 
 export type ResolverKey = keyof typeof resolvers;
@@ -506,6 +508,14 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Terminal",
     defaultProps: {},
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftTypography",
+    label: "Typography",
+    category: "shadcn",
+    icon: "Type",
+    defaultProps: { text: "Heading 1" },
     enabled: true,
   },
 ];

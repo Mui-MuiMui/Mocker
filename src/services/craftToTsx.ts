@@ -407,6 +407,12 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     textProp: "triggerText",
     isContainer: false,
   },
+  // Typography: special rendering (no shadcn import needed)
+  CraftTypography: {
+    tag: "p",
+    propsMap: [],
+    isContainer: false,
+  },
 };
 
 /** Overlay type to import configuration */
@@ -519,6 +525,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", contentWidth: "" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
   CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
+  CraftTypography: { variant: "h1", text: "Heading 1", items: "List item 1,List item 2,List item 3" },
 };
 
 export function craftStateToTsx(
@@ -1073,6 +1080,11 @@ export function craftStateToTsx(
       }
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>\n${alertBody.join("\n")}\n${pad}</${tag}>`;
       return applyCommonWrappers(rendered);
+    }
+
+    // Typography special case: render as plain HTML tag with Tailwind classes
+    if (resolvedName === "CraftTypography") {
+      return applyCommonWrappers(`${mocComments}\n${renderTypography(node.props, classNameAttr, styleAttr, pad)}`);
     }
 
     // Accordion special case: render with AccordionItem/Trigger/Content
@@ -3130,6 +3142,59 @@ function renderBreadcrumb(
 
   lines.push(`${pad}  </BreadcrumbList>`);
   lines.push(`${pad}</Breadcrumb>`);
+  return lines.join("\n");
+}
+
+function renderTypography(
+  props: Record<string, unknown>,
+  classNameAttr: string,
+  styleAttr: string,
+  pad: string,
+): string {
+  const variant = (props?.variant as string) || "h1";
+  const text = (props?.text as string) || "";
+  const items = (props?.items as string) || "";
+
+  const VARIANT_CONFIG: Record<string, { tag: string; className: string }> = {
+    h1:         { tag: "h1",         className: "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl" },
+    h2:         { tag: "h2",         className: "scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0" },
+    h3:         { tag: "h3",         className: "scroll-m-20 text-2xl font-semibold tracking-tight" },
+    h4:         { tag: "h4",         className: "scroll-m-20 text-xl font-semibold tracking-tight" },
+    p:          { tag: "p",          className: "leading-7 [&:not(:first-child)]:mt-6" },
+    blockquote: { tag: "blockquote", className: "mt-6 border-l-4 pl-6 italic" },
+    ul:         { tag: "ul",         className: "my-6 ml-6 list-disc [&>li]:mt-2" },
+    ol:         { tag: "ol",         className: "my-6 ml-6 list-decimal [&>li]:mt-2" },
+    code:       { tag: "code",       className: "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold" },
+    lead:       { tag: "p",          className: "text-xl text-muted-foreground" },
+    large:      { tag: "div",        className: "text-lg font-semibold" },
+    small:      { tag: "small",      className: "text-sm font-medium leading-none" },
+    muted:      { tag: "p",          className: "text-sm text-muted-foreground" },
+  };
+
+  const config = VARIANT_CONFIG[variant] ?? VARIANT_CONFIG.h1;
+  const { tag, className } = config;
+  const isList = variant === "ul" || variant === "ol";
+
+  // Build className attr: merge variant class with any extra classNameAttr
+  const variantClass = ` className="${className}"`;
+  const extraClass = classNameAttr ? classNameAttr.replace(/className="/, 'className="').trim() : "";
+  // If classNameAttr is empty, just use variantClass; else combine
+  const mergedClassAttr = extraClass
+    ? ` className="${className} ${extraClass.replace(/^className="/, "").replace(/"$/, "")}"`
+    : variantClass;
+
+  const lines: string[] = [];
+  if (isList) {
+    const listItems = items.split(",").map((s) => s.trim()).filter(Boolean);
+    lines.push(`${pad}<${tag}${mergedClassAttr}${styleAttr}>`);
+    for (const item of listItems) {
+      lines.push(`${pad}  <li>${escapeJsx(item)}</li>`);
+    }
+    lines.push(`${pad}</${tag}>`);
+  } else {
+    lines.push(`${pad}<${tag}${mergedClassAttr}${styleAttr}>${escapeJsx(text)}</${tag}>`);
+  }
+
   return lines.join("\n");
 }
 
