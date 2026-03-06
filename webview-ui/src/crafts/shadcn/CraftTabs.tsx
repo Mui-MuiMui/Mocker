@@ -106,17 +106,18 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
   const isVertical = orientation === "vertical";
 
   const hasFixedButtonWidth = tabButtonWidth && tabButtonWidth !== "auto";
-  const alignCls = hasFixedButtonWidth
-    ? tabListAlign === "end" ? "justify-end" : tabListAlign === "center" ? "justify-center" : "justify-start"
-    : "";
+  const justifyCls = tabListAlign === "end" ? "justify-end" : tabListAlign === "center" ? "justify-center" : "justify-start";
 
+  // タブリスト自体のクラス
   const tabListCls = cn(
     isVertical
       ? "flex flex-col items-stretch bg-muted p-1 rounded-md"
-      : "inline-flex items-center bg-muted p-1 rounded-md w-full",
-    alignCls,
+      : cn("inline-flex items-center bg-muted p-1 rounded-md", hasFixedButtonWidth ? justifyCls : "w-full"),
     tabListBgClass,
   );
+
+  // tabButtonWidth が auto かつ水平の場合、外側ラッパーで配置を制御する
+  const needsAlignWrapper = !isVertical && !hasFixedButtonWidth;
 
   return (
     <div
@@ -130,41 +131,43 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
       }}
     >
       {/* Tab list */}
-      <div className={tabListCls}>
-        {meta.keys.map((key) => {
-          const label = meta.labels[String(key)] ?? `Tab ${key}`;
-          const iconName = meta.icons[String(key)];
-          const tooltip = meta.tooltips[String(key)] || "";
-          const IconComp = iconName ? (LucideIcons as Record<string, any>)[iconName] : null;
-          const isActive = key === activeKey;
-          return (
-            <div
-              key={key}
-              className={cn("relative group", isVertical ? "" : (hasFixedButtonWidth ? "" : "flex-1"))}
-            >
-              <button
-                type="button"
-                onClick={() => setActiveKey(key)}
-                className={cn(
-                  "inline-flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  isVertical ? "text-left" : "",
-                  isActive
-                    ? cn("bg-background text-foreground shadow", tabActiveBgClass)
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                style={{ width: tabButtonWidth && tabButtonWidth !== "auto" ? tabButtonWidth : undefined }}
+      <div className={needsAlignWrapper ? cn("flex w-full", justifyCls) : undefined}>
+        <div className={tabListCls}>
+          {meta.keys.map((key) => {
+            const label = meta.labels[String(key)] ?? `Tab ${key}`;
+            const iconName = meta.icons[String(key)];
+            const tooltip = meta.tooltips[String(key)] || "";
+            const IconComp = iconName ? (LucideIcons as Record<string, any>)[iconName] : null;
+            const isActive = key === activeKey;
+            return (
+              <div
+                key={key}
+                className={cn("relative group", isVertical ? "" : (hasFixedButtonWidth ? "" : "flex-1"))}
               >
-                {IconComp && <IconComp className="h-4 w-4" />}
-                {label}
-              </button>
-              {tooltip && (
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                  {tooltip}
-                </span>
-              )}
-            </div>
-          );
-        })}
+                <button
+                  type="button"
+                  onClick={() => setActiveKey(key)}
+                  className={cn(
+                    "inline-flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-sm px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                    isVertical ? "text-left" : "",
+                    isActive
+                      ? cn("bg-background text-foreground shadow", tabActiveBgClass)
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  style={{ width: tabButtonWidth && tabButtonWidth !== "auto" ? tabButtonWidth : undefined }}
+                >
+                  {IconComp && <IconComp className="h-4 w-4" />}
+                  {label}
+                </button>
+                {tooltip && (
+                  <span className="pointer-events-none absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 z-50 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    {tooltip}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Tab content slots — all rendered, inactive hidden */}
