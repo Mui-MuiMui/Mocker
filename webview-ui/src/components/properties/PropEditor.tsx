@@ -338,8 +338,6 @@ const COMPONENT_EXCLUDED_PROPS: Record<string, Set<string>> = {
   Avatar: new Set(["width", "height"]),
   // Table: stickyHeader/pinnedLeft は TableMetaEditor 内で編集するため PropEditor からは非表示
   Table: new Set(["stickyHeader", "pinnedLeft"]),
-  // ButtonGroup: buttonData は ButtonGroupMetaEditor 専用UIで表示
-  ButtonGroup: new Set(["buttonData"]),
 };
 
 // --- サイズ入力 UI ---
