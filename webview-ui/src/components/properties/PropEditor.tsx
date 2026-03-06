@@ -590,8 +590,8 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
-    // Custom UI for width/height
-    if (key === "width" || key === "height") {
+    // Custom UI for width/height/tabButtonWidth
+    if (key === "width" || key === "height" || key === "tabButtonWidth") {
       return (
         <SizeInput
           key={`${selectedNodeId}-${key}-${String(value ?? "auto")}`}

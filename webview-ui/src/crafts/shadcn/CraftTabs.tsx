@@ -55,6 +55,7 @@ interface CraftTabsProps {
   orientation?: "horizontal" | "vertical";
   width?: string;
   height?: string;
+  tabButtonWidth?: string;
   className?: string;
   tabListBgClass?: string;
   tabActiveBgClass?: string;
@@ -70,6 +71,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
   orientation = "horizontal",
   width = "auto",
   height = "auto",
+  tabButtonWidth = "auto",
   className = "",
   tabListBgClass = "",
   tabActiveBgClass = "",
@@ -113,7 +115,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
       ref={(ref) => {
         if (ref) connect(drag(ref));
       }}
-      className={cn(width && width !== "auto" ? "block" : "inline-grid", isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, className)}
+      className={cn(width && width !== "auto" ? "block" : "w-fit", isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, className)}
       style={{
         width: width && width !== "auto" ? width : undefined,
         height: height && height !== "auto" ? height : undefined,
@@ -142,6 +144,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
                     ? cn("bg-background text-foreground shadow", tabActiveBgClass)
                     : "text-muted-foreground hover:text-foreground",
                 )}
+                style={{ width: tabButtonWidth && tabButtonWidth !== "auto" ? tabButtonWidth : undefined }}
               >
                 {IconComp && <IconComp className="h-4 w-4" />}
                 {label}
@@ -177,6 +180,7 @@ CraftTabs.craft = {
     orientation: "horizontal",
     width: "auto",
     height: "auto",
+    tabButtonWidth: "auto",
     className: "",
     tabListBgClass: "",
     tabActiveBgClass: "",

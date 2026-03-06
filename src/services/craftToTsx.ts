@@ -2417,11 +2417,15 @@ function renderTabs(
   const outerShadow = (node.props?.outerShadow as string) || "";
   const contentShadow = (node.props?.contentShadow as string) || "";
   const userClassName = (node.props?.className as string) || "";
+  const tabButtonWidth = (node.props?.tabButtonWidth as string) || "";
 
   const styleAttr = buildStyleAttr(node.props);
 
+  const width = (node.props?.width as string) || "";
+  const widthCls = width && width !== "auto" ? "block" : "w-fit";
+
   // Build outer wrapper className
-  const outerCls = [isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, userClassName]
+  const outerCls = [widthCls, isVertical ? "flex flex-row" : "flex flex-col", outerBorderColor, outerShadow, userClassName]
     .filter(Boolean)
     .join(" ");
   const outerClassAttr = outerCls ? ` className="${escapeAttr(outerCls)}"` : "";
@@ -2451,11 +2455,14 @@ function renderTabs(
     const triggerClassAttr = tabActiveBgClass
       ? ` className="${escapeAttr(`data-[state=active]:${tabActiveBgClass}`)}"`
       : "";
+    const triggerStyleAttr = tabButtonWidth && tabButtonWidth !== "auto"
+      ? ` style={{ width: "${tabButtonWidth}" }}`
+      : "";
     if (tooltip) {
       lines.push(`${pad}    <TooltipProvider>`);
       lines.push(`${pad}      <Tooltip>`);
       lines.push(`${pad}        <TooltipTrigger asChild>`);
-      lines.push(`${pad}          <TabsTrigger value="tab-${key}"${triggerClassAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+      lines.push(`${pad}          <TabsTrigger value="tab-${key}"${triggerClassAttr}${triggerStyleAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
       lines.push(`${pad}        </TooltipTrigger>`);
       lines.push(`${pad}        <TooltipContent>`);
       lines.push(`${pad}          <p>${escapeJsx(tooltip)}</p>`);
@@ -2463,7 +2470,7 @@ function renderTabs(
       lines.push(`${pad}      </Tooltip>`);
       lines.push(`${pad}    </TooltipProvider>`);
     } else {
-      lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
+      lines.push(`${pad}    <TabsTrigger value="tab-${key}"${triggerClassAttr}${triggerStyleAttr}>${iconJsx}${escapeJsx(label)}</TabsTrigger>`);
     }
   }
 
