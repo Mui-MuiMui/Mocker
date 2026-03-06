@@ -295,19 +295,19 @@ export const CraftTable: UserComponent<CraftTableProps> = ({
       className={cn(hasWidth ? "block" : "inline-block", "overflow-auto", className)}
       style={hasWidth ? wrapperStyle : undefined}
     >
-      {/* Drag handle strip — outside cell canvas, so clicks reach CraftTable's connect */}
-      <div
-        ref={(ref) => {
-          if (ref) connect(drag(ref));
-        }}
-        className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100"
-      >
-        <span className="text-[9px] text-muted-foreground">⠿ Table</span>
-      </div>
       <table
         className={cn("caption-bottom text-sm border-separate", tableOuterBorderClass)}
         style={{ tableLayout: "fixed", borderSpacing: 0, width: tableWidth, minWidth: totalColWidth > 0 ? `${totalColWidth}px` : undefined }}
       >
+        {/* Drag handle as caption — テーブル幅に自動追従 */}
+        <caption
+          ref={(ref) => {
+            if (ref) connect(drag(ref));
+          }}
+          className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100 caption-top"
+        >
+          <span className="text-[9px] text-muted-foreground">⠿ Table</span>
+        </caption>
         <colgroup>
           {colMap.map((physC) => {
             const w = colWidths[String(physC)];
