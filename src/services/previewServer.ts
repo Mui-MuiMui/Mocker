@@ -696,8 +696,9 @@ export function Button(props: any) {
     const childArray = Array.isArray(children) ? children : [children];
     const placeholder = String(childArray.find((c: any) => typeof c === "string") || "Select...");
     const icons = childArray.filter((c: any) => c !== null && c !== undefined && typeof c !== "string");
+    const inputCls = cn("flex w-full rounded-md border border-input bg-transparent py-2 pl-3 pr-8 text-sm shadow-sm placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-ring", !style?.height && "h-9", className);
     return <div className="relative flex items-center z-[51] w-full" style={style} onClick={(e: any) => { e.stopPropagation(); inputRef.current?.focus(); }}>
-      <input ref={inputRef} type="text" className={cn("flex h-9 w-full rounded-md border border-input bg-transparent py-2 pl-3 pr-8 text-sm shadow-sm placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-ring", className)} value={comboCtx.search || ""} placeholder={placeholder} onChange={(e: any) => { comboCtx.setSearch(e.target.value); comboCtx.setOpen(true); }} onFocus={() => comboCtx.setOpen(true)} />
+      <input ref={inputRef} type="text" className={inputCls} style={style?.height ? { height: style.height } : undefined} value={comboCtx.search || ""} placeholder={placeholder} onChange={(e: any) => { comboCtx.setSearch(e.target.value); comboCtx.setOpen(true); }} onFocus={() => comboCtx.setOpen(true)} />
       <span className="absolute right-2 pointer-events-none opacity-50">{icons}</span>
     </div>;
   }
