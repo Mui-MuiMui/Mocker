@@ -2418,6 +2418,7 @@ function renderTabs(
   const contentShadow = (node.props?.contentShadow as string) || "";
   const userClassName = (node.props?.className as string) || "";
   const tabButtonWidth = (node.props?.tabButtonWidth as string) || "";
+  const tabListAlign = (node.props?.tabListAlign as string) || "start";
 
   const styleAttr = buildStyleAttr(node.props);
 
@@ -2431,10 +2432,14 @@ function renderTabs(
   const outerClassAttr = outerCls ? ` className="${escapeAttr(outerCls)}"` : "";
 
   // Build TabsList className
+  const hasFixedButtonWidth = tabButtonWidth && tabButtonWidth !== "auto";
+  const alignCls = hasFixedButtonWidth
+    ? tabListAlign === "end" ? "justify-end" : tabListAlign === "center" ? "justify-center" : "justify-start"
+    : "";
   const tabListBase = isVertical
     ? "flex flex-col items-stretch bg-muted p-1 rounded-md"
     : "inline-flex items-center bg-muted p-1 rounded-md w-full";
-  const tabListCls = [tabListBase, tabListBgClass].filter(Boolean).join(" ");
+  const tabListCls = [tabListBase, alignCls, tabListBgClass].filter(Boolean).join(" ");
 
   // Build TabsContent className
   const contentCls = [contentBgClass, contentBorderColor, contentShadow].filter(Boolean).join(" ");

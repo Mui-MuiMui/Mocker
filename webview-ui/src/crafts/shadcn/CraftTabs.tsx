@@ -56,6 +56,7 @@ interface CraftTabsProps {
   width?: string;
   height?: string;
   tabButtonWidth?: string;
+  tabListAlign?: "start" | "center" | "end";
   className?: string;
   tabListBgClass?: string;
   tabActiveBgClass?: string;
@@ -72,6 +73,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
   width = "auto",
   height = "auto",
   tabButtonWidth = "auto",
+  tabListAlign = "start",
   className = "",
   tabListBgClass = "",
   tabActiveBgClass = "",
@@ -103,10 +105,16 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
 
   const isVertical = orientation === "vertical";
 
+  const hasFixedButtonWidth = tabButtonWidth && tabButtonWidth !== "auto";
+  const alignCls = hasFixedButtonWidth
+    ? tabListAlign === "end" ? "justify-end" : tabListAlign === "center" ? "justify-center" : "justify-start"
+    : "";
+
   const tabListCls = cn(
     isVertical
       ? "flex flex-col items-stretch bg-muted p-1 rounded-md"
       : "inline-flex items-center bg-muted p-1 rounded-md w-full",
+    alignCls,
     tabListBgClass,
   );
 
@@ -132,7 +140,7 @@ export const CraftTabs: UserComponent<CraftTabsProps> = ({
           return (
             <div
               key={key}
-              className={cn("relative group", isVertical ? "" : "flex-1")}
+              className={cn("relative group", isVertical ? "" : (hasFixedButtonWidth ? "" : "flex-1"))}
             >
               <button
                 type="button"
@@ -181,6 +189,7 @@ CraftTabs.craft = {
     width: "auto",
     height: "auto",
     tabButtonWidth: "auto",
+    tabListAlign: "start",
     className: "",
     tabListBgClass: "",
     tabActiveBgClass: "",
