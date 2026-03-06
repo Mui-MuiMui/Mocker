@@ -47,12 +47,12 @@ const MARGIN_DIRS = [
 ] as const;
 
 const TEXT_ALIGN_OPTIONS = [
-  { label: "Left", textCls: "text-left", justifyCls: "justify-start" },
-  { label: "Center", textCls: "text-center", justifyCls: "justify-center" },
-  { label: "Right", textCls: "text-right", justifyCls: "justify-end" },
-  { label: "Justify", textCls: "text-justify", justifyCls: "justify-between" },
+  { label: "Left", textCls: "text-left" },
+  { label: "Center", textCls: "text-center" },
+  { label: "Right", textCls: "text-right" },
+  { label: "Justify", textCls: "text-justify" },
 ];
-const ALL_TEXT_ALIGN_CLASSES = TEXT_ALIGN_OPTIONS.flatMap((o) => [o.textCls, o.justifyCls]);
+const ALL_TEXT_ALIGN_CLASSES = TEXT_ALIGN_OPTIONS.map((o) => o.textCls);
 
 const ALIGN_SELF_OPTIONS = [
   { label: "Auto", cls: "self-auto" },
@@ -293,7 +293,7 @@ export function TailwindEditor() {
                   if (activeSet.has(o.textCls)) {
                     updateClassName(filtered.join(" "));
                   } else {
-                    updateClassName([...filtered, o.textCls, o.justifyCls].join(" "));
+                    updateClassName([...filtered, o.textCls].join(" "));
                   }
                 }}
               />
