@@ -37,7 +37,6 @@ import { CraftCalendar } from "./shadcn/CraftCalendar";
 import { CraftDatePicker } from "./shadcn/CraftDatePicker";
 import { CraftResizable, ResizablePanelSlot } from "./shadcn/CraftResizable";
 import { CraftCarousel } from "./shadcn/CraftCarousel";
-import { CraftChart } from "./shadcn/CraftChart";
 import { CraftForm } from "./shadcn/CraftForm";
 // Phase 4: Overlay components
 import { CraftDialog } from "./shadcn/CraftDialog";
@@ -99,7 +98,6 @@ export const resolvers = {
   CraftResizable,
   ResizablePanelSlot,
   CraftCarousel,
-  CraftChart,
   CraftForm,
   // Phase 4
   CraftDialog,
@@ -440,14 +438,6 @@ export const paletteItems: PaletteItem[] = [
     label: "Carousel",
     category: "shadcn",
     icon: "GalleryHorizontal",
-    defaultProps: {},
-    enabled: false,
-  },
-  {
-    resolverKey: "CraftChart",
-    label: "Chart",
-    category: "shadcn",
-    icon: "BarChart3",
     defaultProps: {},
     enabled: false,
   },
