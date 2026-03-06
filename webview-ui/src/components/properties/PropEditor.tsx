@@ -360,25 +360,21 @@ function SizeInput({
   value: string;
   onChange: (v: string) => void;
 }) {
+  // isAuto は value prop から直接導出（stateにしない）
+  const isAuto = !value || value === "auto";
   const parsed = parseSizeValue(value);
-  const [isAuto, setIsAuto] = useState(parsed.isAuto);
   const [num, setNum] = useState(parsed.num);
   const [unit, setUnit] = useState<SizeUnit>(parsed.unit);
-  const prevValueRef = useRef(value);
 
+  // ノード切り替え等で value が外部から変わった時のみ num/unit を同期
+  const prevValueRef = useRef(value);
   useEffect(() => {
     if (prevValueRef.current === value) return;
     prevValueRef.current = value;
     const p = parseSizeValue(value);
-    setIsAuto(p.isAuto);
     setNum(p.num);
     setUnit(p.unit);
   }, [value]);
-
-  const commit = (nextIsAuto: boolean, nextNum: string, nextUnit: SizeUnit) => {
-    if (nextIsAuto) { onChange("auto"); return; }
-    onChange(nextNum ? `${nextNum}${nextUnit}` : "");
-  };
 
   return (
     <div className="flex flex-col gap-1">
@@ -386,9 +382,12 @@ function SizeInput({
       <button
         type="button"
         onClick={() => {
-          const next = !isAuto;
-          setIsAuto(next);
-          commit(next, num, unit);
+          if (isAuto) {
+            // auto OFF: 現在の num/unit で確定、なければ空文字
+            onChange(num ? `${num}${unit}` : "");
+          } else {
+            onChange("auto");
+          }
         }}
         className={`w-fit rounded px-2 py-0.5 text-[10px] transition-colors ${
           isAuto
@@ -407,7 +406,7 @@ function SizeInput({
           disabled={isAuto}
           onChange={(e) => {
             setNum(e.target.value);
-            commit(false, e.target.value, unit);
+            onChange(e.target.value ? `${e.target.value}${unit}` : "");
           }}
           placeholder="100"
           className={`${INPUT_CLASS} w-full`}
@@ -418,7 +417,7 @@ function SizeInput({
           onChange={(e) => {
             const nextUnit = e.target.value as SizeUnit;
             setUnit(nextUnit);
-            commit(false, num, nextUnit);
+            onChange(num ? `${num}${nextUnit}` : "");
           }}
           className={`${INPUT_CLASS} w-[60px] shrink-0`}
         >
