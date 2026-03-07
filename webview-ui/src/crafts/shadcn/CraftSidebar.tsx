@@ -427,7 +427,7 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
   const insetPanel = (
     <div
       className={cn(
-        "flex flex-col grow",
+        "flex flex-col flex-1",
         insetBgClass || "bg-background",
         insetBorderColor,
         insetShadow,
@@ -460,10 +460,11 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
       className={cn(
         "flex",
         side === "right" ? "flex-row-reverse" : "flex-row",
+        (!width || width === "auto") && "grow",
         className,
       )}
       style={{
-        width: width && width !== "auto" ? width : `calc(${sidebarWidth || "240px"} + 40px)`,
+        width: width && width !== "auto" ? width : undefined,
         height: height && height !== "auto" ? height : undefined,
       }}
     >
