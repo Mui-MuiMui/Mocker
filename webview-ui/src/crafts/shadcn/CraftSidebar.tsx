@@ -427,7 +427,7 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
   const insetPanel = (
     <div
       className={cn(
-        "flex flex-col flex-1",
+        "flex flex-col grow",
         insetBgClass || "bg-background",
         insetBorderColor,
         insetShadow,
