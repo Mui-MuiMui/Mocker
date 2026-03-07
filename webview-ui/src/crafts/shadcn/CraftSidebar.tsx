@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Element, useNode, useEditor, type UserComponent } from "@craftjs/core";
+import { Element, useNode, type UserComponent } from "@craftjs/core";
 import * as LucideIcons from "lucide-react";
 import { cn } from "../../utils/cn";
 import type { ReactNode } from "react";
@@ -193,7 +193,6 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
   const {
     connectors: { connect, drag },
   } = useNode();
-  const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
   const [collapsed, setCollapsed] = useState(false);
 
   const meta = parseSidebarData(sidebarData);
@@ -264,7 +263,7 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
               key={item.key}
               type="button"
               className={cn(
-                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full",
+                "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full",
                 collapsed && isIconMode ? "justify-center px-0" : "",
                 isActive
                   ? cn(navActiveBgClass || "bg-accent", navTextClass || "text-accent-foreground")
@@ -275,10 +274,10 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
               )}
             >
               {IconComp && (
-                <IconComp className={cn("h-4 w-4 shrink-0", navIconClass)} />
+                <IconComp className={cn("mt-0.5 h-4 w-4 shrink-0", navIconClass)} />
               )}
               {!(collapsed && isIconMode) && (
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="min-w-0 flex-1 break-words text-left">{item.label}</span>
               )}
               {!(collapsed && isIconMode) && item.badge && (
                 <span
@@ -327,9 +326,7 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
         <div className="flex items-center border-b px-2 py-1">
           <button
             type="button"
-            onClick={() => {
-              if (!enabled) setCollapsed((v) => !v);
-            }}
+            onClick={() => setCollapsed((v) => !v)}
             className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             title={collapsed ? "サイドバーを開く" : "サイドバーを閉じる"}
           >

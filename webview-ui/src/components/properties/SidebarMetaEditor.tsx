@@ -144,11 +144,7 @@ export function SidebarMetaEditor({ value, selectedNodeId }: SidebarMetaEditorPr
                 placeholder="ラベル"
               />
             )}
-            {item.type === "separator" && (
-              <span className="flex-1 text-[11px] text-[var(--vscode-descriptionForeground,#888)] italic">
-                ─── 区切り ───
-              </span>
-            )}
+            {item.type === "separator" && <span className="flex-1" />}
             <button
               type="button"
               className={BTN_CLASS}

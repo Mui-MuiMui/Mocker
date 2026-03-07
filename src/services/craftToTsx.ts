@@ -2502,11 +2502,20 @@ function renderSidebar(
   const footerChildren = renderSlot("sidebar_footer", indent + 4);
   const insetChildren = renderSlot("sidebar_inset", indent + 3);
 
+  const collapsible = (node.props?.collapsible as string) || "icon";
+  const isCollapsible = collapsible !== "none";
+  const iconWidth = "48px";
+
+  // ref callback for preview toggle (DOM manipulation, no React state needed)
+  const refAttr = isCollapsible
+    ? ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; const fw = '${escapeAttr(sidebarWidth)}'; let c = false; toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; const w = c ? '${iconWidth}' : fw; aside.style.width = w; aside.style.minWidth = w; })); }}`
+    : "";
+
   const lines: string[] = [];
-  lines.push(`${pad}<div className="${escapeAttr(outerCls)}"${styleAttr}>`);
+  lines.push(`${pad}<div className="${escapeAttr(outerCls)}"${styleAttr}${refAttr}>`);
 
   // Sidebar panel
-  lines.push(`${pad}  <aside className="${escapeAttr(sidebarCls)}" style={{ width: "${escapeAttr(sidebarWidth)}", minWidth: "${escapeAttr(sidebarWidth)}", flexShrink: 0 }}>`);
+  lines.push(`${pad}  <aside data-sb-aside className="${escapeAttr(sidebarCls)}" style={{ width: "${escapeAttr(sidebarWidth)}", minWidth: "${escapeAttr(sidebarWidth)}", flexShrink: 0 }}>`);
 
   // Header slot
   lines.push(`${pad}    <div className="${escapeAttr(headerCls)}">`);
@@ -2525,17 +2534,17 @@ function renderSidebar(
       // item
       const isActive = !!item.active;
       const itemCls = [
-        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
+        "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
         isActive
           ? [navActiveBgClass, navTextClass || "text-accent-foreground"].filter(Boolean).join(" ")
           : [navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent", navTextClass || "text-foreground"].filter(Boolean).join(" "),
       ].filter(Boolean).join(" ");
       lines.push(`${pad}      <button type="button" className="${escapeAttr(itemCls)}">`);
       if (item.icon) {
-        const iconCls = ["h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+        const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
         lines.push(`${pad}        <${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
       }
-      lines.push(`${pad}        <span className="flex-1">${escapeJsx(item.label || "")}</span>`);
+      lines.push(`${pad}        <span className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
       if (item.badge) {
         const badgeCls = [
           "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
@@ -2558,6 +2567,12 @@ function renderSidebar(
 
   // Inset panel
   lines.push(`${pad}  <main className="${escapeAttr(insetCls)}">`);
+  if (isCollapsible) {
+    const toggleArrow = side === "left" ? "←" : "→";
+    lines.push(`${pad}    <div className="flex items-center border-b px-2 py-1">`);
+    lines.push(`${pad}      <button data-sb-toggle type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground">${toggleArrow}</button>`);
+    lines.push(`${pad}    </div>`);
+  }
   if (insetChildren) lines.push(insetChildren);
   lines.push(`${pad}  </main>`);
 
