@@ -1649,7 +1649,17 @@ export function Carousel({ opts = {}, orientation = "horizontal", className = ""
   const canNext = loop || current < count - 1;
   return (
     <CarouselCtx.Provider value={{ current, setCurrent, count, setCount, scrollPrev, scrollNext, canPrev, canNext, orientation }}>
-      <div className={cn("relative", className)} data-orientation={orientation} {...rest}>{children}</div>
+      <div className={cn("relative", className)} data-orientation={orientation} {...rest}>
+        {children}
+        {count > 1 && (
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1">
+            {Array.from({ length: count }, (_: any, i: number) => (
+              <button key={i} type="button" onClick={() => setCurrent(i)}
+                className={cn("h-1.5 w-1.5 rounded-full transition-colors", i === current ? "bg-primary" : "bg-primary/30")} />
+            ))}
+          </div>
+        )}
+      </div>
     </CarouselCtx.Provider>
   );
 }
