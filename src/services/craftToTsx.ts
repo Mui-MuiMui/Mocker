@@ -1004,7 +1004,7 @@ export function craftStateToTsx(
 
     // Merge className
     const userClassName = (node.props?.className as string) || "";
-    const combinedClassName = [containerClass, userClassName].filter(Boolean).join(" ");
+    const combinedClassName = mergeContainerClasses(containerClass, userClassName);
     const classNameAttr = combinedClassName ? ` className="${combinedClassName}"` : "";
 
     // Build dimension styles
@@ -1376,7 +1376,7 @@ export function craftStateToTsx(
   // Build root container class
   const rootContainerClass = buildContainerClasses(rootNode.props);
   const rootUserClass = (rootNode.props?.className as string) || "";
-  const rootCombinedClass = [rootContainerClass, rootUserClass].filter(Boolean).join(" ");
+  const rootCombinedClass = mergeContainerClasses(rootContainerClass, rootUserClass);
   const rootStyleAttr = buildStyleAttr(rootNode.props);
 
   // Build import statements
@@ -1433,6 +1433,27 @@ function buildPropsString(resolvedName: string, props: Record<string, unknown>, 
   }
 
   return parts.length > 0 ? " " + parts.join(" ") : "";
+}
+
+/**
+ * containerClass と userClassName を結合し、競合するTailwindグループは
+ * userClassName 側を優先する（TailwindEditorの設定がコンポーネントpropより優先）。
+ */
+function mergeContainerClasses(containerClass: string, userClassName: string): string {
+  if (!containerClass || !userClassName) {
+    return [containerClass, userClassName].filter(Boolean).join(" ");
+  }
+  const userClasses = userClassName.split(/\s+/).filter(Boolean);
+  const hasUserItems   = userClasses.some(c => /^items-/.test(c));
+  const hasUserJustify = userClasses.some(c => /^justify-/.test(c));
+  const hasUserFlexDir = userClasses.some(c => c === "flex-row" || c === "flex-col");
+  const baseFiltered = containerClass.split(/\s+/).filter(Boolean).filter(c => {
+    if (hasUserItems   && /^items-/.test(c))                      return false;
+    if (hasUserJustify && /^justify-/.test(c))                    return false;
+    if (hasUserFlexDir && (c === "flex-row" || c === "flex-col")) return false;
+    return true;
+  });
+  return [...baseFiltered, ...userClasses].join(" ");
 }
 
 function buildContainerClasses(props: Record<string, unknown>): string {
