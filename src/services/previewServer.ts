@@ -1647,9 +1647,14 @@ export function Carousel({ opts = {}, orientation = "horizontal", className = ""
   const scrollNext = () => setCurrent((i: number) => loop ? (i + 1) % count : Math.min(count - 1, i + 1));
   const canPrev = loop || current > 0;
   const canNext = loop || current < count - 1;
+  const handleWheel = (e: any) => {
+    e.preventDefault();
+    const delta = orientation === "vertical" ? e.deltaY : e.deltaX || e.deltaY;
+    if (delta > 0) scrollNext(); else if (delta < 0) scrollPrev();
+  };
   return (
     <CarouselCtx.Provider value={{ current, setCurrent, count, setCount, scrollPrev, scrollNext, canPrev, canNext, orientation }}>
-      <div className={cn("relative", className)} data-orientation={orientation} {...rest}>
+      <div className={cn("relative", className)} data-orientation={orientation} onWheel={handleWheel} {...rest}>
         {children}
         {count > 1 && (
           <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1">
