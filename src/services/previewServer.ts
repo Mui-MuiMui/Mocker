@@ -1670,21 +1670,35 @@ export function CarouselItem({ className = "", children, ...rest }: any) {
 }
 export function CarouselPrevious({ className = "", ...rest }: any) {
   const ctx = useContext(CarouselCtx);
+  const isVertical = ctx?.orientation === "vertical";
   return (
     <button type="button" disabled={!ctx?.canPrev}
-      className={cn("absolute left-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40", className)}
+      className={cn(
+        "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40",
+        isVertical ? "top-2 left-1/2 -translate-x-1/2" : "left-2 top-1/2 -translate-y-1/2",
+        className,
+      )}
       onClick={() => ctx?.scrollPrev()} {...rest}>
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m15 18-6-6 6-6"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        {isVertical ? <path d="m18 15-6-6-6 6"/> : <path d="m15 18-6-6 6-6"/>}
+      </svg>
     </button>
   );
 }
 export function CarouselNext({ className = "", ...rest }: any) {
   const ctx = useContext(CarouselCtx);
+  const isVertical = ctx?.orientation === "vertical";
   return (
     <button type="button" disabled={!ctx?.canNext}
-      className={cn("absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40", className)}
+      className={cn(
+        "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40",
+        isVertical ? "bottom-2 left-1/2 -translate-x-1/2" : "right-2 top-1/2 -translate-y-1/2",
+        className,
+      )}
       onClick={() => ctx?.scrollNext()} {...rest}>
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m9 18 6-6-6-6"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        {isVertical ? <path d="m6 9 6 6 6-6"/> : <path d="m9 18 6-6-6-6"/>}
+      </svg>
     </button>
   );
 }`,

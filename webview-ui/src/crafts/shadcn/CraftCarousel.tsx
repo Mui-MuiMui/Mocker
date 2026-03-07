@@ -58,7 +58,7 @@ interface CraftCarouselProps {
 
 export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
   slideMeta = DEFAULT_SLIDE_META_JSON,
-  orientation: _orientation = "horizontal",
+  orientation = "horizontal",
   loop: _loop = "false",
   slideSize: _slideSize = "100%",
   showArrows = "true",
@@ -128,20 +128,34 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
         <>
           <button
             type="button"
-            className="absolute left-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent z-10"
+            className={cn(
+              "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent z-10",
+              orientation === "vertical"
+                ? "top-2 left-1/2 -translate-x-1/2"
+                : "left-2 top-1/2 -translate-y-1/2",
+            )}
             onClick={goPrev}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <path d="m15 18-6-6 6-6" />
+              {orientation === "vertical"
+                ? <path d="m18 15-6-6-6 6" />
+                : <path d="m15 18-6-6 6-6" />}
             </svg>
           </button>
           <button
             type="button"
-            className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent z-10"
+            className={cn(
+              "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow-sm hover:bg-accent z-10",
+              orientation === "vertical"
+                ? "bottom-2 left-1/2 -translate-x-1/2"
+                : "right-2 top-1/2 -translate-y-1/2",
+            )}
             onClick={goNext}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-              <path d="m9 18 6-6-6-6" />
+              {orientation === "vertical"
+                ? <path d="m6 9 6 6 6-6" />
+                : <path d="m9 18 6-6-6-6" />}
             </svg>
           </button>
         </>
