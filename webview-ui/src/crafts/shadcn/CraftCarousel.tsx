@@ -114,6 +114,11 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
         height: height && height !== "auto" ? height : undefined,
       }}
     >
+      {/* Drag handle strip — Carousel全体を選択するためのつかみ */}
+      <div className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100">
+        <span className="text-[9px] text-muted-foreground">⠿ Carousel</span>
+      </div>
+
       {/* Slide content slots — all rendered, inactive hidden */}
       <div className="overflow-hidden">
         {meta.keys.map((key) => (
