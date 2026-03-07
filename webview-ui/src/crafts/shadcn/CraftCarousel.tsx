@@ -48,9 +48,9 @@ export const DEFAULT_SLIDE_META_JSON = JSON.stringify(DEFAULT_SLIDE_META);
 interface CraftCarouselProps {
   slideMeta?: string;
   orientation?: "horizontal" | "vertical";
-  loop?: string;
+  loop?: boolean;
   slideSize?: string;
-  showArrows?: string;
+  showArrows?: boolean;
   width?: string;
   height?: string;
   className?: string;
@@ -59,9 +59,9 @@ interface CraftCarouselProps {
 export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
   slideMeta = DEFAULT_SLIDE_META_JSON,
   orientation = "horizontal",
-  loop: _loop = "false",
+  loop = false,
   slideSize: _slideSize = "100%",
-  showArrows = "true",
+  showArrows = true,
   width = "auto",
   height = "auto",
   className = "",
@@ -90,13 +90,13 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
   function goPrev() {
     const idx = meta.keys.indexOf(activeKey);
     if (idx > 0) setActiveKey(meta.keys[idx - 1]);
-    else setActiveKey(meta.keys[meta.keys.length - 1]);
+    else if (loop) setActiveKey(meta.keys[meta.keys.length - 1]);
   }
 
   function goNext() {
     const idx = meta.keys.indexOf(activeKey);
     if (idx < meta.keys.length - 1) setActiveKey(meta.keys[idx + 1]);
-    else setActiveKey(meta.keys[0]);
+    else if (loop) setActiveKey(meta.keys[0]);
   }
 
   return (
@@ -124,7 +124,7 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
       </div>
 
       {/* Navigation arrows */}
-      {showArrows === "true" && (
+      {showArrows && (
         <>
           <button
             type="button"
@@ -183,9 +183,9 @@ CraftCarousel.craft = {
   props: {
     slideMeta: DEFAULT_SLIDE_META_JSON,
     orientation: "horizontal",
-    loop: "false",
+    loop: false,
     slideSize: "100%",
-    showArrows: "true",
+    showArrows: true,
     width: "320px",
     height: "200px",
     className: "",

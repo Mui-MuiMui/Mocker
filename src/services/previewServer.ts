@@ -1642,7 +1642,7 @@ const CarouselCtx = createContext<any>(null);
 export function Carousel({ opts = {}, orientation = "horizontal", className = "", children, ...rest }: any) {
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
-  const loop = opts?.loop ?? false;
+  const loop = !!(opts?.loop);
   const scrollPrev = () => setCurrent((i: number) => loop ? (i - 1 + count) % count : Math.max(0, i - 1));
   const scrollNext = () => setCurrent((i: number) => loop ? (i + 1) % count : Math.min(count - 1, i + 1));
   const canPrev = loop || current > 0;

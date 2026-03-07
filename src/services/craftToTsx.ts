@@ -532,7 +532,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftDataTable: { filterType: "none", pageable: false, pageSize: "10", selectable: false, columnToggle: false, stickyHeader: false, pinnedLeft: "0",
     headerBgClass: "", hoverRowClass: "", selectedRowClass: "", headerTextClass: "", headerHoverTextClass: "", headerBorderClass: "", tableBorderClass: "" },
   CraftResizable: { panelMeta: '{"direction":"horizontal","nextKey":2,"panels":[{"key":0,"size":50},{"key":1,"size":50}]}', withHandle: true },
-  CraftCarousel: { slideMeta: '{"keys":[0,1,2],"nextKey":3,"labels":{"0":"Slide 1","1":"Slide 2","2":"Slide 3"}}' },
+  CraftCarousel: { slideMeta: '{"keys":[0,1,2],"nextKey":3,"labels":{"0":"Slide 1","1":"Slide 2","2":"Slide 3"}}', loop: false, showArrows: true },
   CraftButtonGroup: { orientation: "horizontal", variant: "outline", size: "default", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", hoverCardMocPath: "", hoverCardSide: "bottom", hoverCardTrigger: "hover", contextMenuMocPath: "" },
   CraftForm: {},
   // Phase 4 (legacy standalone)
@@ -2810,9 +2810,9 @@ function renderCarousel(
   }
 
   const orientation = (node.props?.orientation as string) || "horizontal";
-  const loop = (node.props?.loop as string) === "true";
+  const loop = !!(node.props?.loop);
   const slideSize = (node.props?.slideSize as string) || "100%";
-  const showArrows = (node.props?.showArrows as string) !== "false";
+  const showArrows = node.props?.showArrows !== false;
   const userClassName = (node.props?.className as string) || "";
   const styleAttr = buildStyleAttr(node.props);
 
