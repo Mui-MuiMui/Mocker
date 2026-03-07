@@ -1658,9 +1658,9 @@ export function CarouselContent({ className = "", children, ...rest }: any) {
   const items = Array.isArray(children) ? children : children ? [children] : [];
   useEffect(() => { ctx?.setCount(items.length); }, [items.length]);
   return (
-    <div className={cn("overflow-hidden", className)} {...rest}>
+    <div className={cn("overflow-hidden w-full h-full", className)} {...rest}>
       {items.map((item: any, i: number) => (
-        <div key={i} style={{ display: i === ctx?.current ? undefined : "none" }}>{item}</div>
+        <div key={i} className="h-full" style={{ display: i === ctx?.current ? undefined : "none" }}>{item}</div>
       ))}
     </div>
   );

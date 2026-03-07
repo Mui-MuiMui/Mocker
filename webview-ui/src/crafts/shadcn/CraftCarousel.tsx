@@ -114,15 +114,15 @@ export const CraftCarousel: UserComponent<CraftCarouselProps> = ({
         height: height && height !== "auto" ? height : undefined,
       }}
     >
-      {/* Drag handle strip — Carousel全体を選択するためのつかみ */}
-      <div className="flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100">
+      {/* Drag handle strip — absolute配置でflex/gridコンテキストの影響を受けない */}
+      <div className="absolute top-0 left-0 right-0 flex h-4 cursor-move select-none items-center bg-muted/20 px-1 opacity-0 transition-opacity hover:opacity-100 z-10">
         <span className="text-[9px] text-muted-foreground">⠿ Carousel</span>
       </div>
 
-      {/* Slide content slots — all rendered, inactive hidden */}
-      <div className="overflow-hidden">
+      {/* Slide content slots — w-full h-full でCarouselを埋める */}
+      <div className="overflow-hidden w-full h-full">
         {meta.keys.map((key) => (
-          <div key={key} style={{ display: key === activeKey ? undefined : "none" }}>
+          <div key={key} className="h-full" style={{ display: key === activeKey ? undefined : "none" }}>
             <Element id={`slide_${key}`} is={SlideContentSlot} canvas />
           </div>
         ))}
