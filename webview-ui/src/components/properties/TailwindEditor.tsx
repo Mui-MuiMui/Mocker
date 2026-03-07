@@ -73,6 +73,29 @@ const ALL_FLEX_DIR_CLASSES = ["flex-row", "flex-col"];
 
 const FIXED_HEADER_CLASSES = ["fixed", "top-0", "inset-x-0", "z-50"];
 
+/* ---- Flex shorthand ---- */
+
+const FLEX_KEYWORD_OPTIONS = [
+  { label: "–", value: "" },
+  { label: "none", value: "flex-none" },
+  { label: "auto", value: "flex-auto" },
+  { label: "initial", value: "flex-initial" },
+  { label: "Number", value: "__number__" },
+  { label: "Fraction", value: "__fraction__" },
+  { label: "Value", value: "__value__" },
+];
+
+const FLEX_NUMBER_MAX = 12;
+
+const FLEX_FRACTIONS = [
+  "1/2", "1/3", "2/3", "1/4", "3/4",
+  "1/5", "2/5", "3/5", "4/5",
+];
+
+const FLEX_VALUE_UNITS = ["px", "%", "rem", "em"];
+
+const FLEX_SHORTHAND_RE = /^flex-(none|auto|initial|\d+|\d+\/\d+|\[.+\])$/;
+
 /* ---- Tailwind Color Palette ---- */
 
 const PALETTE_FAMILIES = [
@@ -138,9 +161,34 @@ export function TailwindEditor() {
   const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
   const [hoverBgPaletteFamily, setHoverBgPaletteFamily] = useState<string>("blue");
   const [borderPaletteFamily, setBorderPaletteFamily] = useState<string>("blue");
+  const [flexMode, setFlexMode] = useState<string>("");
+  const [flexValueNum, setFlexValueNum] = useState("");
+  const [flexValueUnit, setFlexValueUnit] = useState("px");
 
   useEffect(() => {
     setRawInput(currentClassName);
+  }, [selectedNodeId, currentClassName]);
+
+  // Sync flex mode from className
+  useEffect(() => {
+    const cls = currentClassName.split(/\s+/).find((c) => FLEX_SHORTHAND_RE.test(c)) || "";
+    let mode = "";
+    if (cls === "flex-none" || cls === "flex-auto" || cls === "flex-initial") {
+      mode = cls;
+    } else if (/^flex-\d+\/\d+$/.test(cls)) {
+      mode = "__fraction__";
+    } else if (/^flex-\[.+\]$/.test(cls)) {
+      mode = "__value__";
+      const inner = cls.slice(5, -1); // "flex-[200px]" -> "200px"
+      const unitMatch = inner.match(/^(-?\d*\.?\d+)(px|%|rem|em)$/);
+      if (unitMatch) {
+        setFlexValueNum(unitMatch[1]);
+        setFlexValueUnit(unitMatch[2]);
+      }
+    } else if (/^flex-\d+$/.test(cls)) {
+      mode = "__number__";
+    }
+    setFlexMode(mode);
   }, [selectedNodeId, currentClassName]);
 
   if (!selectedNodeId) return null;
@@ -207,6 +255,23 @@ export function TailwindEditor() {
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
 
+  // Flex shorthand: detect current class and sync state
+  const currentFlexClass = classes.find((c) => FLEX_SHORTHAND_RE.test(c)) || "";
+
+  const setFlexClass = (cls: string) => {
+    const filtered = classes.filter((c) => !FLEX_SHORTHAND_RE.test(c));
+    if (cls) {
+      updateClassName([...filtered, cls].join(" "));
+    } else {
+      updateClassName(filtered.join(" "));
+    }
+  };
+
+  const getFlexNumber = (): number => {
+    const m = currentFlexClass.match(/^flex-(\d+)$/);
+    return m ? Number(m[1]) : 1;
+  };
+
   const getShadowIndex = (): number => {
     for (let i = 0; i < SHADOW_SCALE.length; i++) {
       if (activeSet.has(`shadow-${SHADOW_SCALE[i]}`)) return i;
@@ -265,6 +330,95 @@ export function TailwindEditor() {
       </div>
 
       <TailwindCategory title="Layout" collapsed={collapsedCategories.has("layout")} onToggle={() => toggleCategory("layout")}>
+        <TailwindSection title="Flex">
+          <select
+            value={flexMode}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFlexMode(val);
+              if (val === "" || val === "flex-none" || val === "flex-auto" || val === "flex-initial") {
+                setFlexClass(val);
+              } else if (val === "__number__") {
+                setFlexClass("flex-1");
+              } else if (val === "__fraction__") {
+                setFlexClass("flex-1/2");
+              } else if (val === "__value__") {
+                setFlexValueNum("200");
+                setFlexValueUnit("px");
+                setFlexClass("flex-[200px]");
+              }
+            }}
+            className="w-full rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-2 py-1 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]"
+          >
+            {FLEX_KEYWORD_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {flexMode === "__number__" && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <input
+                type="range"
+                min={1}
+                max={FLEX_NUMBER_MAX}
+                value={getFlexNumber()}
+                onChange={(e) => setFlexClass(`flex-${e.target.value}`)}
+                className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+              />
+              <span className="w-12 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+                flex-{getFlexNumber()}
+              </span>
+            </div>
+          )}
+
+          {flexMode === "__fraction__" && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {FLEX_FRACTIONS.map((f) => {
+                const cls = `flex-${f}`;
+                return (
+                  <ClassButton
+                    key={f}
+                    label={f}
+                    active={currentFlexClass === cls}
+                    onClick={() => setFlexClass(cls)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {flexMode === "__value__" && (
+            <div className="mt-1.5 flex items-center gap-1">
+              <input
+                type="number"
+                value={flexValueNum}
+                onChange={(e) => {
+                  setFlexValueNum(e.target.value);
+                  if (e.target.value) {
+                    setFlexClass(`flex-[${e.target.value}${flexValueUnit}]`);
+                  }
+                }}
+                className="w-16 rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-1.5 py-0.5 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]"
+              />
+              <div className="flex gap-0.5">
+                {FLEX_VALUE_UNITS.map((u) => (
+                  <ClassButton
+                    key={u}
+                    label={u}
+                    active={flexValueUnit === u}
+                    onClick={() => {
+                      setFlexValueUnit(u);
+                      if (flexValueNum) {
+                        setFlexClass(`flex-[${flexValueNum}${u}]`);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </TailwindSection>
+
         <SpacingSlider
           title="Padding"
           directions={PADDING_DIRS}
