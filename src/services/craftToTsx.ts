@@ -2546,6 +2546,7 @@ function renderSidebar(
     headerBgClass,
     headerBorderColor,
     headerShadow,
+    slotClassName("sidebar_header"),
   ].filter(Boolean).join(" ");
 
   const footerCls = [
@@ -2553,6 +2554,7 @@ function renderSidebar(
     footerBgClass,
     footerBorderColor,
     footerShadow,
+    slotClassName("sidebar_footer"),
   ].filter(Boolean).join(" ");
 
   const insetCls = [
@@ -2560,15 +2562,22 @@ function renderSidebar(
     insetBgClass,
     insetBorderColor,
     insetShadow,
+    slotClassName("sidebar_inset"),
   ].filter(Boolean).join(" ");
 
-  // Resolve slot children
-  function renderSlot(slotKey: string, slotIndent: number): string {
+  // Resolve slot children and slot className
+  function getSlotNode(slotKey: string) {
     const slotId = node.linkedNodes?.[slotKey];
-    if (!slotId) return "";
-    const slotNode = craftState[slotId];
+    if (!slotId) return undefined;
+    return craftState[slotId];
+  }
+  function renderSlot(slotKey: string, slotIndent: number): string {
+    const slotNode = getSlotNode(slotKey);
     if (!slotNode) return "";
     return (slotNode.nodes || []).map((childId) => renderNodeFn(childId, slotIndent)).filter(Boolean).join("\n");
+  }
+  function slotClassName(slotKey: string): string {
+    return (getSlotNode(slotKey)?.props?.className as string) || "";
   }
 
   const headerChildren = renderSlot("sidebar_header", indent + 4);

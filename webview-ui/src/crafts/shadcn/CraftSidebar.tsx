@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 
 // --- Slot components ---
 
-export const SidebarHeaderSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+export const SidebarHeaderSlot: UserComponent<{ children?: ReactNode; className?: string }> = ({ children, className = "" }) => {
   const {
     connectors: { connect },
   } = useNode();
@@ -16,7 +16,7 @@ export const SidebarHeaderSlot: UserComponent<{ children?: ReactNode }> = ({ chi
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className="min-h-[40px]"
+      className={cn("min-h-[40px]", className)}
     >
       {children}
     </div>
@@ -26,6 +26,7 @@ export const SidebarHeaderSlot: UserComponent<{ children?: ReactNode }> = ({ chi
 SidebarHeaderSlot.craft = {
   displayName: "SidebarHeaderSlot",
   custom: { noResize: true },
+  props: { className: "" },
   rules: {
     canDrag: () => false,
     canDrop: () => true,
@@ -34,7 +35,7 @@ SidebarHeaderSlot.craft = {
   },
 };
 
-export const SidebarFooterSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+export const SidebarFooterSlot: UserComponent<{ children?: ReactNode; className?: string }> = ({ children, className = "" }) => {
   const {
     connectors: { connect },
   } = useNode();
@@ -44,7 +45,7 @@ export const SidebarFooterSlot: UserComponent<{ children?: ReactNode }> = ({ chi
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className="min-h-[40px]"
+      className={cn("min-h-[40px]", className)}
     >
       {children}
     </div>
@@ -54,6 +55,7 @@ export const SidebarFooterSlot: UserComponent<{ children?: ReactNode }> = ({ chi
 SidebarFooterSlot.craft = {
   displayName: "SidebarFooterSlot",
   custom: { noResize: true },
+  props: { className: "" },
   rules: {
     canDrag: () => false,
     canDrop: () => true,
@@ -62,7 +64,7 @@ SidebarFooterSlot.craft = {
   },
 };
 
-export const SidebarInsetSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+export const SidebarInsetSlot: UserComponent<{ children?: ReactNode; className?: string }> = ({ children, className = "" }) => {
   const {
     connectors: { connect },
   } = useNode();
@@ -72,7 +74,7 @@ export const SidebarInsetSlot: UserComponent<{ children?: ReactNode }> = ({ chil
       ref={(ref) => {
         if (ref) connect(ref);
       }}
-      className="min-h-[40px] flex-1"
+      className={cn("min-h-[40px] flex-1", className)}
     >
       {children}
     </div>
@@ -82,6 +84,7 @@ export const SidebarInsetSlot: UserComponent<{ children?: ReactNode }> = ({ chil
 SidebarInsetSlot.craft = {
   displayName: "SidebarInsetSlot",
   custom: { noResize: true },
+  props: { className: "" },
   rules: {
     canDrag: () => false,
     canDrop: () => true,
