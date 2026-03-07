@@ -204,7 +204,15 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
     const componentName = "MockPage";
 
     // Generate TSX from Craft.js state (pass memos for @moc-memo comments)
-    const { imports, tsxSource } = craftStateToTsx(craftState as Record<string, unknown>, componentName, memos);
+    let imports: string;
+    let tsxSource: string;
+    try {
+      ({ imports, tsxSource } = craftStateToTsx(craftState as Record<string, unknown>, componentName, memos));
+    } catch (err) {
+      vscode.window.showErrorMessage(`TSX の生成に失敗しました: ${err instanceof Error ? err.message : String(err)}`);
+      imports = "";
+      tsxSource = `export default function ${componentName}() {\n  return <div />;\n}`;
+    }
 
     // Build @moc-memo tags from full memos (simplified for AI readability)
     const mocMemos = memos

@@ -7,14 +7,16 @@ import {
   type JsxOpeningElement,
 } from "ts-morph";
 
-const project = new Project({
-  useInMemoryFileSystem: true,
-  compilerOptions: {
-    jsx: 2, // React
-    target: 99, // ESNext
-    module: 99,
-  },
-});
+function createProject(): Project {
+  return new Project({
+    useInMemoryFileSystem: true,
+    compilerOptions: {
+      jsx: 2, // React
+      target: 99, // ESNext
+      module: 99,
+    },
+  });
+}
 
 export interface JsxNodeInfo {
   tagName: string;
@@ -27,7 +29,8 @@ export interface JsxNodeInfo {
 export function parseJsxTree(content: string): JsxNodeInfo[] {
   if (!content.trim()) return [];
 
-  const sourceFile = getOrCreateSourceFile("temp.tsx", content);
+  const project = createProject();
+  const sourceFile = project.createSourceFile("temp.tsx", content);
   const defaultExport = findDefaultExportFunction(sourceFile);
   if (!defaultExport) return [];
 
@@ -119,7 +122,8 @@ export function updateJsxProp(
   propName: string,
   propValue: string,
 ): string {
-  const sourceFile = getOrCreateSourceFile("update.tsx", content);
+  const project = createProject();
+  const sourceFile = project.createSourceFile("update.tsx", content);
 
   const allJsx = [
     ...sourceFile.getDescendantsOfKind(SyntaxKind.JsxElement),
@@ -146,18 +150,8 @@ export function updateJsxProp(
       }
 
       if (!found) {
-        // Add new attribute
-        const text = opening.getText();
-        const closeIdx = text.lastIndexOf(
-          jsx.getKind() === SyntaxKind.JsxSelfClosingElement ? "/>" : ">",
-        );
-        if (closeIdx > 0) {
-          opening.replaceWithText(
-            text.slice(0, closeIdx) +
-              ` ${propName}=${propValue}` +
-              text.slice(closeIdx),
-          );
-        }
+        // Add new attribute using ts-morph API to avoid string manipulation edge cases
+        opening.addAttribute({ name: propName, initializer: propValue });
       }
 
       break;
@@ -169,7 +163,8 @@ export function updateJsxProp(
 
 export function getComponentName(content: string): string | null {
   if (!content.trim()) return null;
-  const sourceFile = getOrCreateSourceFile("name.tsx", content);
+  const project = createProject();
+  const sourceFile = project.createSourceFile("name.tsx", content);
   const fn = findDefaultExportFunction(sourceFile);
   return fn?.getName() || null;
 }
@@ -182,13 +177,4 @@ function findDefaultExportFunction(sourceFile: SourceFile) {
     }
   }
   return null;
-}
-
-function getOrCreateSourceFile(name: string, content: string): SourceFile {
-  const existing = project.getSourceFile(name);
-  if (existing) {
-    existing.replaceWithText(content);
-    return existing;
-  }
-  return project.createSourceFile(name, content);
 }

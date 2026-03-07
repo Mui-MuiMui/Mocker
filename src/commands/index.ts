@@ -141,7 +141,14 @@ export function registerCommands(context: vscode.ExtensionContext): void {
 
       const content = await vscode.workspace.fs.readFile(uri);
       const text = new TextDecoder().decode(content);
-      const flatTsx = generateFlatTsx(text);
+
+      let flatTsx: string;
+      try {
+        flatTsx = generateFlatTsx(text);
+      } catch (err) {
+        vscode.window.showErrorMessage(`Flat TSX の生成に失敗しました: ${err instanceof Error ? err.message : String(err)}`);
+        return;
+      }
 
       const doc = await vscode.workspace.openTextDocument({
         content: flatTsx,

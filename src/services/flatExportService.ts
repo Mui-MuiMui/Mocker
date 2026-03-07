@@ -1,6 +1,7 @@
 import { parseMocFile } from "./mocParser.js";
 
 export function generateFlatTsx(content: string): string {
+  try {
   const doc = parseMocFile(content);
   const lines: string[] = [];
 
@@ -44,4 +45,7 @@ export function generateFlatTsx(content: string): string {
   lines.push("");
 
   return lines.join("\n");
+  } catch (err) {
+    throw new Error(`generateFlatTsx failed: ${err}`);
+  }
 }

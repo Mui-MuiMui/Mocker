@@ -29,7 +29,8 @@ describe("mocSerializer", () => {
       expect(content).toContain("@moc-theme light");
       expect(content).toContain("@moc-layout flow");
       expect(content).toContain("@moc-viewport desktop");
-      expect(content).toContain('@moc-memo #btn "Test memo"');
+      // metadata.memos はヘッダーコメントに書き出されない（editorData.memos に保存される）
+      expect(content).not.toMatch(/ \* @moc-memo #\S+ "/);
       expect(content).toContain('import { Button } from "@/components/ui/button"');
       expect(content).toContain("export default function Test()");
       // Should not contain @moc-id
@@ -117,8 +118,6 @@ describe("mocSerializer", () => {
  * @moc-theme dark
  * @moc-layout absolute
  * @moc-viewport tablet
- *
- * @moc-memo #header "Main header"
  */
 
 import { Card } from "@/components/ui/card";
@@ -138,7 +137,8 @@ export default function RoundTrip() {
       expect(reparsed.metadata.theme).toBe(parsed.metadata.theme);
       expect(reparsed.metadata.layout).toBe(parsed.metadata.layout);
       expect(reparsed.metadata.viewport).toBe(parsed.metadata.viewport);
-      expect(reparsed.metadata.memos).toEqual(parsed.metadata.memos);
+      // metadata.memos はシリアライズ後に保持されない（editorData.memos に保存される）
+      expect(reparsed.metadata.memos).toEqual([]);
     });
 
     it("should round-trip editor data: parse → serialize → parse", () => {

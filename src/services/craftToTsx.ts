@@ -533,6 +533,7 @@ export function craftStateToTsx(
   componentName = "MockPage",
   memos?: MocEditorMemo[],
 ): { imports: string; tsxSource: string } {
+  try {
   if (!craftState || !craftState.ROOT) {
     return { imports: "", tsxSource: `export default function ${componentName}() {\n  return <div />;\n}` };
   }
@@ -1397,6 +1398,9 @@ export function craftStateToTsx(
   }
 
   return { imports, tsxSource };
+  } catch (err) {
+    throw new Error(`craftStateToTsx failed: ${err}`);
+  }
 }
 
 function getResolvedName(node: CraftNodeData): string {
