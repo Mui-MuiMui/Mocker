@@ -368,7 +368,14 @@ function SizeInput({
   const [isAuto, setIsAuto] = useState(parsed.isAuto);
   const [num, setNum] = useState(parsed.num);
   const [unit, setUnit] = useState<SizeUnit>(parsed.unit);
-  // key={nodeId+propKey} で再マウントされるため useEffect による同期は不要
+
+  // ドラッグリサイズなど外部から value が変更された場合にローカル state を同期する
+  useEffect(() => {
+    const p = parseSizeValue(value);
+    setIsAuto(p.isAuto);
+    setNum(p.num);
+    setUnit(p.unit);
+  }, [value]);
 
   return (
     <div className="flex flex-col gap-1">
