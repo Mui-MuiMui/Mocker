@@ -116,9 +116,11 @@ function extractAttrsFromNode(
   return props;
 }
 
+const CRAFT_ID_ATTR = "data-craft-id";
+
 export function updateJsxProp(
   content: string,
-  targetLine: number,
+  craftId: string,
   propName: string,
   propValue: string,
 ): string {
@@ -131,31 +133,35 @@ export function updateJsxProp(
   ];
 
   for (const jsx of allJsx) {
-    if (jsx.getStartLineNumber() === targetLine) {
-      const opening =
-        jsx.getKind() === SyntaxKind.JsxElement
-          ? (jsx as JsxElement).getOpeningElement()
-          : (jsx as JsxSelfClosingElement);
+    const opening =
+      jsx.getKind() === SyntaxKind.JsxElement
+        ? (jsx as JsxElement).getOpeningElement()
+        : (jsx as JsxSelfClosingElement);
 
-      const attrs = opening.getAttributes();
-      let found = false;
+    const attrs = opening.getAttributes();
 
-      for (const attr of attrs) {
-        const jsxAttr = attr.asKind(SyntaxKind.JsxAttribute);
-        if (jsxAttr && jsxAttr.getName() === propName) {
-          jsxAttr.replaceWithText(`${propName}=${propValue}`);
-          found = true;
-          break;
-        }
+    const idAttr = attrs
+      .map((a) => a.asKind(SyntaxKind.JsxAttribute))
+      .find((a) => a?.getNameNode().getText() === CRAFT_ID_ATTR);
+
+    if (!idAttr) continue;
+    if (idAttr.getInitializer()?.getText() !== `"${craftId}"`) continue;
+
+    let found = false;
+    for (const attr of attrs) {
+      const jsxAttr = attr.asKind(SyntaxKind.JsxAttribute);
+      if (jsxAttr && jsxAttr.getNameNode().getText() === propName) {
+        jsxAttr.replaceWithText(`${propName}=${propValue}`);
+        found = true;
+        break;
       }
-
-      if (!found) {
-        // Add new attribute using ts-morph API to avoid string manipulation edge cases
-        opening.addAttribute({ name: propName, initializer: propValue });
-      }
-
-      break;
     }
+
+    if (!found) {
+      opening.addAttribute({ name: propName, initializer: propValue });
+    }
+
+    break;
   }
 
   return sourceFile.getFullText();
