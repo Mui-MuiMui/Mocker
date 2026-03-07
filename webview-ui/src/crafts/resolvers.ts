@@ -54,6 +54,7 @@ import { CraftCommand } from "./shadcn/CraftCommand";
 import { CraftTooltip } from "./shadcn/CraftTooltip";
 import { CraftSonner } from "./shadcn/CraftSonner";
 import { CraftTypography } from "./shadcn/CraftTypography";
+import { CraftSidebar, SidebarHeaderSlot, SidebarFooterSlot, SidebarInsetSlot, DEFAULT_SIDEBAR_DATA } from "./shadcn/CraftSidebar";
 
 export const resolvers = {
   CraftDiv,
@@ -118,6 +119,10 @@ export const resolvers = {
   CraftTooltip,
   CraftSonner,
   CraftTypography,
+  CraftSidebar,
+  SidebarHeaderSlot,
+  SidebarFooterSlot,
+  SidebarInsetSlot,
 };
 
 export type ResolverKey = keyof typeof resolvers;
@@ -516,6 +521,14 @@ export const paletteItems: PaletteItem[] = [
     category: "shadcn",
     icon: "Type",
     defaultProps: { text: "Heading 1" },
+    enabled: true,
+  },
+  {
+    resolverKey: "CraftSidebar",
+    label: "Sidebar",
+    category: "shadcn",
+    icon: "PanelLeft",
+    defaultProps: { sidebarData: DEFAULT_SIDEBAR_DATA },
     enabled: true,
   },
 ];

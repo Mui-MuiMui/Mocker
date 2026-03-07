@@ -1,0 +1,400 @@
+import { useState } from "react";
+import { Element, useNode, useEditor, type UserComponent } from "@craftjs/core";
+import * as LucideIcons from "lucide-react";
+import { cn } from "../../utils/cn";
+import type { ReactNode } from "react";
+
+// --- Slot components ---
+
+export const SidebarHeaderSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+  const {
+    connectors: { connect },
+  } = useNode();
+
+  return (
+    <div
+      ref={(ref) => {
+        if (ref) connect(ref);
+      }}
+      className="min-h-[40px]"
+    >
+      {children}
+    </div>
+  );
+};
+
+SidebarHeaderSlot.craft = {
+  displayName: "SidebarHeaderSlot",
+  custom: { noResize: true },
+  rules: {
+    canDrag: () => false,
+    canDrop: () => true,
+    canMoveIn: () => true,
+    canMoveOut: () => true,
+  },
+};
+
+export const SidebarFooterSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+  const {
+    connectors: { connect },
+  } = useNode();
+
+  return (
+    <div
+      ref={(ref) => {
+        if (ref) connect(ref);
+      }}
+      className="min-h-[40px]"
+    >
+      {children}
+    </div>
+  );
+};
+
+SidebarFooterSlot.craft = {
+  displayName: "SidebarFooterSlot",
+  custom: { noResize: true },
+  rules: {
+    canDrag: () => false,
+    canDrop: () => true,
+    canMoveIn: () => true,
+    canMoveOut: () => true,
+  },
+};
+
+export const SidebarInsetSlot: UserComponent<{ children?: ReactNode }> = ({ children }) => {
+  const {
+    connectors: { connect },
+  } = useNode();
+
+  return (
+    <div
+      ref={(ref) => {
+        if (ref) connect(ref);
+      }}
+      className="min-h-[40px] flex-1"
+    >
+      {children}
+    </div>
+  );
+};
+
+SidebarInsetSlot.craft = {
+  displayName: "SidebarInsetSlot",
+  custom: { noResize: true },
+  rules: {
+    canDrag: () => false,
+    canDrop: () => true,
+    canMoveIn: () => true,
+    canMoveOut: () => true,
+  },
+};
+
+// --- Data types ---
+
+export interface SidebarNavItem {
+  key: number;
+  type: "item" | "group-label" | "separator";
+  label?: string;
+  icon?: string;
+  active?: boolean;
+  badge?: string;
+  badgeBgClass?: string;
+  badgeTextClass?: string;
+}
+
+export interface SidebarMeta {
+  items: SidebarNavItem[];
+  nextKey: number;
+}
+
+const DEFAULT_SIDEBAR_META: SidebarMeta = {
+  items: [
+    { key: 0, type: "group-label", label: "Main" },
+    { key: 1, type: "item", label: "Dashboard", icon: "LayoutDashboard", active: true },
+    { key: 2, type: "item", label: "Inbox", icon: "Inbox", badge: "5", badgeBgClass: "bg-primary", badgeTextClass: "text-primary-foreground" },
+    { key: 3, type: "item", label: "Settings", icon: "Settings" },
+    { key: 4, type: "separator" },
+    { key: 5, type: "group-label", label: "Other" },
+    { key: 6, type: "item", label: "Help", icon: "HelpCircle" },
+  ],
+  nextKey: 7,
+};
+
+export const DEFAULT_SIDEBAR_DATA = JSON.stringify(DEFAULT_SIDEBAR_META);
+
+function parseSidebarData(raw: string): SidebarMeta {
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.items)) return parsed as SidebarMeta;
+    return DEFAULT_SIDEBAR_META;
+  } catch {
+    return DEFAULT_SIDEBAR_META;
+  }
+}
+
+// --- Props ---
+
+interface CraftSidebarProps {
+  sidebarData?: string;
+  side?: "left" | "right";
+  collapsible?: "icon" | "offcanvas" | "none";
+  sidebarWidth?: string;
+  width?: string;
+  height?: string;
+  headerCollapseMode?: "clip" | "hide";
+  footerCollapseMode?: "clip" | "hide";
+  sidebarBgClass?: string;
+  sidebarBorderColor?: string;
+  sidebarShadow?: string;
+  headerBgClass?: string;
+  headerBorderColor?: string;
+  headerShadow?: string;
+  navActiveBgClass?: string;
+  navHoverBgClass?: string;
+  navTextClass?: string;
+  navIconClass?: string;
+  footerBgClass?: string;
+  footerBorderColor?: string;
+  footerShadow?: string;
+  insetBgClass?: string;
+  insetBorderColor?: string;
+  insetShadow?: string;
+  className?: string;
+}
+
+export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
+  sidebarData = DEFAULT_SIDEBAR_DATA,
+  side = "left",
+  collapsible = "icon",
+  sidebarWidth = "240px",
+  width = "auto",
+  height = "auto",
+  headerCollapseMode = "clip",
+  footerCollapseMode = "clip",
+  sidebarBgClass = "",
+  sidebarBorderColor = "",
+  sidebarShadow = "",
+  headerBgClass = "",
+  headerBorderColor = "",
+  headerShadow = "",
+  navActiveBgClass = "",
+  navHoverBgClass = "",
+  navTextClass = "",
+  navIconClass = "",
+  footerBgClass = "",
+  footerBorderColor = "",
+  footerShadow = "",
+  insetBgClass = "",
+  insetBorderColor = "",
+  insetShadow = "",
+  className = "",
+}) => {
+  const {
+    connectors: { connect, drag },
+  } = useNode();
+  const { enabled } = useEditor((state) => ({ enabled: state.options.enabled }));
+  const [collapsed, setCollapsed] = useState(false);
+
+  const meta = parseSidebarData(sidebarData);
+
+  const isCollapsible = collapsible !== "none";
+  const isIconMode = collapsible === "icon";
+  const isOffcanvasMode = collapsible === "offcanvas";
+
+  const effectiveWidth = collapsed
+    ? isIconMode
+      ? "48px"
+      : "0px"
+    : sidebarWidth || "240px";
+
+  const sidebarHidden = collapsed && isOffcanvasMode;
+
+  const sidebarPanel = (
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden transition-all duration-200",
+        sidebarBgClass || "bg-sidebar",
+        sidebarBorderColor,
+        sidebarShadow,
+        side === "left" ? "border-r" : "border-l",
+        sidebarHidden ? "hidden" : "",
+      )}
+      style={{ width: effectiveWidth, minWidth: effectiveWidth, flexShrink: 0 }}
+    >
+      {/* Header */}
+      {!(collapsed && headerCollapseMode === "hide") && (
+        <div
+          className={cn(
+            "border-b px-2 py-3",
+            headerBgClass,
+            headerBorderColor,
+            headerShadow,
+            collapsed && isIconMode ? "overflow-hidden" : "",
+          )}
+        >
+          <Element id="sidebar_header" is={SidebarHeaderSlot} canvas />
+        </div>
+      )}
+
+      {/* Nav items */}
+      <div className="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5 px-2">
+        {meta.items.map((item) => {
+          if (item.type === "separator") {
+            return <div key={item.key} className="my-1 h-px bg-border mx-2" />;
+          }
+          if (item.type === "group-label") {
+            return collapsed && isIconMode ? null : (
+              <div
+                key={item.key}
+                className={cn(
+                  "px-2 py-1 text-xs font-medium uppercase tracking-wide",
+                  navTextClass || "text-muted-foreground",
+                )}
+              >
+                {item.label}
+              </div>
+            );
+          }
+          // item type
+          const IconComp = item.icon ? (LucideIcons as Record<string, any>)[item.icon] : null;
+          const isActive = !!item.active;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full",
+                collapsed && isIconMode ? "justify-center px-0" : "",
+                isActive
+                  ? cn(navActiveBgClass || "bg-accent", navTextClass || "text-accent-foreground")
+                  : cn(
+                      navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent",
+                      navTextClass || "text-foreground",
+                    ),
+              )}
+            >
+              {IconComp && (
+                <IconComp className={cn("h-4 w-4 shrink-0", navIconClass)} />
+              )}
+              {!(collapsed && isIconMode) && (
+                <span className="flex-1 text-left">{item.label}</span>
+              )}
+              {!(collapsed && isIconMode) && item.badge && (
+                <span
+                  className={cn(
+                    "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                    item.badgeBgClass || "bg-primary",
+                    item.badgeTextClass || "text-primary-foreground",
+                  )}
+                >
+                  {item.badge}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Footer */}
+      {!(collapsed && footerCollapseMode === "hide") && (
+        <div
+          className={cn(
+            "border-t px-2 py-3",
+            footerBgClass,
+            footerBorderColor,
+            footerShadow,
+            collapsed && isIconMode ? "overflow-hidden" : "",
+          )}
+        >
+          <Element id="sidebar_footer" is={SidebarFooterSlot} canvas />
+        </div>
+      )}
+    </div>
+  );
+
+  const insetPanel = (
+    <div
+      className={cn(
+        "flex flex-col flex-1 overflow-hidden",
+        insetBgClass || "bg-background",
+        insetBorderColor,
+        insetShadow,
+      )}
+    >
+      {/* Toggle button */}
+      {isCollapsible && (
+        <div className="flex items-center border-b px-2 py-1">
+          <button
+            type="button"
+            onClick={() => {
+              if (!enabled) setCollapsed((v) => !v);
+            }}
+            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            title={collapsed ? "サイドバーを開く" : "サイドバーを閉じる"}
+          >
+            {side === "left" ? (collapsed ? "→" : "←") : collapsed ? "←" : "→"}
+          </button>
+        </div>
+      )}
+      <div className="flex-1 overflow-auto">
+        <Element id="sidebar_inset" is={SidebarInsetSlot} canvas />
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      ref={(ref) => {
+        if (ref) connect(drag(ref));
+      }}
+      className={cn(
+        "flex overflow-hidden",
+        side === "right" ? "flex-row-reverse" : "flex-row",
+        className,
+      )}
+      style={{
+        width: width && width !== "auto" ? width : undefined,
+        height: height && height !== "auto" ? height : undefined,
+      }}
+    >
+      {sidebarPanel}
+      {insetPanel}
+    </div>
+  );
+};
+
+CraftSidebar.craft = {
+  displayName: "Sidebar",
+  props: {
+    sidebarData: DEFAULT_SIDEBAR_DATA,
+    side: "left",
+    collapsible: "icon",
+    sidebarWidth: "240px",
+    width: "auto",
+    height: "auto",
+    headerCollapseMode: "clip",
+    footerCollapseMode: "clip",
+    sidebarBgClass: "",
+    sidebarBorderColor: "",
+    sidebarShadow: "",
+    headerBgClass: "",
+    headerBorderColor: "",
+    headerShadow: "",
+    navActiveBgClass: "",
+    navHoverBgClass: "",
+    navTextClass: "",
+    navIconClass: "",
+    footerBgClass: "",
+    footerBorderColor: "",
+    footerShadow: "",
+    insetBgClass: "",
+    insetBorderColor: "",
+    insetShadow: "",
+    className: "",
+  },
+  rules: {
+    canDrag: () => true,
+    canMoveIn: () => false,
+  },
+};

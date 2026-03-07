@@ -379,6 +379,26 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  CraftSidebar: {
+    tag: "nav",
+    propsMap: [],
+    isContainer: false,
+  },
+  SidebarHeaderSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
+  SidebarFooterSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
+  SidebarInsetSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   CraftCommand: {
     tag: "div",
     propsMap: ["className"],
@@ -526,6 +546,23 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
   CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
   CraftTypography: { variant: "h1", text: "Heading 1", items: "List item 1,List item 2,List item 3" },
+  CraftSidebar: {
+    sidebarData: JSON.stringify({
+      items: [
+        { key: 0, type: "group-label", label: "Main" },
+        { key: 1, type: "item", label: "Dashboard", icon: "LayoutDashboard", active: true },
+        { key: 2, type: "item", label: "Inbox", icon: "Inbox", badge: "5", badgeBgClass: "bg-primary", badgeTextClass: "text-primary-foreground" },
+        { key: 3, type: "item", label: "Settings", icon: "Settings" },
+        { key: 4, type: "separator" },
+        { key: 5, type: "group-label", label: "Other" },
+        { key: 6, type: "item", label: "Help", icon: "HelpCircle" },
+      ],
+      nextKey: 7,
+    }),
+    side: "left",
+    collapsible: "icon",
+    sidebarWidth: "240px",
+  },
 };
 
 export function craftStateToTsx(
@@ -823,6 +860,26 @@ export function craftStateToTsx(
 
     // CraftNavigationMenu: traverse linkedNodes (slot children)
     if (resolvedName === "CraftNavigationMenu") {
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
+    // CraftSidebar: collect icon imports from sidebarData and traverse linkedNodes
+    if (resolvedName === "CraftSidebar") {
+      try {
+        const meta = JSON.parse((node.props?.sidebarData as string) || "{}");
+        if (Array.isArray(meta.items)) {
+          for (const item of meta.items) {
+            if (item.type === "item" && typeof item.icon === "string" && item.icon) {
+              addImport("lucide-react", item.icon);
+            }
+          }
+        }
+      } catch {
+        // ignore parse errors
+      }
       for (const linkedId of Object.values(node.linkedNodes || {})) {
         collectImports(linkedId);
       }
@@ -1202,6 +1259,11 @@ export function craftStateToTsx(
     // Menubar special case: render from JSON menuData
     if (resolvedName === "CraftMenubar") {
       return applyCommonWrappers(`${mocComments}\n${renderMenubar(node, indent)}`);
+    }
+
+    // Sidebar special case: render sidebar layout with linked slots
+    if (resolvedName === "CraftSidebar") {
+      return applyCommonWrappers(`${mocComments}\n${renderSidebar(node, craftState, indent, renderNode)}`);
     }
 
     // ContextMenu special case: render from JSON menuData (applyCommonWrappers 対象外)
@@ -2344,6 +2406,162 @@ function renderDropdownMenu(node: CraftNodeData, indent: number): string {
 
   lines.push(`${pad}  </DropdownMenuContent>`);
   lines.push(`${pad}</DropdownMenu>`);
+  return lines.join("\n");
+}
+
+interface SidebarNavItemDef {
+  key: number;
+  type: "item" | "group-label" | "separator";
+  label?: string;
+  icon?: string;
+  active?: boolean;
+  badge?: string;
+  badgeBgClass?: string;
+  badgeTextClass?: string;
+}
+
+function renderSidebar(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  let items: SidebarNavItemDef[] = [];
+  try {
+    const meta = JSON.parse((node.props?.sidebarData as string) || "{}");
+    if (Array.isArray(meta.items)) items = meta.items as SidebarNavItemDef[];
+  } catch {
+    // use defaults
+  }
+
+  const side = (node.props?.side as string) || "left";
+  const sidebarWidth = (node.props?.sidebarWidth as string) || "240px";
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  const sidebarBgClass = (node.props?.sidebarBgClass as string) || "bg-muted/50";
+  const sidebarBorderColor = (node.props?.sidebarBorderColor as string) || "";
+  const sidebarShadow = (node.props?.sidebarShadow as string) || "";
+  const headerBgClass = (node.props?.headerBgClass as string) || "";
+  const headerBorderColor = (node.props?.headerBorderColor as string) || "";
+  const headerShadow = (node.props?.headerShadow as string) || "";
+  const navActiveBgClass = (node.props?.navActiveBgClass as string) || "bg-accent";
+  const navHoverBgClass = (node.props?.navHoverBgClass as string) || "";
+  const navTextClass = (node.props?.navTextClass as string) || "";
+  const navIconClass = (node.props?.navIconClass as string) || "";
+  const footerBgClass = (node.props?.footerBgClass as string) || "";
+  const footerBorderColor = (node.props?.footerBorderColor as string) || "";
+  const footerShadow = (node.props?.footerShadow as string) || "";
+  const insetBgClass = (node.props?.insetBgClass as string) || "bg-background";
+  const insetBorderColor = (node.props?.insetBorderColor as string) || "";
+  const insetShadow = (node.props?.insetShadow as string) || "";
+
+  const outerCls = ["flex overflow-hidden", side === "right" ? "flex-row-reverse" : "flex-row", className].filter(Boolean).join(" ");
+
+  const sidebarCls = [
+    "flex flex-col overflow-hidden",
+    sidebarBgClass,
+    sidebarBorderColor,
+    sidebarShadow,
+    side === "left" ? "border-r" : "border-l",
+  ].filter(Boolean).join(" ");
+
+  const headerCls = [
+    "border-b px-2 py-3",
+    headerBgClass,
+    headerBorderColor,
+    headerShadow,
+  ].filter(Boolean).join(" ");
+
+  const footerCls = [
+    "border-t px-2 py-3",
+    footerBgClass,
+    footerBorderColor,
+    footerShadow,
+  ].filter(Boolean).join(" ");
+
+  const insetCls = [
+    "flex flex-col flex-1 overflow-hidden",
+    insetBgClass,
+    insetBorderColor,
+    insetShadow,
+  ].filter(Boolean).join(" ");
+
+  // Resolve slot children
+  function renderSlot(slotKey: string, slotIndent: number): string {
+    const slotId = node.linkedNodes?.[slotKey];
+    if (!slotId) return "";
+    const slotNode = craftState[slotId];
+    if (!slotNode) return "";
+    return (slotNode.nodes || []).map((childId) => renderNodeFn(childId, slotIndent)).filter(Boolean).join("\n");
+  }
+
+  const headerChildren = renderSlot("sidebar_header", indent + 4);
+  const footerChildren = renderSlot("sidebar_footer", indent + 4);
+  const insetChildren = renderSlot("sidebar_inset", indent + 3);
+
+  const lines: string[] = [];
+  lines.push(`${pad}<div className="${escapeAttr(outerCls)}"${styleAttr}>`);
+
+  // Sidebar panel
+  lines.push(`${pad}  <aside className="${escapeAttr(sidebarCls)}" style={{ width: "${escapeAttr(sidebarWidth)}", minWidth: "${escapeAttr(sidebarWidth)}", flexShrink: 0 }}>`);
+
+  // Header slot
+  lines.push(`${pad}    <div className="${escapeAttr(headerCls)}">`);
+  if (headerChildren) lines.push(headerChildren);
+  lines.push(`${pad}    </div>`);
+
+  // Nav items
+  lines.push(`${pad}    <nav className="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5 px-2">`);
+  for (const item of items) {
+    if (item.type === "separator") {
+      lines.push(`${pad}      <hr className="my-1 border-t border-border mx-2" />`);
+    } else if (item.type === "group-label") {
+      const groupCls = ["px-2 py-1 text-xs font-medium uppercase tracking-wide", navTextClass || "text-muted-foreground"].filter(Boolean).join(" ");
+      lines.push(`${pad}      <div className="${escapeAttr(groupCls)}">${escapeJsx(item.label || "")}</div>`);
+    } else {
+      // item
+      const isActive = !!item.active;
+      const itemCls = [
+        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
+        isActive
+          ? [navActiveBgClass, navTextClass || "text-accent-foreground"].filter(Boolean).join(" ")
+          : [navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent", navTextClass || "text-foreground"].filter(Boolean).join(" "),
+      ].filter(Boolean).join(" ");
+      lines.push(`${pad}      <button type="button" className="${escapeAttr(itemCls)}">`);
+      if (item.icon) {
+        const iconCls = ["h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+        lines.push(`${pad}        <${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
+      }
+      lines.push(`${pad}        <span className="flex-1">${escapeJsx(item.label || "")}</span>`);
+      if (item.badge) {
+        const badgeCls = [
+          "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+          item.badgeBgClass || "bg-primary",
+          item.badgeTextClass || "text-primary-foreground",
+        ].filter(Boolean).join(" ");
+        lines.push(`${pad}        <span className="${escapeAttr(badgeCls)}">${escapeJsx(item.badge)}</span>`);
+      }
+      lines.push(`${pad}      </button>`);
+    }
+  }
+  lines.push(`${pad}    </nav>`);
+
+  // Footer slot
+  lines.push(`${pad}    <div className="${escapeAttr(footerCls)}">`);
+  if (footerChildren) lines.push(footerChildren);
+  lines.push(`${pad}    </div>`);
+
+  lines.push(`${pad}  </aside>`);
+
+  // Inset panel
+  lines.push(`${pad}  <main className="${escapeAttr(insetCls)}">`);
+  if (insetChildren) lines.push(insetChildren);
+  lines.push(`${pad}  </main>`);
+
+  lines.push(`${pad}</div>`);
   return lines.join("\n");
 }
 
