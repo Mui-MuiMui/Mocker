@@ -172,8 +172,8 @@ CraftCarousel.craft = {
     loop: "false",
     slideSize: "100%",
     showArrows: "true",
-    width: "auto",
-    height: "auto",
+    width: "320px",
+    height: "200px",
     className: "",
   },
   rules: {
