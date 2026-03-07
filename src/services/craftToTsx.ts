@@ -871,11 +871,15 @@ export function craftStateToTsx(
       try {
         const meta = JSON.parse((node.props?.sidebarData as string) || "{}");
         if (Array.isArray(meta.items)) {
-          for (const item of meta.items) {
-            if (item.type === "item" && typeof item.icon === "string" && item.icon) {
-              addImport("lucide-react", item.icon);
+          function collectSidebarIcons(items: SidebarNavItemDef[]) {
+            for (const item of items) {
+              if (item.type === "item" && typeof item.icon === "string" && item.icon) {
+                addImport("lucide-react", item.icon);
+              }
+              if (item.children) collectSidebarIcons(item.children);
             }
           }
+          collectSidebarIcons(meta.items as SidebarNavItemDef[]);
         }
       } catch {
         // ignore parse errors
@@ -2418,6 +2422,75 @@ interface SidebarNavItemDef {
   badge?: string;
   badgeBgClass?: string;
   badgeTextClass?: string;
+  children?: SidebarNavItemDef[];
+  defaultOpen?: boolean;
+}
+
+function renderNavItemsHtml(
+  items: SidebarNavItemDef[],
+  pad: string,
+  depth: number,
+  navActiveBgClass: string,
+  navHoverBgClass: string,
+  navTextClass: string,
+  navIconClass: string,
+): string[] {
+  const lines: string[] = [];
+  const innerPad = pad + "  ";
+
+  for (const item of items) {
+    if (item.type === "separator") {
+      lines.push(`${pad}<hr className="my-1 border-t border-border mx-2" />`);
+    } else if (item.type === "group-label") {
+      const groupCls = ["px-2 py-1 text-xs font-medium uppercase tracking-wide", navTextClass || "text-muted-foreground"].filter(Boolean).join(" ");
+      lines.push(`${pad}<div className="${escapeAttr(groupCls)}">${escapeJsx(item.label || "")}</div>`);
+    } else {
+      const isActive = !!item.active;
+      const indentClass = depth === 1 ? "pl-5" : depth >= 2 ? "pl-8" : "";
+      const itemCls = [
+        "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
+        indentClass,
+        isActive
+          ? [navActiveBgClass, navTextClass || "text-accent-foreground"].filter(Boolean).join(" ")
+          : [navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent", navTextClass || "text-foreground"].filter(Boolean).join(" "),
+      ].filter(Boolean).join(" ");
+
+      const hasChildren = !!(item.children && item.children.length > 0);
+
+      if (hasChildren) {
+        const detailsAttr = item.defaultOpen ? " open" : "";
+        lines.push(`${pad}<details${detailsAttr}>`);
+        lines.push(`${innerPad}<summary className="${escapeAttr(itemCls)}">`);
+        if (item.icon && depth < 2) {
+          const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+          lines.push(`${innerPad}  <${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
+        }
+        lines.push(`${innerPad}  <span className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
+        lines.push(`${innerPad}</summary>`);
+        lines.push(`${innerPad}<div className="flex flex-col gap-0.5">`);
+        lines.push(...renderNavItemsHtml(item.children!, innerPad + "  ", depth + 1, navActiveBgClass, navHoverBgClass, navTextClass, navIconClass));
+        lines.push(`${innerPad}</div>`);
+        lines.push(`${pad}</details>`);
+      } else {
+        lines.push(`${pad}<button type="button" className="${escapeAttr(itemCls)}">`);
+        if (item.icon && depth < 2) {
+          const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+          lines.push(`${innerPad}<${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
+        }
+        lines.push(`${innerPad}<span className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
+        if (item.badge) {
+          const badgeCls = [
+            "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+            item.badgeBgClass || "bg-primary",
+            item.badgeTextClass || "text-primary-foreground",
+          ].filter(Boolean).join(" ");
+          lines.push(`${innerPad}<span className="${escapeAttr(badgeCls)}">${escapeJsx(item.badge)}</span>`);
+        }
+        lines.push(`${pad}</button>`);
+      }
+    }
+  }
+  return lines;
 }
 
 function renderSidebar(
@@ -2524,38 +2597,7 @@ function renderSidebar(
 
   // Nav items
   lines.push(`${pad}    <nav className="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5 px-2">`);
-  for (const item of items) {
-    if (item.type === "separator") {
-      lines.push(`${pad}      <hr className="my-1 border-t border-border mx-2" />`);
-    } else if (item.type === "group-label") {
-      const groupCls = ["px-2 py-1 text-xs font-medium uppercase tracking-wide", navTextClass || "text-muted-foreground"].filter(Boolean).join(" ");
-      lines.push(`${pad}      <div className="${escapeAttr(groupCls)}">${escapeJsx(item.label || "")}</div>`);
-    } else {
-      // item
-      const isActive = !!item.active;
-      const itemCls = [
-        "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
-        isActive
-          ? [navActiveBgClass, navTextClass || "text-accent-foreground"].filter(Boolean).join(" ")
-          : [navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent", navTextClass || "text-foreground"].filter(Boolean).join(" "),
-      ].filter(Boolean).join(" ");
-      lines.push(`${pad}      <button type="button" className="${escapeAttr(itemCls)}">`);
-      if (item.icon) {
-        const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
-        lines.push(`${pad}        <${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
-      }
-      lines.push(`${pad}        <span className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
-      if (item.badge) {
-        const badgeCls = [
-          "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-          item.badgeBgClass || "bg-primary",
-          item.badgeTextClass || "text-primary-foreground",
-        ].filter(Boolean).join(" ");
-        lines.push(`${pad}        <span className="${escapeAttr(badgeCls)}">${escapeJsx(item.badge)}</span>`);
-      }
-      lines.push(`${pad}      </button>`);
-    }
-  }
+  lines.push(...renderNavItemsHtml(items, `${pad}      `, 0, navActiveBgClass, navHoverBgClass, navTextClass, navIconClass));
   lines.push(`${pad}    </nav>`);
 
   // Footer slot

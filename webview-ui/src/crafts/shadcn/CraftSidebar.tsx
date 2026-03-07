@@ -101,6 +101,8 @@ export interface SidebarNavItem {
   badge?: string;
   badgeBgClass?: string;
   badgeTextClass?: string;
+  children?: SidebarNavItem[];
+  defaultOpen?: boolean;
 }
 
 export interface SidebarMeta {
@@ -131,6 +133,143 @@ function parseSidebarData(raw: string): SidebarMeta {
   } catch {
     return DEFAULT_SIDEBAR_META;
   }
+}
+
+// --- Helpers ---
+
+function collectDefaultOpenKeys(items: SidebarNavItem[]): number[] {
+  const keys: number[] = [];
+  for (const item of items) {
+    if (item.type === "item" && item.defaultOpen && item.children?.length) {
+      keys.push(item.key);
+    }
+    if (item.children) {
+      keys.push(...collectDefaultOpenKeys(item.children));
+    }
+  }
+  return keys;
+}
+
+// --- NavItemList ---
+
+interface NavItemListProps {
+  items: SidebarNavItem[];
+  depth: number;
+  collapsed: boolean;
+  isIconMode: boolean;
+  openKeys: Set<number>;
+  onToggle: (key: number) => void;
+  navActiveBgClass: string;
+  navHoverBgClass: string;
+  navTextClass: string;
+  navIconClass: string;
+}
+
+function NavItemList({
+  items,
+  depth,
+  collapsed,
+  isIconMode,
+  openKeys,
+  onToggle,
+  navActiveBgClass,
+  navHoverBgClass,
+  navTextClass,
+  navIconClass,
+}: NavItemListProps) {
+  const ChevronRight = (LucideIcons as Record<string, any>)["ChevronRight"];
+  const iconModeOnly = collapsed && isIconMode;
+
+  return (
+    <>
+      {items.map((item) => {
+        if (item.type === "separator") {
+          return <div key={item.key} className="my-1 h-px bg-border mx-2" />;
+        }
+        if (item.type === "group-label") {
+          return iconModeOnly ? null : (
+            <div
+              key={item.key}
+              className={cn(
+                "px-2 py-1 text-xs font-medium uppercase tracking-wide",
+                navTextClass || "text-muted-foreground",
+              )}
+            >
+              {item.label}
+            </div>
+          );
+        }
+        // item type
+        const IconComp = item.icon && depth < 2 ? (LucideIcons as Record<string, any>)[item.icon] : null;
+        const isActive = !!item.active;
+        const hasChildren = !!(item.children && item.children.length > 0);
+        const isOpen = openKeys.has(item.key);
+        const indentClass = depth === 1 ? "pl-5" : depth >= 2 ? "pl-8" : "";
+
+        const itemCls = cn(
+          "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full",
+          indentClass,
+          iconModeOnly ? "justify-center px-0" : "",
+          isActive
+            ? cn(navActiveBgClass || "bg-accent", navTextClass || "text-accent-foreground")
+            : cn(
+                navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent",
+                navTextClass || "text-foreground",
+              ),
+        );
+
+        return (
+          <div key={item.key}>
+            <button
+              type="button"
+              className={itemCls}
+              onClick={hasChildren ? () => onToggle(item.key) : undefined}
+            >
+              {IconComp && <IconComp className={cn("mt-0.5 h-4 w-4 shrink-0", navIconClass)} />}
+              {!iconModeOnly && (
+                <span className="min-w-0 flex-1 break-words text-left">{item.label}</span>
+              )}
+              {!iconModeOnly && item.badge && (
+                <span
+                  className={cn(
+                    "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                    item.badgeBgClass || "bg-primary",
+                    item.badgeTextClass || "text-primary-foreground",
+                  )}
+                >
+                  {item.badge}
+                </span>
+              )}
+              {!iconModeOnly && hasChildren && ChevronRight && (
+                <ChevronRight
+                  className={cn(
+                    "ml-auto h-4 w-4 shrink-0 transition-transform",
+                    isOpen && "rotate-90",
+                  )}
+                />
+              )}
+            </button>
+            {hasChildren && isOpen && !iconModeOnly && (
+              <div className="flex flex-col gap-0.5">
+                <NavItemList
+                  items={item.children!}
+                  depth={depth + 1}
+                  collapsed={collapsed}
+                  isIconMode={isIconMode}
+                  openKeys={openKeys}
+                  onToggle={onToggle}
+                  navActiveBgClass={navActiveBgClass}
+                  navHoverBgClass={navHoverBgClass}
+                  navTextClass={navTextClass}
+                  navIconClass={navIconClass}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
 }
 
 // --- Props ---
@@ -194,8 +333,21 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
     connectors: { connect, drag },
   } = useNode();
   const [collapsed, setCollapsed] = useState(false);
+  const [openKeys, setOpenKeys] = useState<Set<number>>(() => {
+    const initial = parseSidebarData(sidebarData);
+    return new Set(collectDefaultOpenKeys(initial.items));
+  });
 
   const meta = parseSidebarData(sidebarData);
+
+  function toggleKey(key: number) {
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
 
   const isCollapsible = collapsible !== "none";
   const isIconMode = collapsible === "icon";
@@ -238,61 +390,18 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
 
       {/* Nav items */}
       <div className="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5 px-2">
-        {meta.items.map((item) => {
-          if (item.type === "separator") {
-            return <div key={item.key} className="my-1 h-px bg-border mx-2" />;
-          }
-          if (item.type === "group-label") {
-            return collapsed && isIconMode ? null : (
-              <div
-                key={item.key}
-                className={cn(
-                  "px-2 py-1 text-xs font-medium uppercase tracking-wide",
-                  navTextClass || "text-muted-foreground",
-                )}
-              >
-                {item.label}
-              </div>
-            );
-          }
-          // item type
-          const IconComp = item.icon ? (LucideIcons as Record<string, any>)[item.icon] : null;
-          const isActive = !!item.active;
-          return (
-            <button
-              key={item.key}
-              type="button"
-              className={cn(
-                "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full",
-                collapsed && isIconMode ? "justify-center px-0" : "",
-                isActive
-                  ? cn(navActiveBgClass || "bg-accent", navTextClass || "text-accent-foreground")
-                  : cn(
-                      navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent",
-                      navTextClass || "text-foreground",
-                    ),
-              )}
-            >
-              {IconComp && (
-                <IconComp className={cn("mt-0.5 h-4 w-4 shrink-0", navIconClass)} />
-              )}
-              {!(collapsed && isIconMode) && (
-                <span className="min-w-0 flex-1 break-words text-left">{item.label}</span>
-              )}
-              {!(collapsed && isIconMode) && item.badge && (
-                <span
-                  className={cn(
-                    "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                    item.badgeBgClass || "bg-primary",
-                    item.badgeTextClass || "text-primary-foreground",
-                  )}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        <NavItemList
+          items={meta.items}
+          depth={0}
+          collapsed={collapsed}
+          isIconMode={isIconMode}
+          openKeys={openKeys}
+          onToggle={toggleKey}
+          navActiveBgClass={navActiveBgClass}
+          navHoverBgClass={navHoverBgClass}
+          navTextClass={navTextClass}
+          navIconClass={navIconClass}
+        />
       </div>
 
       {/* Footer */}
