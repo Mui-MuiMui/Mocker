@@ -1,3 +1,4 @@
+import { layoutModeRef } from "./layoutModeRef";
 import { CraftDiv } from "./html/CraftDiv";
 import { CraftText } from "./html/CraftText";
 import { CraftPlaceholderImage } from "./html/CraftPlaceholderImage";
@@ -113,6 +114,20 @@ export const resolvers = {
   SidebarFooterSlot,
   SidebarInsetSlot,
 };
+
+// 自由配置モード時に全コンポーネントの Craft.js DnD を無効化
+// canDrag が false の場合、Craft.js はドラッグを開始しない（RenderNode の独自ハンドラが動作）
+(Object.values(resolvers) as Array<{ craft?: { rules?: { canDrag?: (...a: unknown[]) => boolean } } }>).forEach(
+  (Component) => {
+    if (!Component?.craft) return;
+    if (!Component.craft.rules) Component.craft.rules = {};
+    const original = Component.craft.rules.canDrag;
+    Component.craft.rules.canDrag = (...args: unknown[]) => {
+      if (layoutModeRef.current === "absolute") return false;
+      return original ? original(...args) : true;
+    };
+  },
+);
 
 export type ResolverKey = keyof typeof resolvers;
 

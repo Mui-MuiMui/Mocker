@@ -120,13 +120,14 @@ export const RenderNode = React.memo(function RenderNode({
   }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
 
   // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
+  // resolvers.ts の canDrag: false により Craft.js DnD は起動しないため、通常の bubble phase で処理
   useEffect(() => {
     if (!dom || layoutMode !== "absolute" || parentIsGroup || id === "ROOT") return;
 
     const onMouseDown = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest("[data-momoc-handle]")) return;
-      // capture フェーズで Craft.js DnD をブロック（click イベントは別扱いなので selection は動作）
-      e.stopImmediatePropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
       const startX = e.clientX;
       const startY = e.clientY;
@@ -159,9 +160,8 @@ export const RenderNode = React.memo(function RenderNode({
       document.addEventListener("mouseup", onUp);
     };
 
-    // capture フェーズで登録 — 祖先の capture より後、Craft.js bubble より前に実行される
-    dom.addEventListener("mousedown", onMouseDown, true);
-    return () => dom.removeEventListener("mousedown", onMouseDown, true);
+    dom.addEventListener("mousedown", onMouseDown);
+    return () => dom.removeEventListener("mousedown", onMouseDown);
   }, [dom, layoutMode, editorActions, id, parentIsGroup]);
 
   // Label badge

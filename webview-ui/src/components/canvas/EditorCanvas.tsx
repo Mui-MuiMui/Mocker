@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftContainer } from "../../crafts/layout/CraftContainer";
 import { CraftFreeCanvas } from "../../crafts/layout/CraftFreeCanvas";
+import { layoutModeRef } from "../../crafts/layoutModeRef";
 import { MemoAddButton, MemoStickers } from "../memo/MemoOverlay";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useVscodeMessage } from "../../hooks/useVscodeMessage";
@@ -35,6 +36,11 @@ export function EditorCanvas() {
   const zoom = useEditorStore((s) => s.zoom);
   const setZoom = useEditorStore((s) => s.setZoom);
   const layoutMode = useEditorStore((s) => s.layoutMode);
+
+  // Craft.js canDrag ルールから参照されるモジュールレベルフラグを同期
+  useEffect(() => {
+    layoutModeRef.current = layoutMode;
+  }, [layoutMode]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
