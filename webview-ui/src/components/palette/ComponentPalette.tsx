@@ -264,7 +264,7 @@ function buildGroupTreeFromCraftState(
 
 export function ComponentPalette() {
   const { t } = useTranslation();
-  const { connectors, actions, query } = useEditor();
+  const { connectors } = useEditor();
   const isPaletteOpen = useEditorStore((s) => s.isPaletteOpen);
   const togglePalette = useEditorStore((s) => s.togglePalette);
   const [search, setSearch] = useState("");
@@ -332,15 +332,6 @@ export function ComponentPalette() {
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [contextMenu]);
-
-  const handleInsertCustom = useCallback(
-    (entry: CustomComponentEntry) => {
-      const tree = buildGroupTreeFromCraftState(entry.craftState);
-      if (!tree) return;
-      actions.addNodeTree(tree, "ROOT");
-    },
-    [actions],
-  );
 
   const filteredItems = paletteItems.filter(
     (item) => item.enabled !== false && item.label.toLowerCase().includes(search.toLowerCase()),
@@ -497,19 +488,15 @@ export function ComponentPalette() {
             ) : (
               <div className="flex flex-col gap-1">
                 {customComponents.map((entry) => (
-                  <button
+                  <CustomComponentCard
                     key={entry.id}
-                    type="button"
-                    onClick={() => handleInsertCustom(entry)}
+                    entry={entry}
+                    connectors={connectors}
                     onContextMenu={(e) => {
                       e.preventDefault();
                       setContextMenu({ x: e.clientX, y: e.clientY, id: entry.id });
                     }}
-                    className="flex items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs text-[var(--vscode-foreground,#ccc)] hover:border-[var(--vscode-focusBorder,#007fd4)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] transition-colors"
-                  >
-                    <Icons.Layers size={14} className="shrink-0 opacity-60" />
-                    <span className="truncate">{entry.name}</span>
-                  </button>
+                  />
                 ))}
               </div>
             )}
@@ -649,6 +636,35 @@ export function ComponentPalette() {
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function CustomComponentCard({
+  entry,
+  connectors,
+  onContextMenu,
+}: {
+  entry: CustomComponentEntry;
+  connectors: ReturnType<typeof useEditor>["connectors"];
+  onContextMenu: (e: React.MouseEvent) => void;
+}) {
+  return (
+    <div
+      ref={(ref) => {
+        if (ref) {
+          connectors.create(ref, () => {
+            const tree = buildGroupTreeFromCraftState(entry.craftState);
+            if (!tree) return <div />;
+            return tree;
+          });
+        }
+      }}
+      onContextMenu={onContextMenu}
+      className="flex cursor-grab items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs text-[var(--vscode-foreground,#ccc)] transition-colors hover:border-[var(--vscode-focusBorder,#007fd4)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] active:cursor-grabbing"
+    >
+      <Icons.Layers size={14} className="shrink-0 opacity-60" />
+      <span className="truncate">{entry.name}</span>
     </div>
   );
 }
