@@ -579,7 +579,7 @@ export function PropEditor() {
   const flowEntries: [string, unknown][] = layoutMode === "flow"
     ? Array.from(FLOW_KEYS)
         .filter((k) => {
-          if (currentDisplay === "grid" && (k === "flexDirection" || k === "justifyContent" || k === "alignItems")) return false;
+          if (currentDisplay === "grid" && k === "flexDirection") return false;
           if (currentDisplay === "flex" && k === "gridCols") return false;
           return true;
         })
@@ -630,6 +630,31 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
+    // Custom UI for gap (slider)
+    if (key === "gap") {
+      const GAP_SCALE = ["0","1","2","3","4","5","6","8","10","12","16","20","24"];
+      const currentVal = String(value ?? "4");
+      const idx = Math.max(0, GAP_SCALE.indexOf(currentVal));
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">gap</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={GAP_SCALE.length - 1}
+              value={idx}
+              onChange={(e) => handlePropChange(key, GAP_SCALE[Number(e.target.value)])}
+              className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+            />
+            <span className="w-10 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+              gap-{GAP_SCALE[idx]}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
     // Custom UI for width/height/tabButtonWidth
     if (key === "width" || key === "height" || key === "tabButtonWidth") {
       return (
