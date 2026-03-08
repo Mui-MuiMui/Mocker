@@ -119,13 +119,14 @@ export const RenderNode = React.memo(function RenderNode({
     }
   }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
 
-  // Drag-to-move in absolute mode (all nodes, not inside CraftGroup)
+  // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
   useEffect(() => {
-    if (!dom || layoutMode !== "absolute" || parentIsGroup) return;
+    if (!dom || layoutMode !== "absolute" || parentIsGroup || id === "ROOT") return;
 
     const onMouseDown = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest("[data-momoc-handle]")) return;
-      // Don't preventDefault/stopPropagation here — let Craft.js handle selection click
+      // capture フェーズで Craft.js DnD をブロック（click イベントは別扱いなので selection は動作）
+      e.stopImmediatePropagation();
 
       const startX = e.clientX;
       const startY = e.clientY;
@@ -140,15 +141,13 @@ export const RenderNode = React.memo(function RenderNode({
           if (Math.hypot(dx, dy) < 5) return;
           dragging = true;
         }
-        ev.stopImmediatePropagation(); // Craft.js DnD をブロック
-        ev.preventDefault();
         dom.style.top = `${startTop + dy}px`;
         dom.style.left = `${startLeft + dx}px`;
       };
 
       const onUp = (ev: MouseEvent) => {
-        document.removeEventListener("mousemove", onMove, true);
-        document.removeEventListener("mouseup", onUp, true);
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
         if (!dragging) return;
         editorActions.setProp(id, (props: Record<string, unknown>) => {
           props.top = `${startTop + ev.clientY - startY}px`;
@@ -156,12 +155,13 @@ export const RenderNode = React.memo(function RenderNode({
         });
       };
 
-      document.addEventListener("mousemove", onMove, true); // capture フェーズ
-      document.addEventListener("mouseup", onUp, true);
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
     };
 
-    dom.addEventListener("mousedown", onMouseDown);
-    return () => dom.removeEventListener("mousedown", onMouseDown);
+    // capture フェーズで登録 — 祖先の capture より後、Craft.js bubble より前に実行される
+    dom.addEventListener("mousedown", onMouseDown, true);
+    return () => dom.removeEventListener("mousedown", onMouseDown, true);
   }, [dom, layoutMode, editorActions, id, parentIsGroup]);
 
   // Label badge

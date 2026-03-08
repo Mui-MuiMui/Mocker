@@ -1,5 +1,6 @@
 import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
+import { useEditorStore } from "../../stores/editorStore";
 
 interface CraftFreeCanvasProps {
   width?: string;
@@ -17,6 +18,11 @@ export const CraftFreeCanvas: UserComponent<CraftFreeCanvasProps> = ({
   const {
     connectors: { connect, drag },
   } = useNode();
+  const layoutMode = useEditorStore((s) => s.layoutMode);
+
+  // 自由配置モードでは常に 100% × 100% に強制
+  const effectiveWidth = layoutMode === "absolute" ? "100%" : width;
+  const effectiveHeight = layoutMode === "absolute" ? "100%" : height;
 
   return (
     <div
@@ -24,7 +30,7 @@ export const CraftFreeCanvas: UserComponent<CraftFreeCanvasProps> = ({
         if (ref) connect(drag(ref));
       }}
       className={cn("relative", className)}
-      style={{ width, height }}
+      style={{ width: effectiveWidth, height: effectiveHeight }}
     >
       {children}
     </div>
