@@ -3,6 +3,7 @@ import { Frame, Element } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftContainer } from "../../crafts/layout/CraftContainer";
+import { CraftFreeCanvas } from "../../crafts/layout/CraftFreeCanvas";
 import { MemoAddButton, MemoStickers } from "../memo/MemoOverlay";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useVscodeMessage } from "../../hooks/useVscodeMessage";
@@ -33,6 +34,7 @@ export function EditorCanvas() {
   const customViewportHeight = useEditorStore((s) => s.customViewportHeight);
   const zoom = useEditorStore((s) => s.zoom);
   const setZoom = useEditorStore((s) => s.setZoom);
+  const layoutMode = useEditorStore((s) => s.layoutMode);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
@@ -269,14 +271,17 @@ export function EditorCanvas() {
               <div data-momoc-viewport className={themeMode === "dark" ? "dark" : ""}>
                 <div className="min-h-full bg-background text-foreground">
                   <Frame>
-                    <Element
-                      is={CraftContainer}
-                      canvas
-                      display="flex"
-                      flexDirection="column"
-                      className="min-h-screen"
-                    >
-                    </Element>
+                    {layoutMode === "absolute" ? (
+                      <Element is={CraftFreeCanvas} canvas width="100%" height="100%" />
+                    ) : (
+                      <Element
+                        is={CraftContainer}
+                        canvas
+                        display="flex"
+                        flexDirection="column"
+                        className="min-h-screen"
+                      />
+                    )}
                   </Frame>
                 </div>
               </div>

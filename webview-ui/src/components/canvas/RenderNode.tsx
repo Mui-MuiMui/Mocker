@@ -119,41 +119,50 @@ export const RenderNode = React.memo(function RenderNode({
     }
   }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
 
-  // Drag-to-move in absolute mode (active node only, not inside CraftGroup)
+  // Drag-to-move in absolute mode (all nodes, not inside CraftGroup)
   useEffect(() => {
-    if (!dom || !isActive || layoutMode !== "absolute" || parentIsGroup) return;
+    if (!dom || layoutMode !== "absolute" || parentIsGroup) return;
 
     const onMouseDown = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest("[data-momoc-handle]")) return;
-      e.preventDefault();
-      e.stopPropagation();
+      // Don't preventDefault/stopPropagation here — let Craft.js handle selection click
 
       const startX = e.clientX;
       const startY = e.clientY;
       const startTop = parseInt(dom.style.top || "0", 10);
       const startLeft = parseInt(dom.style.left || "0", 10);
+      let dragging = false;
 
       const onMove = (ev: MouseEvent) => {
-        dom.style.top = `${startTop + ev.clientY - startY}px`;
-        dom.style.left = `${startLeft + ev.clientX - startX}px`;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (!dragging) {
+          if (Math.hypot(dx, dy) < 5) return;
+          dragging = true;
+        }
+        ev.stopImmediatePropagation(); // Craft.js DnD をブロック
+        ev.preventDefault();
+        dom.style.top = `${startTop + dy}px`;
+        dom.style.left = `${startLeft + dx}px`;
       };
+
       const onUp = (ev: MouseEvent) => {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-        const newTop = `${startTop + ev.clientY - startY}px`;
-        const newLeft = `${startLeft + ev.clientX - startX}px`;
+        document.removeEventListener("mousemove", onMove, true);
+        document.removeEventListener("mouseup", onUp, true);
+        if (!dragging) return;
         editorActions.setProp(id, (props: Record<string, unknown>) => {
-          props.top = newTop;
-          props.left = newLeft;
+          props.top = `${startTop + ev.clientY - startY}px`;
+          props.left = `${startLeft + ev.clientX - startX}px`;
         });
       };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
+
+      document.addEventListener("mousemove", onMove, true); // capture フェーズ
+      document.addEventListener("mouseup", onUp, true);
     };
 
     dom.addEventListener("mousedown", onMouseDown);
     return () => dom.removeEventListener("mousedown", onMouseDown);
-  }, [dom, isActive, layoutMode, editorActions, id, parentIsGroup]);
+  }, [dom, layoutMode, editorActions, id, parentIsGroup]);
 
   // Label badge
   useEffect(() => {
