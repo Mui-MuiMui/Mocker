@@ -3029,15 +3029,18 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
       ].join("\n");
     case "alert-dialog": {
       const pattern = (props?.alertDialogPattern as string) || "cancel-continue";
-      const ALERT_DIALOG_PATTERNS: Record<string, [string, string]> = {
-        "cancel-continue": ["Cancel", "Continue"],
-        "continue-cancel": ["Continue", "Cancel"],
-        "yes-no": ["Yes", "No"],
-        "no-yes": ["No", "Yes"],
-        "ok-cancel": ["OK", "Cancel"],
-        "cancel-ok": ["Cancel", "OK"],
+      // [leftLabel, rightLabel, leftIsAction] — leftIsAction=true なら左が AlertDialogAction（色付き）
+      const ALERT_DIALOG_PATTERNS: Record<string, [string, string, boolean]> = {
+        "cancel-continue": ["Cancel", "Continue", false],
+        "continue-cancel": ["Continue", "Cancel", true],
+        "yes-no":          ["Yes",    "No",      true],
+        "no-yes":          ["No",     "Yes",     false],
+        "ok-cancel":       ["OK",     "Cancel",  true],
+        "cancel-ok":       ["Cancel", "OK",      false],
       };
-      const [leftBtn, rightBtn] = ALERT_DIALOG_PATTERNS[pattern] ?? ["Cancel", "Continue"];
+      const [leftBtn, rightBtn, leftIsAction] = ALERT_DIALOG_PATTERNS[pattern] ?? ["Cancel", "Continue", false];
+      const leftTag  = leftIsAction  ? "AlertDialogAction" : "AlertDialogCancel";
+      const rightTag = leftIsAction  ? "AlertDialogCancel" : "AlertDialogAction";
       return [
         `${pad}<AlertDialog>`,
         `${pad}  <AlertDialogTrigger asChild>`,
@@ -3046,8 +3049,8 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
         `${pad}  <AlertDialogContent${classAttr}${styleAttr}>`,
         `${pad}    ${contentComment}`,
         `${pad}    <div className="flex justify-end gap-8">`,
-        `${pad}      <AlertDialogCancel>${leftBtn}</AlertDialogCancel>`,
-        `${pad}      <AlertDialogAction>${rightBtn}</AlertDialogAction>`,
+        `${pad}      <${leftTag}>${leftBtn}</${leftTag}>`,
+        `${pad}      <${rightTag}>${rightBtn}</${rightTag}>`,
         `${pad}    </div>`,
         `${pad}  </AlertDialogContent>`,
         `${pad}</AlertDialog>`,
