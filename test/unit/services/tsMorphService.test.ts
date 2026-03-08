@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseJsxTree, getComponentName } from "../../../src/services/tsMorphService.js";
+import { parseJsxTree, getComponentName, updateJsxProp } from "../../../src/services/tsMorphService.js";
 
 const sampleTsx = `
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,35 @@ describe("tsMorphService", () => {
     it("should return null for no default export", () => {
       const name = getComponentName("function Foo() { return <div />; }");
       expect(name).toBeNull();
+    });
+  });
+
+  describe("updateJsxProp", () => {
+    const sampleWithCraftIds = `
+export default function Foo() {
+  return (
+    <div data-craft-id="root" className="flex">
+      <Button data-craft-id="btn1" variant="default" />
+    </div>
+  );
+}
+`;
+
+    it("should update an existing prop on the matched element", () => {
+      const result = updateJsxProp(sampleWithCraftIds, "btn1", "variant", `"outline"`);
+      expect(result).toContain('variant="outline"');
+      expect(result).not.toContain('variant="default"');
+    });
+
+    it("should add a new prop when prop does not exist", () => {
+      const result = updateJsxProp(sampleWithCraftIds, "root", "id", `"main"`);
+      expect(result).toContain('id="main"');
+    });
+
+    it("should not modify content when craft ID is not found", () => {
+      const result = updateJsxProp(sampleWithCraftIds, "nonexistent", "variant", `"outline"`);
+      expect(result).toContain('variant="default"');
+      expect(result).not.toContain('variant="outline"');
     });
   });
 });

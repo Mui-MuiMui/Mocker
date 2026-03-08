@@ -4,8 +4,10 @@ import { getVsCodeApi } from "../../utils/vscodeApi";
 import { IconCombobox } from "./IconCombobox";
 import { TableMetaEditor } from "./TableMetaEditor";
 import { TabMetaEditor } from "./TabMetaEditor";
+import { SlideMetaEditor } from "./SlideMetaEditor";
 import { ResizableMetaEditor } from "./ResizableMetaEditor";
 import { MenubarMetaEditor } from "./MenubarMetaEditor";
+import { SidebarMetaEditor } from "./SidebarMetaEditor";
 import { ButtonGroupMetaEditor } from "./ButtonGroupMetaEditor";
 import { CommandMetaEditor } from "./CommandMetaEditor";
 import { ColumnDefsEditor } from "./ColumnDefsEditor";
@@ -19,12 +21,11 @@ const PROP_OPTIONS: Record<string, string[]> = {
   type: ["text", "email", "password", "number", "tel", "url", "search"],
   display: ["flex", "grid"],
   flexDirection: ["row", "column"],
-  justifyContent: ["start", "center", "end", "between", "around", "evenly"],
-  alignItems: ["start", "center", "end", "stretch", "baseline"],
   orientation: ["horizontal", "vertical"],
   objectFit: ["cover", "contain", "fill", "none", "scale-down"],
   overlayType: ["none", "dialog", "alert-dialog", "sheet", "drawer", "popover", "dropdown-menu"],
   sheetSide: ["top", "right", "bottom", "left"],
+  alertDialogPattern: ["cancel-continue", "continue-cancel", "yes-no", "no-yes", "ok-cancel", "cancel-ok"],
   tooltipSide: ["", "top", "right", "bottom", "left"],
   tooltipTrigger: ["hover", "focus"],
   hoverCardSide: ["bottom", "top", "left", "right"],
@@ -129,10 +130,26 @@ const COMPONENT_PROP_OPTIONS: Record<string, Record<string, string[]>> = {
   Typography: {
     variant: ["h1", "h2", "h3", "h4", "p", "blockquote", "ul", "ol", "code", "lead", "large", "small", "muted"],
   },
+  Carousel: {
+    orientation: ["horizontal", "vertical"],
+  },
+  Sidebar: {
+    side: ["left", "right"],
+    collapsible: ["icon", "offcanvas", "none"],
+    headerCollapseMode: ["clip", "hide"],
+    footerCollapseMode: ["clip", "hide"],
+    sidebarShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    headerShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    footerShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+    insetShadow: ["", "shadow-sm", "shadow", "shadow-md", "shadow-lg", "shadow-xl", "shadow-inner", "shadow-none"],
+  },
 };
 
 /** Property names rendered as a button group (toggle buttons) per component. */
 const BUTTON_GROUP_PROPS: Record<string, Record<string, string[]>> = {
+  Button: {
+    buttonType: ["text", "icon"],
+  },
   "Navigation Menu": {
     buttonBorderWidth: ["", "0", "1", "2", "4", "8"],
   },
@@ -181,13 +198,13 @@ const MOC_PATH_PROPS = new Set(["linkedMocPath", "contextMenuMocPath", "hoverCar
 const COLOR_PALETTE_PROPS = new Set(["cardBorderColor", "cardBgColor", "descriptionColor", "labelColor"]);
 
 /** Props that use the Tailwind bg class palette picker UI (stores "bg-red-500" style class names). */
-const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass", "itemBgClass", "separatorClass", "indicatorClass"]);
+const TAILWIND_BG_PALETTE_PROPS = new Set(["checkedClassName", "uncheckedClassName", "fillClassName", "trackClassName", "bgClass", "tabListBgClass", "tabActiveBgClass", "contentBgClass", "separatorColor", "todayBgClass", "buttonBgClass", "triggerBgClass", "hoverBgClass", "dropdownBgClass", "panelBgClass", "activeBgClass", "selectedBgClass", "headerBgClass", "hoverRowClass", "selectedRowClass", "itemBgClass", "separatorClass", "indicatorClass", "sidebarBgClass", "navActiveBgClass", "navHoverBgClass", "footerBgClass", "insetBgClass"]);
 
 /** Props that use the Tailwind border class palette picker UI (stores "border-red-500" style class names). */
-const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "triggerBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass", "cardBorderClass", "itemBorderClass", "inputBorderClass", "separatorBorderClass"]);
+const TAILWIND_BORDER_PALETTE_PROPS = new Set(["borderColor", "outerBorderColor", "dividerBorderColor", "triggerBorderColor", "contentBorderColor", "buttonBorderClass", "triggerBorderClass", "dropdownBorderClass", "panelBorderClass", "activeBorderClass", "calendarBorderClass", "todayBorderClass", "selectedBorderClass", "headerBorderClass", "tableBorderClass", "cardBorderClass", "itemBorderClass", "inputBorderClass", "separatorBorderClass", "sidebarBorderColor", "headerBorderColor", "footerBorderColor", "insetBorderColor"]);
 
 /** Props that use the Tailwind text class palette picker UI (stores "text-red-500" style class names). */
-const TAILWIND_TEXT_PALETTE_PROPS = new Set(["todayTextClass", "hoverTextClass", "buttonTextClass", "triggerTextClass", "dropdownTextClass", "shortcutTextClass", "checkTextClass", "panelTextClass", "activeTextClass", "selectedTextClass", "headerTextClass", "headerHoverTextClass", "sortIconClass", "filterIconClass", "itemTextClass", "iconClass", "groupHeadingClass"]);
+const TAILWIND_TEXT_PALETTE_PROPS = new Set(["todayTextClass", "hoverTextClass", "buttonTextClass", "triggerTextClass", "dropdownTextClass", "shortcutTextClass", "checkTextClass", "panelTextClass", "activeTextClass", "selectedTextClass", "headerTextClass", "headerHoverTextClass", "sortIconClass", "filterIconClass", "itemTextClass", "iconClass", "groupHeadingClass", "navTextClass", "navIconClass"]);
 
 /**
  * Tailwind CSS color palette (hex) — same data as TailwindEditor.tsx.
@@ -289,7 +306,8 @@ const INTERACTION_ORDERED: string[] = [
 const INTERACTION_EXCLUDED_COMPONENTS = new Set([
   "Tooltip", "ContextMenu", "HoverCard", "FreeCanvas",
   "ResizablePanelSlot", "TableCellSlot", "DataTableSlot",
-  "NavMenuSlot", "CollapsibleSlot", "TabContentSlot",
+  "NavMenuSlot", "CollapsibleSlot", "TabContentSlot", "SlideContentSlot",
+  "SidebarHeaderSlot", "SidebarFooterSlot", "SidebarInsetSlot",
 ]);
 
 /** インタラクションプロパティのデフォルト値 */
@@ -305,11 +323,11 @@ const INTERACTION_DEFAULTS: Record<string, unknown> = {
 
 /** フロー配置専用プロパティ — layoutMode === "flow" のみ表示 */
 const FLOW_KEYS = new Set([
-  "display", "flexDirection", "justifyContent", "alignItems", "gap", "gridCols",
+  "display", "flexDirection", "gap", "gridCols",
 ]);
 
 /** 自由配置専用プロパティ — layoutMode === "absolute" のみ表示 */
-const ABSOLUTE_KEYS = new Set(["top", "left"]);
+const ABSOLUTE_KEYS = new Set(["top", "left", "zIndex"]);
 
 /** 共通/フロー/自由配置 以外はコンポーネント固有として扱う */
 const LAYOUT_ALL_KEYS = new Set([...COMMON_KEYS, ...FLOW_KEYS, ...ABSOLUTE_KEYS]);
@@ -318,8 +336,6 @@ const LAYOUT_ALL_KEYS = new Set([...COMMON_KEYS, ...FLOW_KEYS, ...ABSOLUTE_KEYS]
 const FLOW_DEFAULTS: Record<string, unknown> = {
   display: "flex",
   flexDirection: "row",
-  justifyContent: "start",
-  alignItems: "start",
   gap: "4",
   gridCols: 3,
 };
@@ -328,6 +344,7 @@ const FLOW_DEFAULTS: Record<string, unknown> = {
 const ABSOLUTE_DEFAULTS: Record<string, unknown> = {
   top: "0px",
   left: "0px",
+  zIndex: 0,
 };
 
 /**
@@ -368,7 +385,14 @@ function SizeInput({
   const [isAuto, setIsAuto] = useState(parsed.isAuto);
   const [num, setNum] = useState(parsed.num);
   const [unit, setUnit] = useState<SizeUnit>(parsed.unit);
-  // key={nodeId+propKey} で再マウントされるため useEffect による同期は不要
+
+  // ドラッグリサイズなど外部から value が変更された場合にローカル state を同期する
+  useEffect(() => {
+    const p = parseSizeValue(value);
+    setIsAuto(p.isAuto);
+    setNum(p.num);
+    setUnit(p.unit);
+  }, [value]);
 
   return (
     <div className="flex flex-col gap-1">
@@ -552,8 +576,16 @@ export function PropEditor() {
     .map((k) => [k, selectedProps[k] ?? "auto"]);
 
   // フロー配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
+  // display の値に応じて flex 専用 / grid 専用プロパティを非表示にする
+  const currentDisplay = (selectedProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
   const flowEntries: [string, unknown][] = layoutMode === "flow"
-    ? Array.from(FLOW_KEYS).map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
+    ? Array.from(FLOW_KEYS)
+        .filter((k) => {
+          if (currentDisplay === "grid" && k === "flexDirection") return false;
+          if (currentDisplay === "flex" && k === "gridCols") return false;
+          return true;
+        })
+        .map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
     : [];
 
   // 自由配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
@@ -578,7 +610,15 @@ export function PropEditor() {
       !excludedProps.has(key) &&
       // Typography: items は ul/ol のみ表示、text は ul/ol では非表示
       !(componentName === "Typography" && key === "items" && selectedProps.variant !== "ul" && selectedProps.variant !== "ol") &&
-      !(componentName === "Typography" && key === "text" && (selectedProps.variant === "ul" || selectedProps.variant === "ol")),
+      !(componentName === "Typography" && key === "text" && (selectedProps.variant === "ul" || selectedProps.variant === "ol")) &&
+      // Button: alertDialogPattern は alert-dialog 選択時のみ表示
+      !(componentName === "Button" && key === "alertDialogPattern" && selectedProps.overlayType !== "alert-dialog") &&
+      // Button: icon モード時は text を非表示、text モード時は icon/iconSize を非表示
+      !(componentName === "Button" && key === "text" && selectedProps.buttonType === "icon") &&
+      !(componentName === "Button" && key === "icon" && selectedProps.buttonType !== "icon") &&
+      !(componentName === "Button" && key === "iconSize" && selectedProps.buttonType !== "icon") &&
+      // Sidebar: toggle icon props は collapsible !== "none" のときのみ表示
+      !(componentName === "Sidebar" && (key === "toggleOpenIcon" || key === "toggleCloseIcon" || key === "toggleIconSize") && selectedProps.collapsible === "none"),
   ).map(([key, defaultVal]) => {
     const selectedVal = selectedProps[key];
     // selectedProps の値の型が craftDefaultProps のデフォルト値と一致する場合のみ使用
@@ -598,6 +638,56 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
+    // Custom UI for iconSize / toggleIconSize (slider)
+    if (key === "iconSize" || key === "toggleIconSize") {
+      const ICON_SIZE_SCALE = ["2","2.5","3","3.5","4","5","6","7","8","9","10","11","12","14","16","20","24","28","32","36","40","44","48","52","56","60","64","72","80","96"];
+      const currentVal = String(value ?? "4");
+      const idx = Math.max(0, ICON_SIZE_SCALE.indexOf(currentVal));
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">{key}</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={ICON_SIZE_SCALE.length - 1}
+              value={idx}
+              onChange={(e) => handlePropChange(key, ICON_SIZE_SCALE[Number(e.target.value)])}
+              className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+            />
+            <span className="w-10 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+              {ICON_SIZE_SCALE[idx]}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Custom UI for gap (slider)
+    if (key === "gap") {
+      const GAP_SCALE = ["0","1","2","3","4","5","6","8","10","12","16","20","24"];
+      const currentVal = String(value ?? "4");
+      const idx = Math.max(0, GAP_SCALE.indexOf(currentVal));
+      return (
+        <div key={key} className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">gap</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="range"
+              min={0}
+              max={GAP_SCALE.length - 1}
+              value={idx}
+              onChange={(e) => handlePropChange(key, GAP_SCALE[Number(e.target.value)])}
+              className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+            />
+            <span className="w-10 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+              gap-{GAP_SCALE[idx]}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
     // Custom UI for width/height/tabButtonWidth
     if (key === "width" || key === "height" || key === "tabButtonWidth") {
       return (
@@ -658,6 +748,17 @@ export function PropEditor() {
       );
     }
 
+    // Custom UI for slideMeta (carousel slide structure editor)
+    if (key === "slideMeta" && selectedNodeId) {
+      return (
+        <SlideMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
     // Custom UI for panelMeta (resizable panel structure editor)
     if (key === "panelMeta" && selectedNodeId) {
       return (
@@ -684,6 +785,17 @@ export function PropEditor() {
     if (key === "menuData" && selectedNodeId) {
       return (
         <MenubarMetaEditor
+          key={key}
+          value={String(value ?? "")}
+          selectedNodeId={selectedNodeId}
+        />
+      );
+    }
+
+    // Custom UI for sidebarData (sidebar nav structure editor)
+    if (key === "sidebarData" && selectedNodeId) {
+      return (
+        <SidebarMetaEditor
           key={key}
           value={String(value ?? "")}
           selectedNodeId={selectedNodeId}
@@ -748,8 +860,8 @@ export function PropEditor() {
       );
     }
 
-    // Custom UI for icon (combobox with all Lucide icons)
-    if (key === "icon") {
+    // Custom UI for icon / toggleOpenIcon / toggleCloseIcon (combobox with all Lucide icons)
+    if (key === "icon" || key === "toggleOpenIcon" || key === "toggleCloseIcon") {
       return (
         <div key={key} className="flex flex-col gap-1">
           <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
@@ -918,6 +1030,13 @@ export function PropEditor() {
           <div className="flex justify-between text-[8px] text-[var(--vscode-descriptionForeground,#666)]">
             <span>50</span><span>500</span><span>950</span>
           </div>
+          <input
+            type="text"
+            value={currentValue}
+            onChange={(e) => handlePropChange(key, e.target.value)}
+            className={`${INPUT_CLASS} w-full`}
+            placeholder="#ff0000"
+          />
         </div>
       );
     }

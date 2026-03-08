@@ -27,6 +27,13 @@ const SHADOW_SCALE = ["2xs", "xs", "sm", "md", "lg", "xl", "2xl"] as const;
 const SHADOW_PRESET = [...SHADOW_SCALE, "none"] as const;
 const ALL_SHADOW_CLASSES = [...SHADOW_SCALE.map((s) => `shadow-${s}`), "shadow-none", "shadow"];
 
+const DROP_SHADOW_SCALE = ["xs", "sm", "md", "lg", "xl", "2xl"] as const;
+const DROP_SHADOW_PRESET = [...DROP_SHADOW_SCALE, "none"] as const;
+const ALL_DROP_SHADOW_CLASSES = [
+  ...DROP_SHADOW_SCALE.map((s) => `drop-shadow-${s}`),
+  "drop-shadow-none",
+];
+
 const PADDING_DIRS = [
   { label: "All", prefix: "p" },
   { label: "X", prefix: "px" },
@@ -55,6 +62,12 @@ const ALIGN_SELF_OPTIONS = [
   { label: "Stretch", cls: "self-stretch" },
 ];
 
+const FLEX_WRAP_OPTIONS = [
+  { label: "wrap", cls: "flex-wrap" },
+  { label: "nowrap", cls: "flex-nowrap" },
+  { label: "wrap-rev", cls: "flex-wrap-reverse" },
+];
+
 // 3×3 Content Align グリッド (flex-row前提: justify=水平, items=垂直)
 const CONTENT_ALIGN_GRID = [
   { justify: "justify-start",  items: "items-start"  },
@@ -72,6 +85,29 @@ const ALL_ITEMS_CLASSES = ["items-start", "items-center", "items-end", "items-st
 const ALL_FLEX_DIR_CLASSES = ["flex-row", "flex-col"];
 
 const FIXED_HEADER_CLASSES = ["fixed", "top-0", "inset-x-0", "z-50"];
+
+/* ---- Flex shorthand ---- */
+
+const FLEX_KEYWORD_OPTIONS = [
+  { label: "–", value: "" },
+  { label: "none", value: "flex-none" },
+  { label: "auto", value: "flex-auto" },
+  { label: "initial", value: "flex-initial" },
+  { label: "Number", value: "__number__" },
+  { label: "Fraction", value: "__fraction__" },
+  { label: "Value", value: "__value__" },
+];
+
+const FLEX_NUMBER_MAX = 12;
+
+const FLEX_FRACTIONS = [
+  "1/2", "1/3", "2/3", "1/4", "3/4",
+  "1/5", "2/5", "3/5", "4/5",
+];
+
+const FLEX_VALUE_UNITS = ["px", "%", "rem", "em"];
+
+const FLEX_SHORTHAND_RE = /^flex-(none|auto|initial|\d+|\d+\/\d+|\[.+\])$/;
 
 /* ---- Tailwind Color Palette ---- */
 
@@ -105,8 +141,8 @@ const P: Record<string, Record<string, string>> = {
   rose:    { "50":"#fff1f2","100":"#ffe4e6","200":"#fecdd3","300":"#fda4af","400":"#fb7185","500":"#f43f5e","600":"#e11d48","700":"#be123c","800":"#9f1239","900":"#881337","950":"#4c0519" },
 };
 
-/** Regex to match palette color classes: text-red-500, hover:bg-blue-200, border-green-300, etc. */
-const PALETTE_CLASS_RE = /^((?:hover:)?(?:text|bg|border))-(\w+)-(\d{2,3})$/;
+/** Regex to match palette color classes: text-red-500, hover:bg-blue-200, border-green-300, drop-shadow-blue-500, etc. */
+const PALETTE_CLASS_RE = /^((?:hover:)?(?:text|bg|border|drop-shadow))-(\w+)-(\d{2,3})$/;
 
 function parsePaletteClass(cls: string): { prefix: string; family: string; shade: string } | null {
   const m = cls.match(PALETTE_CLASS_RE);
@@ -134,13 +170,40 @@ export function TailwindEditor() {
   const [marginDir, setMarginDir] = useState(0);
   const [fontSizeMode, setFontSizeMode] = useState<"preset" | "slider">("preset");
   const [shadowMode, setShadowMode] = useState<"preset" | "slider">("preset");
+  const [dropShadowMode, setDropShadowMode] = useState<"preset" | "slider">("preset");
+  const [dropShadowColorFamily, setDropShadowColorFamily] = useState<string>("gray");
   const [textPaletteFamily, setTextPaletteFamily] = useState<string>("blue");
   const [bgPaletteFamily, setBgPaletteFamily] = useState<string>("blue");
   const [hoverBgPaletteFamily, setHoverBgPaletteFamily] = useState<string>("blue");
   const [borderPaletteFamily, setBorderPaletteFamily] = useState<string>("blue");
+  const [flexMode, setFlexMode] = useState<string>("");
+  const [flexValueNum, setFlexValueNum] = useState("");
+  const [flexValueUnit, setFlexValueUnit] = useState("px");
 
   useEffect(() => {
     setRawInput(currentClassName);
+  }, [selectedNodeId, currentClassName]);
+
+  // Sync flex mode from className
+  useEffect(() => {
+    const cls = currentClassName.split(/\s+/).find((c) => FLEX_SHORTHAND_RE.test(c)) || "";
+    let mode = "";
+    if (cls === "flex-none" || cls === "flex-auto" || cls === "flex-initial") {
+      mode = cls;
+    } else if (/^flex-\d+\/\d+$/.test(cls)) {
+      mode = "__fraction__";
+    } else if (/^flex-\[.+\]$/.test(cls)) {
+      mode = "__value__";
+      const inner = cls.slice(5, -1); // "flex-[200px]" -> "200px"
+      const unitMatch = inner.match(/^(-?\d*\.?\d+)(px|%|rem|em)$/);
+      if (unitMatch) {
+        setFlexValueNum(unitMatch[1]);
+        setFlexValueUnit(unitMatch[2]);
+      }
+    } else if (/^flex-\d+$/.test(cls)) {
+      mode = "__number__";
+    }
+    setFlexMode(mode);
   }, [selectedNodeId, currentClassName]);
 
   if (!selectedNodeId) return null;
@@ -206,10 +269,35 @@ export function TailwindEditor() {
   const fontWeightGroup = FONT_WEIGHT_OPTIONS.map((w) => `font-${w}`);
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
+  const flexWrapGroup = FLEX_WRAP_OPTIONS.map((o) => o.cls);
+
+  // Flex shorthand: detect current class and sync state
+  const currentFlexClass = classes.find((c) => FLEX_SHORTHAND_RE.test(c)) || "";
+
+  const setFlexClass = (cls: string) => {
+    const filtered = classes.filter((c) => !FLEX_SHORTHAND_RE.test(c));
+    if (cls) {
+      updateClassName([...filtered, cls].join(" "));
+    } else {
+      updateClassName(filtered.join(" "));
+    }
+  };
+
+  const getFlexNumber = (): number => {
+    const m = currentFlexClass.match(/^flex-(\d+)$/);
+    return m ? Number(m[1]) : 1;
+  };
 
   const getShadowIndex = (): number => {
     for (let i = 0; i < SHADOW_SCALE.length; i++) {
       if (activeSet.has(`shadow-${SHADOW_SCALE[i]}`)) return i;
+    }
+    return -1;
+  };
+
+  const getDropShadowIndex = (): number => {
+    for (let i = 0; i < DROP_SHADOW_SCALE.length; i++) {
+      if (activeSet.has(`drop-shadow-${DROP_SHADOW_SCALE[i]}`)) return i;
     }
     return -1;
   };
@@ -220,6 +308,7 @@ export function TailwindEditor() {
   const currentMarginIdx = getSpacingValue(currentMarginPrefix);
   const currentFontSizeIdx = getFontSizeIndex();
   const currentShadowIdx = getShadowIndex();
+  const currentDropShadowIdx = getDropShadowIndex();
 
   // Detect active palette color for a given effective prefix (e.g. "text", "hover:bg")
   const findPaletteColor = (effectivePrefix: string) => {
@@ -232,9 +321,9 @@ export function TailwindEditor() {
 
   // Apply a color: clears palette and theme colors for the given effective prefix
   const applyColor = (effectivePrefix: string, colorCls: string) => {
-    const basePrefix = effectivePrefix.replace("hover:", "") as "text" | "bg" | "border";
+    const basePrefix = effectivePrefix.replace("hover:", "") as "text" | "bg" | "border" | "drop-shadow";
     const themeGroup = THEME_COLOR_OPTIONS.map((c) => `${effectivePrefix}-${c}`);
-    const baseThemeGroup = basePrefix === "text" ? themeTextGroup : basePrefix === "bg" ? themeBgGroup : themeBorderGroup;
+    const baseThemeGroup = basePrefix === "text" ? themeTextGroup : basePrefix === "bg" ? themeBgGroup : basePrefix === "border" ? themeBorderGroup : [];
     const filtered = classes.filter((c) => {
       if (themeGroup.includes(c)) return false;
       // Also clear base theme colors only when effectivePrefix has no hover
@@ -265,6 +354,95 @@ export function TailwindEditor() {
       </div>
 
       <TailwindCategory title="Layout" collapsed={collapsedCategories.has("layout")} onToggle={() => toggleCategory("layout")}>
+        <TailwindSection title="Flex">
+          <select
+            value={flexMode}
+            onChange={(e) => {
+              const val = e.target.value;
+              setFlexMode(val);
+              if (val === "" || val === "flex-none" || val === "flex-auto" || val === "flex-initial") {
+                setFlexClass(val);
+              } else if (val === "__number__") {
+                setFlexClass("flex-1");
+              } else if (val === "__fraction__") {
+                setFlexClass("flex-1/2");
+              } else if (val === "__value__") {
+                setFlexValueNum("200");
+                setFlexValueUnit("px");
+                setFlexClass("flex-[200px]");
+              }
+            }}
+            className="w-full rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-2 py-1 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]"
+          >
+            {FLEX_KEYWORD_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+
+          {flexMode === "__number__" && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <input
+                type="range"
+                min={1}
+                max={FLEX_NUMBER_MAX}
+                value={getFlexNumber()}
+                onChange={(e) => setFlexClass(`flex-${e.target.value}`)}
+                className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+              />
+              <span className="w-12 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+                flex-{getFlexNumber()}
+              </span>
+            </div>
+          )}
+
+          {flexMode === "__fraction__" && (
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {FLEX_FRACTIONS.map((f) => {
+                const cls = `flex-${f}`;
+                return (
+                  <ClassButton
+                    key={f}
+                    label={f}
+                    active={currentFlexClass === cls}
+                    onClick={() => setFlexClass(cls)}
+                  />
+                );
+              })}
+            </div>
+          )}
+
+          {flexMode === "__value__" && (
+            <div className="mt-1.5 flex items-center gap-1">
+              <input
+                type="number"
+                value={flexValueNum}
+                onChange={(e) => {
+                  setFlexValueNum(e.target.value);
+                  if (e.target.value) {
+                    setFlexClass(`flex-[${e.target.value}${flexValueUnit}]`);
+                  }
+                }}
+                className="w-16 rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-1.5 py-0.5 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]"
+              />
+              <div className="flex gap-0.5">
+                {FLEX_VALUE_UNITS.map((u) => (
+                  <ClassButton
+                    key={u}
+                    label={u}
+                    active={flexValueUnit === u}
+                    onClick={() => {
+                      setFlexValueUnit(u);
+                      if (flexValueNum) {
+                        setFlexClass(`flex-[${flexValueNum}${u}]`);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </TailwindSection>
+
         <SpacingSlider
           title="Padding"
           directions={PADDING_DIRS}
@@ -321,6 +499,19 @@ export function TailwindEditor() {
                 </button>
               );
             })}
+          </div>
+        </TailwindSection>
+
+        <TailwindSection title="Flex Wrap">
+          <div className="flex flex-wrap gap-1">
+            {FLEX_WRAP_OPTIONS.map((o) => (
+              <ClassButton
+                key={o.cls}
+                label={o.label}
+                active={activeSet.has(o.cls)}
+                onClick={() => setGroupClass(o.cls, flexWrapGroup)}
+              />
+            ))}
           </div>
         </TailwindSection>
 
@@ -530,6 +721,68 @@ export function TailwindEditor() {
             </div>
           )}
         </TailwindSection>
+
+        <TailwindSection title="Drop Shadow">
+          <div className="mb-1 flex gap-1">
+            <ModeToggle label="Preset" active={dropShadowMode === "preset"} onClick={() => setDropShadowMode("preset")} />
+            <ModeToggle label="Slider" active={dropShadowMode === "slider"} onClick={() => setDropShadowMode("slider")} />
+          </div>
+          {dropShadowMode === "preset" ? (
+            <div className="flex flex-wrap gap-1">
+              {DROP_SHADOW_PRESET.map((s) => {
+                const cls = `drop-shadow-${s}`;
+                return (
+                  <ClassButton
+                    key={s}
+                    label={s}
+                    active={activeSet.has(cls)}
+                    onClick={() => {
+                      const filtered = classes.filter((c) => !ALL_DROP_SHADOW_CLASSES.includes(c));
+                      if (activeSet.has(cls)) {
+                        updateClassName(filtered.join(" "));
+                      } else {
+                        updateClassName([...filtered, cls].join(" "));
+                      }
+                    }}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                type="range"
+                min={-1}
+                max={DROP_SHADOW_SCALE.length - 1}
+                value={currentDropShadowIdx}
+                onChange={(e) => {
+                  const idx = Number(e.target.value);
+                  const filtered = classes.filter((c) => !ALL_DROP_SHADOW_CLASSES.includes(c));
+                  if (idx < 0) {
+                    updateClassName(filtered.join(" "));
+                  } else {
+                    updateClassName([...filtered, `drop-shadow-${DROP_SHADOW_SCALE[idx]}`].join(" "));
+                  }
+                }}
+                className="flex-1 accent-[var(--vscode-button-background,#0e639c)]"
+              />
+              <span className="w-16 text-right text-[10px] text-[var(--vscode-foreground,#ccc)]">
+                {currentDropShadowIdx >= 0 ? `drop-shadow-${DROP_SHADOW_SCALE[currentDropShadowIdx]}` : "—"}
+              </span>
+            </div>
+          )}
+        </TailwindSection>
+
+        <ColorSection
+          title="Drop Shadow Color"
+          prefix="drop-shadow"
+          activeSet={activeSet}
+          paletteFamily={dropShadowColorFamily}
+          onFamilyChange={setDropShadowColorFamily}
+          findPaletteColor={findPaletteColor}
+          onApply={applyColor}
+          showThemeColors={false}
+        />
       </TailwindCategory>
     </div>
   );
@@ -547,9 +800,10 @@ function ColorSection({
   onApply,
   initialMode = "normal",
   showToggle = true,
+  showThemeColors = true,
 }: {
   title: string;
-  prefix: "text" | "bg" | "border";
+  prefix: "text" | "bg" | "border" | "drop-shadow";
   activeSet: Set<string>;
   paletteFamily: string;
   onFamilyChange: (f: string) => void;
@@ -557,6 +811,7 @@ function ColorSection({
   onApply: (effectivePrefix: string, colorCls: string) => void;
   initialMode?: "normal" | "hover";
   showToggle?: boolean;
+  showThemeColors?: boolean;
 }) {
   const [mode, setMode] = useState<"normal" | "hover">(initialMode);
   const effectivePrefix = mode === "hover" ? `hover:${prefix}` : prefix;
@@ -582,11 +837,13 @@ function ColorSection({
         </div>
       )}
       {/* Theme colors */}
-      <div className="mb-1.5 flex flex-wrap gap-1">
-        {THEME_COLOR_OPTIONS.map((c) => (
-          <ClassButton key={c} label={c} active={isThemeActive(c)} onClick={() => onApply(effectivePrefix, `${effectivePrefix}-${c}`)} />
-        ))}
-      </div>
+      {showThemeColors && (
+        <div className="mb-1.5 flex flex-wrap gap-1">
+          {THEME_COLOR_OPTIONS.map((c) => (
+            <ClassButton key={c} label={c} active={isThemeActive(c)} onClick={() => onApply(effectivePrefix, `${effectivePrefix}-${c}`)} />
+          ))}
+        </div>
+      )}
       {/* Palette family selector */}
       <div className="mb-1 flex items-center gap-1">
         <div className="flex flex-wrap gap-1">

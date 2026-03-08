@@ -25,7 +25,7 @@ export const CraftSeparator: UserComponent<CraftSeparatorProps> = ({
       }}
       role="separator"
       className={cn(
-        "shrink-0 bg-border",
+        "shrink-0 bg-border relative z-[1]",
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
         className,
       )}

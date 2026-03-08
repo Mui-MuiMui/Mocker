@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Frame, Element } from "@craftjs/core";
+import { Frame, Element, useEditor } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftContainer } from "../../crafts/layout/CraftContainer";
+import { CraftFreeCanvas } from "../../crafts/layout/CraftFreeCanvas";
+import { layoutModeRef } from "../../crafts/layoutModeRef";
 import { MemoAddButton, MemoStickers } from "../memo/MemoOverlay";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useVscodeMessage } from "../../hooks/useVscodeMessage";
@@ -25,19 +27,87 @@ const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 2;
 
+/**
+ * 自由配置モードでパレットからドロップされたコンポーネントをドロップ座標に配置する。
+ * canvasScaleRef: zoom 変換が適用されたキャンバス div への参照
+ */
+function AbsoluteDropPositioner({
+  canvasRef,
+}: {
+  canvasRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  // ドロップ瞬間（mouseup）の座標をキャンバス相対で保存
+  // mouseup 時点でキャンバス rect を計算して保存することで、
+  // Craft.js の後処理でキャンバスが動いても正確な座標を維持する
+  const lastDropCanvasPos = useRef({ x: 0, y: 0 });
+  const prevNodeIdsRef = useRef<Set<string>>(new Set());
+  const zoom = useEditorStore((s) => s.zoom);
+  const layoutMode = useEditorStore((s) => s.layoutMode);
+  const { nodes, actions } = useEditor((state) => ({ nodes: state.nodes }));
+
+  // mouseup 時点でキャンバス相対座標を即座に計算・保存
+  useEffect(() => {
+    const onMouseUp = (e: MouseEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      lastDropCanvasPos.current = {
+        x: Math.max(0, Math.round((e.clientX - rect.left) / zoom)),
+        y: Math.max(0, Math.round((e.clientY - rect.top) / zoom)),
+      };
+    };
+    document.addEventListener("mouseup", onMouseUp);
+    return () => document.removeEventListener("mouseup", onMouseUp);
+  }, [canvasRef, zoom]);
+
+  // 新規ノードを検出してドロップ座標を設定
+  useEffect(() => {
+    const currentIds = new Set(Object.keys(nodes));
+
+    if (layoutMode === "absolute" && prevNodeIdsRef.current.size > 0) {
+      for (const newId of currentIds) {
+        if (prevNodeIdsRef.current.has(newId)) continue;
+
+        const node = nodes[newId];
+        // ROOT の直接子のみ対象（CraftGroup 内の子は親が ROOT でないのでスキップ）
+        if (!node || node.data.parent !== "ROOT") continue;
+
+        // top/left が既に設定されている = ファイルロードによる追加 → スキップ
+        const nodeProps = node.data.props as Record<string, unknown>;
+        if (nodeProps.top !== undefined || nodeProps.left !== undefined) continue;
+
+        const { x, y } = lastDropCanvasPos.current;
+        actions.setProp(newId, (props: Record<string, unknown>) => {
+          props.top = `${y}px`;
+          props.left = `${x}px`;
+        });
+      }
+    }
+
+    prevNodeIdsRef.current = currentIds;
+  }, [nodes, layoutMode, actions]);
+
+  return null;
+}
+
 export function EditorCanvas() {
   const { t } = useTranslation();
-  const {
-    themeMode,
-    viewportMode,
-    customViewportWidth,
-    customViewportHeight,
-    zoom,
-    setZoom,
-  } = useEditorStore();
+  const themeMode = useEditorStore((s) => s.themeMode);
+  const viewportMode = useEditorStore((s) => s.viewportMode);
+  const customViewportWidth = useEditorStore((s) => s.customViewportWidth);
+  const customViewportHeight = useEditorStore((s) => s.customViewportHeight);
+  const zoom = useEditorStore((s) => s.zoom);
+  const setZoom = useEditorStore((s) => s.setZoom);
+  const layoutMode = useEditorStore((s) => s.layoutMode);
+
+  // Craft.js canDrag ルールから参照されるモジュールレベルフラグを同期
+  useEffect(() => {
+    layoutModeRef.current = layoutMode;
+  }, [layoutMode]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
+  const canvasScaleRef = useRef<HTMLDivElement>(null);
   const isSpaceHeld = useRef(false);
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
@@ -255,6 +325,8 @@ export function EditorCanvas() {
             }}
           >
             <div
+              data-momoc-canvas-area
+              ref={canvasScaleRef}
               style={{
                 width: viewportWidth,
                 minHeight: viewportHeight,
@@ -270,15 +342,19 @@ export function EditorCanvas() {
               </div>
               <div data-momoc-viewport className={themeMode === "dark" ? "dark" : ""}>
                 <div className="min-h-full bg-background text-foreground">
+                  <AbsoluteDropPositioner canvasRef={canvasScaleRef} />
                   <Frame>
-                    <Element
-                      is={CraftContainer}
-                      canvas
-                      display="flex"
-                      flexDirection="column"
-                      className="min-h-screen"
-                    >
-                    </Element>
+                    {layoutMode === "absolute" ? (
+                      <Element is={CraftFreeCanvas} canvas width="100%" height="100%" />
+                    ) : (
+                      <Element
+                        is={CraftContainer}
+                        canvas
+                        display="flex"
+                        flexDirection="column"
+                        className="min-h-screen"
+                      />
+                    )}
                   </Frame>
                 </div>
               </div>
@@ -288,7 +364,11 @@ export function EditorCanvas() {
       </div>
 
       {/* Fixed overlays (outside scroll container) */}
-      <MemoAddButton />
+      <div className="pointer-events-none absolute right-4 top-2 z-50">
+        <div className="pointer-events-auto">
+          <MemoAddButton />
+        </div>
+      </div>
 
       {/* Zoom controls - fixed bottom-right, inset to avoid scrollbar overlap */}
       <div className="pointer-events-none absolute bottom-4 right-5 z-50">

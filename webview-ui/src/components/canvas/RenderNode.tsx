@@ -1,6 +1,7 @@
 import { useNode, useEditor } from "@craftjs/core";
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { useEditorStore } from "../../stores/editorStore";
+import { CraftGroup } from "../../crafts/layout/CraftGroup";
 
 type HandlePosition = "top-left" | "top-right" | "bottom-left" | "bottom-right" | "right" | "bottom";
 
@@ -15,7 +16,7 @@ const cursorMap: Record<HandlePosition, string> = {
   bottom: "ns-resize",
 };
 
-export function RenderNode({
+export const RenderNode = React.memo(function RenderNode({
   render,
 }: {
   render: React.ReactElement;
@@ -31,6 +32,7 @@ export function RenderNode({
     noResize,
     nodeTop,
     nodeLeft,
+    nodeZIndex,
   } = useNode((node) => ({
     isActive: node.events.selected,
     isHover: node.events.hovered,
@@ -41,11 +43,23 @@ export function RenderNode({
     noResize: !!(node.data.custom as Record<string, unknown>)?.noResize,
     nodeTop: (node.data.props as Record<string, unknown>)?.top as string | undefined,
     nodeLeft: (node.data.props as Record<string, unknown>)?.left as string | undefined,
+    nodeZIndex: (node.data.props as Record<string, unknown>)?.zIndex as number | undefined,
   }));
 
   const layoutMode = useEditorStore((s) => s.layoutMode);
 
   const { actions: editorActions } = useEditor();
+
+  // 親ノードが CraftGroup かどうか（layoutMode に関わらず常に absolute 配置を適用するため）
+  const { parentIsGroup } = useEditor((state) => {
+    const node = state.nodes[id];
+    if (!node) return { parentIsGroup: false };
+    const parentId = node.data.parent;
+    if (!parentId) return { parentIsGroup: false };
+    const parent = state.nodes[parentId];
+    if (!parent) return { parentIsGroup: false };
+    return { parentIsGroup: parent.data.type === CraftGroup };
+  });
   const handlesRef = useRef<HTMLDivElement[]>([]);
   const resizeStateRef = useRef<{
     startX: number;
@@ -75,7 +89,9 @@ export function RenderNode({
 
     dom.style.outlineOffset = "-1px";
     dom.style.position = dom.style.position || "relative";
-    dom.style.cursor = "pointer";
+    // CraftGroup 内の子ノードはすべての操作を無効化
+    dom.style.pointerEvents = parentIsGroup ? "none" : "";
+    dom.style.cursor = parentIsGroup ? "default" : "pointer";
 
     if (isCanvas) {
       if (!dom.style.minHeight || dom.style.minHeight === "0px") {
@@ -85,25 +101,28 @@ export function RenderNode({
         dom.style.minWidth = "40px";
       }
     }
-  }, [dom, isActive, isHover, isCanvas]);
+  }, [dom, isActive, isHover, isCanvas, parentIsGroup]);
 
-  // Apply absolute positioning when layoutMode === "absolute"
+  // Apply absolute positioning when layoutMode === "absolute" OR when inside CraftGroup
   useEffect(() => {
     if (!dom) return;
-    if (layoutMode === "absolute") {
+    if (layoutMode === "absolute" || parentIsGroup) {
       dom.style.position = "absolute";
       dom.style.top = nodeTop || "0px";
       dom.style.left = nodeLeft || "0px";
+      dom.style.zIndex = nodeZIndex != null ? String(nodeZIndex) : "";
     } else {
       dom.style.position = "";
       dom.style.top = "";
       dom.style.left = "";
+      dom.style.zIndex = "";
     }
-  }, [dom, layoutMode, nodeTop, nodeLeft]);
+  }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
 
-  // Drag-to-move in absolute mode (active node only)
+  // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
+  // resolvers.ts の canDrag: false により Craft.js DnD は起動しないため、通常の bubble phase で処理
   useEffect(() => {
-    if (!dom || !isActive || layoutMode !== "absolute") return;
+    if (!dom || layoutMode !== "absolute" || parentIsGroup || id === "ROOT") return;
 
     const onMouseDown = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest("[data-momoc-handle]")) return;
@@ -114,28 +133,36 @@ export function RenderNode({
       const startY = e.clientY;
       const startTop = parseInt(dom.style.top || "0", 10);
       const startLeft = parseInt(dom.style.left || "0", 10);
+      let dragging = false;
 
       const onMove = (ev: MouseEvent) => {
-        dom.style.top = `${startTop + ev.clientY - startY}px`;
-        dom.style.left = `${startLeft + ev.clientX - startX}px`;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        if (!dragging) {
+          if (Math.hypot(dx, dy) < 5) return;
+          dragging = true;
+        }
+        dom.style.top = `${startTop + dy}px`;
+        dom.style.left = `${startLeft + dx}px`;
       };
+
       const onUp = (ev: MouseEvent) => {
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
-        const newTop = `${startTop + ev.clientY - startY}px`;
-        const newLeft = `${startLeft + ev.clientX - startX}px`;
+        if (!dragging) return;
         editorActions.setProp(id, (props: Record<string, unknown>) => {
-          props.top = newTop;
-          props.left = newLeft;
+          props.top = `${startTop + ev.clientY - startY}px`;
+          props.left = `${startLeft + ev.clientX - startX}px`;
         });
       };
+
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
     };
 
     dom.addEventListener("mousedown", onMouseDown);
     return () => dom.removeEventListener("mousedown", onMouseDown);
-  }, [dom, isActive, layoutMode, editorActions, id]);
+  }, [dom, layoutMode, editorActions, id, parentIsGroup]);
 
   // Label badge
   useEffect(() => {
@@ -361,4 +388,4 @@ export function RenderNode({
   }, [dom, isActive, noResize, onMouseDown]);
 
   return <>{render}</>;
-}
+});

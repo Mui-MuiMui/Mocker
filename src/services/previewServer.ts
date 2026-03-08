@@ -295,7 +295,7 @@ export async function startPreviewServer(
     }
   }
 
-  // Build import map: React CDN + shadcn/ui fallback routes + linked components
+  // Build import map: React (esm.sh) + shadcn/ui fallback routes + linked components
   function buildImportMap(): string {
     const imports: Record<string, string> = {
       "react": "https://esm.sh/react@19",
@@ -348,7 +348,7 @@ export async function startPreviewServer(
     /* Toggle: icon fill when pressed */
     [data-toggle-pressed] svg.lucide { fill: currentColor; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="/tailwindcss-browser.js"></script>
   <style type="text/tailwindcss">
     @import "tailwindcss";
     @theme {
@@ -478,6 +478,23 @@ export async function startPreviewServer(
     if (url === "/" || url === "/index.html") {
       res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
       res.end(buildPreviewHtml());
+      return;
+    }
+
+    if (url === "/tailwindcss-browser.js") {
+      const twBrowserPath = path.join(__dirname, "tailwindcss-browser.js");
+      try {
+        const fs = await import("fs");
+        const content = fs.readFileSync(twBrowserPath);
+        res.writeHead(200, {
+          "Content-Type": "application/javascript; charset=utf-8",
+          "Cache-Control": "public, max-age=86400",
+        });
+        res.end(content);
+      } catch {
+        res.writeHead(404);
+        res.end("Not found");
+      }
       return;
     }
 
@@ -761,7 +778,7 @@ export function Badge(props: any) {
   separator: `import { cn } from "@/components/ui/_cn";
 export function Separator(props: any) {
   const { className = "", orientation = "horizontal", ...rest } = props;
-  const base = orientation === "horizontal" ? "shrink-0 bg-border h-[1px] w-full" : "shrink-0 bg-border h-full w-[1px]";
+  const base = orientation === "horizontal" ? "shrink-0 bg-border relative z-[1] h-[1px] w-full" : "shrink-0 bg-border relative z-[1] h-full w-[1px]";
   const cls = cn(base, className);
   return <div role="separator" className={cls} {...rest} />;
 }`,
@@ -1619,11 +1636,86 @@ export function ResizableHandle(props) {
   );
 }`,
 
-  carousel: `import { cn } from "@/components/ui/_cn";
-export function Carousel(props: any) {
-  const { className = "", children, ...rest } = props;
-  const cls = cn("relative w-full", className);
-  return <div className={cls} {...rest}>{children}</div>;
+  carousel: `import { createContext, useContext, useEffect, useState } from "react";
+import { cn } from "@/components/ui/_cn";
+const CarouselCtx = createContext<any>(null);
+export function Carousel({ opts = {}, orientation = "horizontal", className = "", children, ...rest }: any) {
+  const [current, setCurrent] = useState(0);
+  const [count, setCount] = useState(0);
+  const loop = !!(opts?.loop);
+  const scrollPrev = () => setCurrent((i: number) => loop ? (i - 1 + count) % count : Math.max(0, i - 1));
+  const scrollNext = () => setCurrent((i: number) => loop ? (i + 1) % count : Math.min(count - 1, i + 1));
+  const canPrev = loop || current > 0;
+  const canNext = loop || current < count - 1;
+  const handleWheel = (e: any) => {
+    e.preventDefault();
+    const delta = orientation === "vertical" ? e.deltaY : e.deltaX || e.deltaY;
+    if (delta > 0) scrollNext(); else if (delta < 0) scrollPrev();
+  };
+  return (
+    <CarouselCtx.Provider value={{ current, setCurrent, count, setCount, scrollPrev, scrollNext, canPrev, canNext, orientation }}>
+      <div className={cn("relative", className)} data-orientation={orientation} onWheel={handleWheel} {...rest}>
+        {children}
+        {count > 1 && (
+          <div className="absolute bottom-1.5 left-0 right-0 flex justify-center gap-1">
+            {Array.from({ length: count }, (_: any, i: number) => (
+              <button key={i} type="button" onClick={() => setCurrent(i)}
+                className={cn("h-1.5 w-1.5 rounded-full transition-colors", i === current ? "bg-primary" : "bg-primary/30")} />
+            ))}
+          </div>
+        )}
+      </div>
+    </CarouselCtx.Provider>
+  );
+}
+export function CarouselContent({ className = "", children, ...rest }: any) {
+  const ctx = useContext(CarouselCtx);
+  const items = Array.isArray(children) ? children : children ? [children] : [];
+  useEffect(() => { ctx?.setCount(items.length); }, [items.length]);
+  return (
+    <div className={cn("overflow-hidden w-full h-full", className)} {...rest}>
+      {items.map((item: any, i: number) => (
+        <div key={i} className="h-full" style={{ display: i === ctx?.current ? undefined : "none" }}>{item}</div>
+      ))}
+    </div>
+  );
+}
+export function CarouselItem({ className = "", children, ...rest }: any) {
+  return <div className={cn("min-w-0 shrink-0 grow-0 h-full w-full", className)} {...rest}>{children}</div>;
+}
+export function CarouselPrevious({ className = "", ...rest }: any) {
+  const ctx = useContext(CarouselCtx);
+  const isVertical = ctx?.orientation === "vertical";
+  return (
+    <button type="button" disabled={!ctx?.canPrev}
+      className={cn(
+        "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40",
+        isVertical ? "top-2 left-1/2 -translate-x-1/2" : "left-2 top-1/2 -translate-y-1/2",
+        className,
+      )}
+      onClick={() => ctx?.scrollPrev()} {...rest}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        {isVertical ? <path d="m18 15-6-6-6 6"/> : <path d="m15 18-6-6 6-6"/>}
+      </svg>
+    </button>
+  );
+}
+export function CarouselNext({ className = "", ...rest }: any) {
+  const ctx = useContext(CarouselCtx);
+  const isVertical = ctx?.orientation === "vertical";
+  return (
+    <button type="button" disabled={!ctx?.canNext}
+      className={cn(
+        "absolute inline-flex h-8 w-8 items-center justify-center rounded-full border bg-background shadow hover:bg-accent disabled:opacity-40",
+        isVertical ? "bottom-8 left-1/2 -translate-x-1/2" : "right-2 top-1/2 -translate-y-1/2",
+        className,
+      )}
+      onClick={() => ctx?.scrollNext()} {...rest}>
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        {isVertical ? <path d="m6 9 6 6 6-6"/> : <path d="m9 18 6-6-6-6"/>}
+      </svg>
+    </button>
+  );
 }`,
 
   "button-group": `import { cn } from "@/components/ui/_cn";

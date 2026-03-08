@@ -42,6 +42,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: true,
   },
+  CraftGroup: {
+    tag: "div",
+    propsMap: ["className"],
+    isContainer: true,
+  },
   CraftDiv: {
     tag: "div",
     propsMap: ["className"],
@@ -181,6 +186,11 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: true,
   },
+  SlideContentSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   NavMenuSlot: {
     tag: "div",
     propsMap: [],
@@ -307,44 +317,6 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["orientation", "variant", "size", "className"],
     isContainer: false,
   },
-  CraftForm: {
-    tag: "form",
-    propsMap: ["className"],
-    isContainer: false,
-  },
-  // Phase 4: Overlay components (legacy standalone - render as Button for backward compat)
-  CraftDialog: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["variant", "className"],
-    textProp: "triggerText",
-    isContainer: false,
-  },
-  CraftAlertDialog: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["className"],
-    textProp: "triggerText",
-    isContainer: false,
-  },
-  CraftSheet: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["className"],
-    textProp: "triggerText",
-    isContainer: false,
-  },
-  CraftDrawer: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["className"],
-    textProp: "triggerText",
-    isContainer: false,
-  },
   CraftDropdownMenu: {
     tag: "div",
     propsMap: [],
@@ -353,14 +325,6 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
   CraftContextMenu: {
     tag: "div",
     propsMap: ["className"],
-    isContainer: false,
-  },
-  CraftPopover: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["className"],
-    textProp: "triggerText",
     isContainer: false,
   },
   CraftHoverCard: {
@@ -379,6 +343,26 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: ["className"],
     isContainer: false,
   },
+  CraftSidebar: {
+    tag: "nav",
+    propsMap: [],
+    isContainer: false,
+  },
+  SidebarHeaderSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
+  SidebarFooterSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
+  SidebarInsetSlot: {
+    tag: "div",
+    propsMap: [],
+    isContainer: true,
+  },
   CraftCommand: {
     tag: "div",
     propsMap: ["className"],
@@ -392,14 +376,6 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     isContainer: false,
   },
   CraftTooltip: {
-    tag: "Button",
-    importFrom: "@/components/ui/button",
-    importName: "Button",
-    propsMap: ["className"],
-    textProp: "triggerText",
-    isContainer: false,
-  },
-  CraftSonner: {
     tag: "Button",
     importFrom: "@/components/ui/button",
     importName: "Button",
@@ -465,8 +441,8 @@ const DEFAULT_DROPDOWN_DATA_STR = JSON.stringify([
 
 /** Default prop values to omit from generated TSX */
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
-  CraftButton: { variant: "default", size: "default", disabled: false, text: "Button",
-    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
+  CraftButton: { buttonType: "text", icon: "", iconSize: "4", variant: "default", size: "default", disabled: false, text: "Button",
+    overlayType: "none", linkedMocPath: "", sheetSide: "right", alertDialogPattern: "cancel-continue", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
   CraftInput: { type: "text", disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftBadge: { variant: "default", text: "Badge", tooltipText: "", tooltipSide: "" },
   CraftSeparator: { orientation: "horizontal" },
@@ -476,9 +452,9 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftLabel: { text: "Label", tooltipText: "", tooltipSide: "" },
   CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", linkedMocPath: "" },
   CraftContainer: {
-    display: "flex", flexDirection: "column", justifyContent: "start",
-    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
+    display: "flex", flexDirection: "column", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
   },
+  CraftGroup: { className: "", width: "200px", height: "200px" },
   CraftDiv: { contextMenuMocPath: "" },
   // Phase 1
   CraftAccordion: { items: "Item 1,Item 2,Item 3", type: "single", linkedMocPaths: "" },
@@ -507,25 +483,34 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftDataTable: { filterType: "none", pageable: false, pageSize: "10", selectable: false, columnToggle: false, stickyHeader: false, pinnedLeft: "0",
     headerBgClass: "", hoverRowClass: "", selectedRowClass: "", headerTextClass: "", headerHoverTextClass: "", headerBorderClass: "", tableBorderClass: "" },
   CraftResizable: { panelMeta: '{"direction":"horizontal","nextKey":2,"panels":[{"key":0,"size":50},{"key":1,"size":50}]}', withHandle: true },
-  CraftCarousel: { items: "Slide 1,Slide 2,Slide 3" },
+  CraftCarousel: { slideMeta: '{"keys":[0,1,2],"nextKey":3,"labels":{"0":"Slide 1","1":"Slide 2","2":"Slide 3"}}', loop: false, showArrows: true },
   CraftButtonGroup: { orientation: "horizontal", variant: "outline", size: "default", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", hoverCardMocPath: "", hoverCardSide: "bottom", hoverCardTrigger: "hover", contextMenuMocPath: "" },
-  CraftForm: {},
-  // Phase 4 (legacy standalone)
-  CraftDialog: { triggerText: "Open Dialog", variant: "default", linkedMocPath: "" },
-  CraftAlertDialog: { triggerText: "Open Alert", linkedMocPath: "" },
-  CraftSheet: { triggerText: "Open Sheet", side: "right", linkedMocPath: "" },
-  CraftDrawer: { triggerText: "Open Drawer", linkedMocPath: "" },
   CraftDropdownMenu: { triggerText: "Open Menu", menuData: DEFAULT_DROPDOWN_DATA_STR },
   CraftContextMenu: { menuData: DEFAULT_CONTEXTMENU_DATA_STR },
-  CraftPopover: { triggerText: "Open Popover", linkedMocPath: "" },
   CraftHoverCard: { triggerText: "Hover me", linkedMocPath: "", cardBorderRadius: "rounded-md" },
   CraftNavigationMenu: {},
   CraftMenubar: { menuData: DEFAULT_MENUBAR_DATA_STR },
   CraftCommand: { placeholder: "Type a command or search...", items: "Calendar,Search,Settings", linkedMocPath: "" },
   CraftCombobox: { placeholder: "Select an option...", items: "Apple,Banana,Cherry", linkedMocPath: "", tooltipText: "", tooltipSide: "", tooltipTrigger: "hover", contentWidth: "" },
   CraftTooltip: { triggerText: "Hover", text: "Tooltip text" },
-  CraftSonner: { triggerText: "Show Toast", text: "Event has been created." },
   CraftTypography: { variant: "h1", text: "Heading 1", items: "List item 1,List item 2,List item 3" },
+  CraftSidebar: {
+    sidebarData: JSON.stringify({
+      items: [
+        { key: 0, type: "group-label", label: "Main" },
+        { key: 1, type: "item", label: "Dashboard", icon: "LayoutDashboard", active: true },
+        { key: 2, type: "item", label: "Inbox", icon: "Inbox", badge: "5", badgeBgClass: "bg-primary", badgeTextClass: "text-primary-foreground" },
+        { key: 3, type: "item", label: "Settings", icon: "Settings" },
+        { key: 4, type: "separator" },
+        { key: 5, type: "group-label", label: "Other" },
+        { key: 6, type: "item", label: "Help", icon: "HelpCircle" },
+      ],
+      nextKey: 7,
+    }),
+    side: "left",
+    collapsible: "icon",
+    sidebarWidth: "240px",
+  },
 };
 
 export function craftStateToTsx(
@@ -533,6 +518,7 @@ export function craftStateToTsx(
   componentName = "MockPage",
   memos?: MocEditorMemo[],
 ): { imports: string; tsxSource: string } {
+  try {
   if (!craftState || !craftState.ROOT) {
     return { imports: "", tsxSource: `export default function ${componentName}() {\n  return <div />;\n}` };
   }
@@ -674,6 +660,11 @@ export function craftStateToTsx(
       const toastText = node.props?.toastText as string | undefined;
       if (toastText) {
         addImport("sonner", "toast");
+      }
+      const buttonType = node.props?.buttonType as string | undefined;
+      const icon = node.props?.icon as string | undefined;
+      if (buttonType === "icon" && icon) {
+        addImport("lucide-react", icon);
       }
     }
 
@@ -820,8 +811,48 @@ export function craftStateToTsx(
       return;
     }
 
+    // CraftCarousel: add carousel sub-component imports and traverse linkedNodes
+    if (resolvedName === "CraftCarousel") {
+      addImport("@/components/ui/carousel", "CarouselContent");
+      addImport("@/components/ui/carousel", "CarouselItem");
+      addImport("@/components/ui/carousel", "CarouselPrevious");
+      addImport("@/components/ui/carousel", "CarouselNext");
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
     // CraftNavigationMenu: traverse linkedNodes (slot children)
     if (resolvedName === "CraftNavigationMenu") {
+      for (const linkedId of Object.values(node.linkedNodes || {})) {
+        collectImports(linkedId);
+      }
+      return;
+    }
+
+    // CraftSidebar: collect icon imports from sidebarData and traverse linkedNodes
+    if (resolvedName === "CraftSidebar") {
+      try {
+        const meta = JSON.parse((node.props?.sidebarData as string) || "{}");
+        if (Array.isArray(meta.items)) {
+          function collectSidebarIcons(items: SidebarNavItemDef[]) {
+            for (const item of items) {
+              if (item.type === "item" && typeof item.icon === "string" && item.icon) {
+                addImport("lucide-react", item.icon);
+              }
+              if (item.children) collectSidebarIcons(item.children);
+            }
+          }
+          collectSidebarIcons(meta.items as SidebarNavItemDef[]);
+        }
+      } catch {
+        // ignore parse errors
+      }
+      const toggleOpenIcon = node.props?.toggleOpenIcon as string;
+      const toggleCloseIcon = node.props?.toggleCloseIcon as string;
+      if (toggleOpenIcon) addImport("lucide-react", toggleOpenIcon);
+      if (toggleCloseIcon) addImport("lucide-react", toggleCloseIcon);
       for (const linkedId of Object.values(node.linkedNodes || {})) {
         collectImports(linkedId);
       }
@@ -1000,10 +1031,13 @@ export function craftStateToTsx(
     if (resolvedName === "CraftFreeCanvas") {
       containerClass = "relative";
     }
+    if (resolvedName === "CraftGroup") {
+      containerClass = "relative";
+    }
 
     // Merge className
     const userClassName = (node.props?.className as string) || "";
-    const combinedClassName = [containerClass, userClassName].filter(Boolean).join(" ");
+    const combinedClassName = mergeContainerClasses(containerClass, userClassName);
     const classNameAttr = combinedClassName ? ` className="${combinedClassName}"` : "";
 
     // Build dimension styles
@@ -1193,6 +1227,11 @@ export function craftStateToTsx(
       return applyCommonWrappers(`${mocComments}\n${renderTabs(node, craftState, indent, renderNode)}`);
     }
 
+    // Carousel special case: render as LinkedNodes carousel
+    if (resolvedName === "CraftCarousel") {
+      return applyCommonWrappers(`${mocComments}\n${renderCarousel(node, craftState, indent, renderNode)}`);
+    }
+
     // NavigationMenu special case: render nav bar with hover dropdown slots
     if (resolvedName === "CraftNavigationMenu") {
       return applyCommonWrappers(`${mocComments}\n${renderNavigationMenu(node, craftState, indent, renderNode)}`);
@@ -1201,6 +1240,11 @@ export function craftStateToTsx(
     // Menubar special case: render from JSON menuData
     if (resolvedName === "CraftMenubar") {
       return applyCommonWrappers(`${mocComments}\n${renderMenubar(node, indent)}`);
+    }
+
+    // Sidebar special case: render sidebar layout with linked slots
+    if (resolvedName === "CraftSidebar") {
+      return applyCommonWrappers(`${mocComments}\n${renderSidebar(node, craftState, indent, renderNode)}`);
     }
 
     // ContextMenu special case: render from JSON menuData (applyCommonWrappers 対象外)
@@ -1331,6 +1375,18 @@ export function craftStateToTsx(
       return applyCommonWrappers(rendered);
     }
 
+    // CraftButton: icon モード時はアイコンを子要素として描画
+    if (resolvedName === "CraftButton") {
+      const buttonType = node.props?.buttonType as string | undefined;
+      const icon = node.props?.icon as string | undefined;
+      const iconSize = (node.props?.iconSize as string | undefined) || "4";
+      if (buttonType === "icon" && icon) {
+        rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${toastOnClick}${styleAttr}>\n${pad}  <${icon} className="h-${iconSize} w-${iconSize}" />\n${pad}</${tag}>`;
+        rendered = wrapWithOverlay(rendered, node.props, pad);
+        return applyCommonWrappers(rendered);
+      }
+    }
+
     // Text content
     if (textContent) {
       const escapedTextContent = textContent.includes("<kbd>")
@@ -1375,7 +1431,7 @@ export function craftStateToTsx(
   // Build root container class
   const rootContainerClass = buildContainerClasses(rootNode.props);
   const rootUserClass = (rootNode.props?.className as string) || "";
-  const rootCombinedClass = [rootContainerClass, rootUserClass].filter(Boolean).join(" ");
+  const rootCombinedClass = mergeContainerClasses(rootContainerClass, rootUserClass);
   const rootStyleAttr = buildStyleAttr(rootNode.props);
 
   // Build import statements
@@ -1397,6 +1453,9 @@ export function craftStateToTsx(
   }
 
   return { imports, tsxSource };
+  } catch (err) {
+    throw new Error(`craftStateToTsx failed: ${err}`);
+  }
 }
 
 function getResolvedName(node: CraftNodeData): string {
@@ -1431,6 +1490,27 @@ function buildPropsString(resolvedName: string, props: Record<string, unknown>, 
   return parts.length > 0 ? " " + parts.join(" ") : "";
 }
 
+/**
+ * containerClass と userClassName を結合し、競合するTailwindグループは
+ * userClassName 側を優先する（TailwindEditorの設定がコンポーネントpropより優先）。
+ */
+function mergeContainerClasses(containerClass: string, userClassName: string): string {
+  if (!containerClass || !userClassName) {
+    return [containerClass, userClassName].filter(Boolean).join(" ");
+  }
+  const userClasses = userClassName.split(/\s+/).filter(Boolean);
+  const hasUserItems   = userClasses.some(c => /^items-/.test(c));
+  const hasUserJustify = userClasses.some(c => /^justify-/.test(c));
+  const hasUserFlexDir = userClasses.some(c => c === "flex-row" || c === "flex-col");
+  const baseFiltered = containerClass.split(/\s+/).filter(Boolean).filter(c => {
+    if (hasUserItems   && /^items-/.test(c))                      return false;
+    if (hasUserJustify && /^justify-/.test(c))                    return false;
+    if (hasUserFlexDir && (c === "flex-row" || c === "flex-col")) return false;
+    return true;
+  });
+  return [...baseFiltered, ...userClasses].join(" ");
+}
+
 function buildContainerClasses(props: Record<string, unknown>): string {
   const classes: string[] = [];
   const display = (props?.display as string) || "flex";
@@ -1440,20 +1520,6 @@ function buildContainerClasses(props: Record<string, unknown>): string {
     const dir = (props?.flexDirection as string) || "column";
     if (dir === "row") classes.push("flex-row");
     else classes.push("flex-col");
-
-    const justify = (props?.justifyContent as string) || "start";
-    const justifyMap: Record<string, string> = {
-      start: "justify-start", center: "justify-center", end: "justify-end",
-      between: "justify-between", around: "justify-around", evenly: "justify-evenly",
-    };
-    if (justifyMap[justify] && justify !== "start") classes.push(justifyMap[justify]);
-
-    const align = (props?.alignItems as string) || "stretch";
-    const alignMap: Record<string, string> = {
-      start: "items-start", center: "items-center", end: "items-end",
-      stretch: "items-stretch", baseline: "items-baseline",
-    };
-    if (alignMap[align] && align !== "stretch") classes.push(alignMap[align]);
   } else {
     const cols = (props?.gridCols as number) || 3;
     classes.push(`grid-cols-${cols}`);
@@ -1477,6 +1543,7 @@ function buildStyleAttr(props: Record<string, unknown>, extraStyles?: Record<str
   const objectFit = props?.objectFit as string | undefined;
   const top = props?.top as string | undefined;
   const left = props?.left as string | undefined;
+  const zIndex = props?.zIndex as number | undefined;
   const parts: string[] = [];
   if (extraStyles) {
     for (const [k, v] of Object.entries(extraStyles)) parts.push(`${k}: "${v}"`);
@@ -1487,6 +1554,7 @@ function buildStyleAttr(props: Record<string, unknown>, extraStyles?: Record<str
   if (top || left) parts.push(`position: "absolute"`);
   if (top) parts.push(`top: "${top}"`);
   if (left) parts.push(`left: "${left}"`);
+  if (zIndex) parts.push(`zIndex: ${zIndex}`);
   if (parts.length === 0) return "";
   return ` style={{ ${parts.join(", ")} }}`;
 }
@@ -2322,6 +2390,261 @@ function renderDropdownMenu(node: CraftNodeData, indent: number): string {
   return lines.join("\n");
 }
 
+interface SidebarNavItemDef {
+  key: number;
+  type: "item" | "group-label" | "separator";
+  label?: string;
+  icon?: string;
+  active?: boolean;
+  badge?: string;
+  badgeBgClass?: string;
+  badgeTextClass?: string;
+  children?: SidebarNavItemDef[];
+  defaultOpen?: boolean;
+}
+
+function renderNavItemsHtml(
+  items: SidebarNavItemDef[],
+  pad: string,
+  depth: number,
+  navActiveBgClass: string,
+  navHoverBgClass: string,
+  navTextClass: string,
+  navIconClass: string,
+): string[] {
+  const lines: string[] = [];
+  const innerPad = pad + "  ";
+
+  for (const item of items) {
+    if (item.type === "separator") {
+      lines.push(`${pad}<hr className="my-1 border-t border-border mx-2" />`);
+    } else if (item.type === "group-label") {
+      const groupCls = ["px-2 py-1 text-xs font-medium uppercase tracking-wide", navTextClass || "text-muted-foreground"].filter(Boolean).join(" ");
+      lines.push(`${pad}<div data-sb-label className="${escapeAttr(groupCls)}">${escapeJsx(item.label || "")}</div>`);
+    } else {
+      const isActive = !!item.active;
+      const indentClass = depth === 1 ? "pl-5" : depth >= 2 ? "pl-8" : "";
+      const itemCls = [
+        "flex items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors w-full text-left",
+        indentClass,
+        isActive
+          ? [navActiveBgClass, navTextClass || "text-accent-foreground"].filter(Boolean).join(" ")
+          : [navHoverBgClass ? `hover:${navHoverBgClass}` : "hover:bg-accent", navTextClass || "text-foreground"].filter(Boolean).join(" "),
+      ].filter(Boolean).join(" ");
+
+      const hasChildren = !!(item.children && item.children.length > 0);
+
+      if (hasChildren) {
+        const detailsAttr = item.defaultOpen ? " open" : "";
+        lines.push(`${pad}<details${detailsAttr}>`);
+        lines.push(`${innerPad}<summary className="${escapeAttr(itemCls)}">`);
+        if (item.icon && depth < 2) {
+          const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+          lines.push(`${innerPad}  <${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
+        }
+        lines.push(`${innerPad}  <span data-sb-label className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
+        lines.push(`${innerPad}</summary>`);
+        lines.push(`${innerPad}<div data-sb-label className="flex flex-col gap-0.5">`);
+        lines.push(...renderNavItemsHtml(item.children!, innerPad + "  ", depth + 1, navActiveBgClass, navHoverBgClass, navTextClass, navIconClass));
+        lines.push(`${innerPad}</div>`);
+        lines.push(`${pad}</details>`);
+      } else {
+        lines.push(`${pad}<button type="button" className="${escapeAttr(itemCls)}">`);
+        if (item.icon && depth < 2) {
+          const iconCls = ["mt-0.5 h-4 w-4 shrink-0", navIconClass].filter(Boolean).join(" ");
+          lines.push(`${innerPad}<${escapeJsx(item.icon)} className="${escapeAttr(iconCls)}" />`);
+        }
+        lines.push(`${innerPad}<span data-sb-label className="min-w-0 flex-1 break-words">${escapeJsx(item.label || "")}</span>`);
+        if (item.badge) {
+          const badgeCls = [
+            "ml-auto inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+            item.badgeBgClass || "bg-primary",
+            item.badgeTextClass || "text-primary-foreground",
+          ].filter(Boolean).join(" ");
+          lines.push(`${innerPad}<span data-sb-label className="${escapeAttr(badgeCls)}">${escapeJsx(item.badge)}</span>`);
+        }
+        lines.push(`${pad}</button>`);
+      }
+    }
+  }
+  return lines;
+}
+
+function renderSidebar(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  let items: SidebarNavItemDef[] = [];
+  try {
+    const meta = JSON.parse((node.props?.sidebarData as string) || "{}");
+    if (Array.isArray(meta.items)) items = meta.items as SidebarNavItemDef[];
+  } catch {
+    // use defaults
+  }
+
+  const side = (node.props?.side as string) || "left";
+  const sidebarWidth = (node.props?.sidebarWidth as string) || "240px";
+  const className = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  const sidebarBgClass = (node.props?.sidebarBgClass as string) || "bg-muted/50";
+  const sidebarBorderColor = (node.props?.sidebarBorderColor as string) || "";
+  const sidebarShadow = (node.props?.sidebarShadow as string) || "";
+  const headerBgClass = (node.props?.headerBgClass as string) || "";
+  const headerBorderColor = (node.props?.headerBorderColor as string) || "";
+  const headerShadow = (node.props?.headerShadow as string) || "";
+  const navActiveBgClass = (node.props?.navActiveBgClass as string) || "bg-accent";
+  const navHoverBgClass = (node.props?.navHoverBgClass as string) || "";
+  const navTextClass = (node.props?.navTextClass as string) || "";
+  const navIconClass = (node.props?.navIconClass as string) || "";
+  const footerBgClass = (node.props?.footerBgClass as string) || "";
+  const footerBorderColor = (node.props?.footerBorderColor as string) || "";
+  const footerShadow = (node.props?.footerShadow as string) || "";
+  const insetBgClass = (node.props?.insetBgClass as string) || "bg-background";
+  const insetBorderColor = (node.props?.insetBorderColor as string) || "";
+  const insetShadow = (node.props?.insetShadow as string) || "";
+
+  const outerCls = ["flex overflow-hidden", side === "right" ? "flex-row-reverse" : "flex-row", className].filter(Boolean).join(" ");
+
+  const sidebarCls = [
+    "flex flex-col overflow-hidden",
+    sidebarBgClass,
+    sidebarBorderColor,
+    sidebarShadow,
+    side === "left" ? "border-r" : "border-l",
+  ].filter(Boolean).join(" ");
+
+  const headerCls = [
+    "border-b px-2 py-3",
+    headerBgClass,
+    headerBorderColor,
+    headerShadow,
+  ].filter(Boolean).join(" ");
+
+  const footerCls = [
+    "border-t px-2 py-3",
+    footerBgClass,
+    footerBorderColor,
+    footerShadow,
+  ].filter(Boolean).join(" ");
+
+  const insetCls = [
+    "flex flex-col flex-1 overflow-hidden",
+    insetBgClass,
+    insetBorderColor,
+    insetShadow,
+  ].filter(Boolean).join(" ");
+
+  // Resolve slot children and slot className
+  function getSlotNode(slotKey: string) {
+    const slotId = node.linkedNodes?.[slotKey];
+    if (!slotId) return undefined;
+    return craftState[slotId];
+  }
+  function renderSlot(slotKey: string, slotIndent: number): string {
+    const slotNode = getSlotNode(slotKey);
+    if (!slotNode) return "";
+    return (slotNode.nodes || []).map((childId) => renderNodeFn(childId, slotIndent)).filter(Boolean).join("\n");
+  }
+  function slotClassName(slotKey: string): string {
+    return (getSlotNode(slotKey)?.props?.className as string) || "";
+  }
+
+  const headerChildren = renderSlot("sidebar_header", indent + 4);
+  const footerChildren = renderSlot("sidebar_footer", indent + 4);
+  const insetChildren = renderSlot("sidebar_inset", indent + 3);
+
+  const collapsible = (node.props?.collapsible as string) || "icon";
+  const isCollapsible = collapsible !== "none";
+  const isIconMode = collapsible === "icon";
+  const headerCollapseMode = (node.props?.headerCollapseMode as string) || "clip";
+  const footerCollapseMode = (node.props?.footerCollapseMode as string) || "clip";
+
+  const defaultCollapsed = !!(node.props?.defaultCollapsed);
+
+  // ref callback for preview toggle (DOM manipulation, no React state needed)
+  // apply() function handles all state-dependent DOM updates (called on mount for initial state and on click)
+  let refAttr = "";
+  if (isCollapsible) {
+    const initC = defaultCollapsed ? "true" : "false";
+    if (isIconMode) {
+      const hdrHide = headerCollapseMode === "hide" ? " const hdr = aside.querySelector('[data-sb-header]'); if (hdr) hdr.style.display = c ? 'none' : '';" : "";
+      const ftrHide = footerCollapseMode === "hide" ? " const ftr = aside.querySelector('[data-sb-footer]'); if (ftr) ftr.style.display = c ? 'none' : '';" : "";
+      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; const fw = '${escapeAttr(sidebarWidth)}'; let c = ${initC}; const apply = () => { const w = c ? '48px' : fw; aside.style.width = w; aside.style.minWidth = w; aside.querySelectorAll('[data-sb-label]').forEach((n: any) => { n.style.display = c ? 'none' : ''; });${hdrHide}${ftrHide} toggles.forEach((b: any) => { b.querySelectorAll('[data-sb-open-icon]').forEach((i: any) => { i.style.display = c ? '' : 'none'; }); b.querySelectorAll('[data-sb-close-icon]').forEach((i: any) => { i.style.display = c ? 'none' : ''; }); }); }; apply(); toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; apply(); })); }}`;
+    } else {
+      // offcanvas: hide the aside entirely
+      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; let c = ${initC}; const apply = () => { aside.style.display = c ? 'none' : ''; toggles.forEach((b: any) => { b.querySelectorAll('[data-sb-open-icon]').forEach((i: any) => { i.style.display = c ? '' : 'none'; }); b.querySelectorAll('[data-sb-close-icon]').forEach((i: any) => { i.style.display = c ? 'none' : ''; }); }); }; apply(); toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; apply(); })); }}`;
+    }
+  }
+
+  const lines: string[] = [];
+  lines.push(`${pad}<div className="${escapeAttr(outerCls)}"${styleAttr}${refAttr}>`);
+
+  // Sidebar panel
+  lines.push(`${pad}  <aside data-sb-aside className="${escapeAttr(sidebarCls)}" style={{ width: "${escapeAttr(sidebarWidth)}", minWidth: "${escapeAttr(sidebarWidth)}", flexShrink: 0 }}>`);
+
+  // Header slot
+  const headerInnerCls = ["min-h-[40px]", slotClassName("sidebar_header")].filter(Boolean).join(" ");
+  lines.push(`${pad}    <div data-sb-header className="${escapeAttr(headerCls)}">`);
+  lines.push(`${pad}      <div className="${escapeAttr(headerInnerCls)}">`);
+  if (headerChildren) lines.push(headerChildren);
+  lines.push(`${pad}      </div>`);
+  lines.push(`${pad}    </div>`);
+
+  // Nav items
+  lines.push(`${pad}    <nav className="flex flex-col flex-1 overflow-y-auto py-2 gap-0.5 px-2">`);
+  lines.push(...renderNavItemsHtml(items, `${pad}      `, 0, navActiveBgClass, navHoverBgClass, navTextClass, navIconClass));
+  lines.push(`${pad}    </nav>`);
+
+  // Footer slot
+  const footerInnerCls = ["min-h-[40px]", slotClassName("sidebar_footer")].filter(Boolean).join(" ");
+  lines.push(`${pad}    <div data-sb-footer className="${escapeAttr(footerCls)}">`);
+  lines.push(`${pad}      <div className="${escapeAttr(footerInnerCls)}">`);
+  if (footerChildren) lines.push(footerChildren);
+  lines.push(`${pad}      </div>`);
+  lines.push(`${pad}    </div>`);
+
+  lines.push(`${pad}  </aside>`);
+
+  // Inset panel
+  lines.push(`${pad}  <main className="${escapeAttr(insetCls)}">`);
+  if (isCollapsible) {
+    const iconSize = (node.props?.toggleIconSize as string) || "4";
+    const openIconName = (node.props?.toggleOpenIcon as string) || "";
+    const closeIconName = (node.props?.toggleCloseIcon as string) || "";
+    const hasIcons = openIconName || closeIconName;
+    let buttonContent: string;
+    if (hasIcons) {
+      const openArrow = side === "left" ? "→" : "←";
+      const closeArrow = side === "left" ? "←" : "→";
+      const openPart = openIconName
+        ? `<${openIconName} data-sb-open-icon className="h-${iconSize} w-${iconSize}" style={{ display: 'none' }} />`
+        : `<span data-sb-open-icon style={{ display: 'none' }}>${openArrow}</span>`;
+      const closePart = closeIconName
+        ? `<${closeIconName} data-sb-close-icon className="h-${iconSize} w-${iconSize}" />`
+        : `<span data-sb-close-icon>${closeArrow}</span>`;
+      buttonContent = openPart + closePart;
+    } else {
+      buttonContent = side === "left" ? "←" : "→";
+    }
+    lines.push(`${pad}    <div className="flex items-center border-b px-2 py-1">`);
+    lines.push(`${pad}      <button data-sb-toggle type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground">${buttonContent}</button>`);
+    lines.push(`${pad}    </div>`);
+  }
+  const insetContentCls = ["flex-1 overflow-auto", slotClassName("sidebar_inset")].filter(Boolean).join(" ");
+  lines.push(`${pad}    <div className="${escapeAttr(insetContentCls)}">`);
+  if (insetChildren) lines.push(insetChildren);
+  lines.push(`${pad}    </div>`);
+  lines.push(`${pad}  </main>`);
+
+  lines.push(`${pad}</div>`);
+  return lines.join("\n");
+}
+
 function renderTabs(
   node: CraftNodeData,
   craftState: CraftSerializedState,
@@ -2442,6 +2765,68 @@ function renderTabs(
   }
 
   lines.push(`${pad}</Tabs>`);
+  return lines.join("\n");
+}
+
+function renderCarousel(
+  node: CraftNodeData,
+  craftState: CraftSerializedState,
+  indent: number,
+  renderNodeFn: (nodeId: string, indent: number) => string,
+): string {
+  const pad = "  ".repeat(indent);
+
+  // Parse slideMeta
+  let keys: number[] = [0, 1, 2];
+  try {
+    const meta = JSON.parse((node.props?.slideMeta as string) || "{}");
+    if (Array.isArray(meta.keys)) keys = meta.keys;
+  } catch {
+    // use defaults
+  }
+
+  const orientation = (node.props?.orientation as string) || "horizontal";
+  const loop = !!(node.props?.loop);
+  const showArrows = node.props?.showArrows !== false;
+  const userClassName = (node.props?.className as string) || "";
+  const styleAttr = buildStyleAttr(node.props);
+
+  const optsAttr = `opts={{ loop: ${loop} }}`;
+  const orientationAttr = orientation === "vertical" ? ` orientation="vertical"` : "";
+  const classAttr = userClassName ? ` className="${escapeAttr(userClassName)}"` : "";
+
+  const itemClassAttr = "";
+
+  const lines: string[] = [];
+  lines.push(`${pad}<Carousel ${optsAttr}${orientationAttr}${classAttr}${styleAttr}>`);
+  lines.push(`${pad}  <CarouselContent>`);
+
+  for (const key of keys) {
+    const slotId = node.linkedNodes?.[`slide_${key}`];
+    const slotNode = slotId ? craftState[slotId] : null;
+    const slotClassName = (slotNode?.props?.className as string) || "";
+    const slotChildren = slotNode
+      ? (slotNode.nodes || []).map((childId) => renderNodeFn(childId, indent + 5)).filter(Boolean)
+      : [];
+
+    if (slotChildren.length > 0) {
+      const innerCls = ["h-full w-full", slotClassName].filter(Boolean).join(" ");
+      lines.push(`${pad}    <CarouselItem${itemClassAttr}>`);
+      lines.push(`${pad}      <div className="${escapeAttr(innerCls)}">`);
+      for (const child of slotChildren) lines.push(child);
+      lines.push(`${pad}      </div>`);
+      lines.push(`${pad}    </CarouselItem>`);
+    } else {
+      lines.push(`${pad}    <CarouselItem${itemClassAttr} />`);
+    }
+  }
+
+  lines.push(`${pad}  </CarouselContent>`);
+  if (showArrows) {
+    lines.push(`${pad}  <CarouselPrevious />`);
+    lines.push(`${pad}  <CarouselNext />`);
+  }
+  lines.push(`${pad}</Carousel>`);
   return lines.join("\n");
 }
 
@@ -2680,7 +3065,20 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
         `${pad}  </DialogContent>`,
         `${pad}</Dialog>`,
       ].join("\n");
-    case "alert-dialog":
+    case "alert-dialog": {
+      const pattern = (props?.alertDialogPattern as string) || "cancel-continue";
+      // [leftLabel, rightLabel, leftIsAction] — leftIsAction=true なら左が AlertDialogAction（色付き）
+      const ALERT_DIALOG_PATTERNS: Record<string, [string, string, boolean]> = {
+        "cancel-continue": ["Cancel", "Continue", false],
+        "continue-cancel": ["Continue", "Cancel", true],
+        "yes-no":          ["Yes",    "No",      true],
+        "no-yes":          ["No",     "Yes",     false],
+        "ok-cancel":       ["OK",     "Cancel",  true],
+        "cancel-ok":       ["Cancel", "OK",      false],
+      };
+      const [leftBtn, rightBtn, leftIsAction] = ALERT_DIALOG_PATTERNS[pattern] ?? ["Cancel", "Continue", false];
+      const leftTag  = leftIsAction  ? "AlertDialogAction" : "AlertDialogCancel";
+      const rightTag = leftIsAction  ? "AlertDialogCancel" : "AlertDialogAction";
       return [
         `${pad}<AlertDialog>`,
         `${pad}  <AlertDialogTrigger asChild>`,
@@ -2688,11 +3086,14 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
         `${pad}  </AlertDialogTrigger>`,
         `${pad}  <AlertDialogContent${classAttr}${styleAttr}>`,
         `${pad}    ${contentComment}`,
-        `${pad}    <AlertDialogCancel>Cancel</AlertDialogCancel>`,
-        `${pad}    <AlertDialogAction>Continue</AlertDialogAction>`,
+        `${pad}    <div className="flex justify-end gap-8">`,
+        `${pad}      <${leftTag}>${leftBtn}</${leftTag}>`,
+        `${pad}      <${rightTag}>${rightBtn}</${rightTag}>`,
+        `${pad}    </div>`,
         `${pad}  </AlertDialogContent>`,
         `${pad}</AlertDialog>`,
       ].join("\n");
+    }
     case "sheet": {
       const side = (props?.sheetSide as string) || "right";
       const sideAttr = side !== "right" ? ` side="${side}"` : "";

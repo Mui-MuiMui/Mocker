@@ -2,6 +2,7 @@ import { useNode, type UserComponent } from "@craftjs/core";
 import { cn } from "../../utils/cn";
 import { cva } from "class-variance-authority";
 import { renderKbd } from "../../utils/renderKbd";
+import * as Icons from "lucide-react";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-pre-line rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
@@ -39,13 +40,17 @@ const OVERLAY_LABELS: Record<string, string> = {
 };
 
 interface CraftButtonProps {
+  buttonType?: "text" | "icon";
   text?: string;
+  icon?: string;
+  iconSize?: string;
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   disabled?: boolean;
   overlayType?: "none" | "dialog" | "alert-dialog" | "sheet" | "drawer" | "popover" | "dropdown-menu";
   linkedMocPath?: string;
   sheetSide?: "top" | "right" | "bottom" | "left";
+  alertDialogPattern?: "cancel-continue" | "continue-cancel" | "yes-no" | "no-yes" | "ok-cancel" | "cancel-ok";
   overlayWidth?: string;
   overlayHeight?: string;
   overlayClassName?: string;
@@ -59,13 +64,17 @@ interface CraftButtonProps {
 }
 
 export const CraftButton: UserComponent<CraftButtonProps> = ({
+  buttonType = "text",
   text = "Button",
+  icon = "",
+  iconSize = "4",
   variant = "default",
   size = "default",
   disabled = false,
   overlayType = "none",
   linkedMocPath = "",
   sheetSide = "right",
+  alertDialogPattern = "cancel-continue",
   overlayWidth = "",
   overlayHeight = "",
   overlayClassName = "",
@@ -82,6 +91,10 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
   } = useNode();
 
   const overlayLabel = overlayType !== "none" ? OVERLAY_LABELS[overlayType] : null;
+
+  const IconComponent = icon
+    ? (Icons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[icon]
+    : null;
 
   const classes = className ? className.split(" ").filter(Boolean) : [];
   const marginClasses = classes.filter((c) => /^-?m[trblxy]?-/.test(c));
@@ -100,7 +113,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
         disabled={disabled}
         type="button"
       >
-        {renderKbd(text)}
+        {buttonType === "icon" && IconComponent ? <IconComponent className={`h-${iconSize} w-${iconSize}`} /> : renderKbd(text)}
         {linkedMocPath && (
           <span className="ml-1 opacity-60" title={linkedMocPath}>
             &#128279;
@@ -119,16 +132,22 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
 CraftButton.craft = {
   displayName: "Button",
   props: {
+    buttonType: "text",
     text: "Button",
+    icon: "",
+    iconSize: "4",
     variant: "default",
     size: "default",
     disabled: false,
     overlayType: "none",
+    alertDialogPattern: "cancel-continue",
     linkedMocPath: "",
     sheetSide: "right",
     overlayWidth: "",
     overlayHeight: "",
     overlayClassName: "",
+    tooltipText: "",
+    tooltipSide: "",
     toastText: "",
     toastPosition: "bottom-right",
     width: "auto",
