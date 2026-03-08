@@ -615,7 +615,9 @@ export function PropEditor() {
       // Button: icon モード時は text を非表示、text モード時は icon/iconSize を非表示
       !(componentName === "Button" && key === "text" && selectedProps.buttonType === "icon") &&
       !(componentName === "Button" && key === "icon" && selectedProps.buttonType !== "icon") &&
-      !(componentName === "Button" && key === "iconSize" && selectedProps.buttonType !== "icon"),
+      !(componentName === "Button" && key === "iconSize" && selectedProps.buttonType !== "icon") &&
+      // Sidebar: toggle icon props は collapsible !== "none" のときのみ表示
+      !(componentName === "Sidebar" && (key === "toggleOpenIcon" || key === "toggleCloseIcon" || key === "toggleIconSize") && selectedProps.collapsible === "none"),
   ).map(([key, defaultVal]) => {
     const selectedVal = selectedProps[key];
     // selectedProps の値の型が craftDefaultProps のデフォルト値と一致する場合のみ使用
@@ -635,14 +637,14 @@ export function PropEditor() {
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
   function renderProp(key: string, value: unknown) {
-    // Custom UI for iconSize (slider) — Button icon mode
-    if (key === "iconSize") {
+    // Custom UI for iconSize / toggleIconSize (slider)
+    if (key === "iconSize" || key === "toggleIconSize") {
       const ICON_SIZE_SCALE = ["2","2.5","3","3.5","4","5","6","7","8","9","10","11","12","14","16","20","24","28","32","36","40","44","48","52","56","60","64","72","80","96"];
       const currentVal = String(value ?? "4");
       const idx = Math.max(0, ICON_SIZE_SCALE.indexOf(currentVal));
       return (
         <div key={key} className="flex flex-col gap-1">
-          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">iconSize</label>
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">{key}</label>
           <div className="flex items-center gap-2">
             <input
               type="range"
@@ -857,8 +859,8 @@ export function PropEditor() {
       );
     }
 
-    // Custom UI for icon (combobox with all Lucide icons)
-    if (key === "icon") {
+    // Custom UI for icon / toggleOpenIcon / toggleCloseIcon (combobox with all Lucide icons)
+    if (key === "icon" || key === "toggleOpenIcon" || key === "toggleCloseIcon") {
       return (
         <div key={key} className="flex flex-col gap-1">
           <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">

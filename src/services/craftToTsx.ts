@@ -843,6 +843,10 @@ export function craftStateToTsx(
       } catch {
         // ignore parse errors
       }
+      const toggleOpenIcon = node.props?.toggleOpenIcon as string;
+      const toggleCloseIcon = node.props?.toggleCloseIcon as string;
+      if (toggleOpenIcon) addImport("lucide-react", toggleOpenIcon);
+      if (toggleCloseIcon) addImport("lucide-react", toggleCloseIcon);
       for (const linkedId of Object.values(node.linkedNodes || {})) {
         collectImports(linkedId);
       }
@@ -2555,10 +2559,10 @@ function renderSidebar(
     if (isIconMode) {
       const hdrHide = headerCollapseMode === "hide" ? " const hdr = aside.querySelector('[data-sb-header]'); if (hdr) hdr.style.display = c ? 'none' : '';" : "";
       const ftrHide = footerCollapseMode === "hide" ? " const ftr = aside.querySelector('[data-sb-footer]'); if (ftr) ftr.style.display = c ? 'none' : '';" : "";
-      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; const fw = '${escapeAttr(sidebarWidth)}'; let c = false; toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; const w = c ? '48px' : fw; aside.style.width = w; aside.style.minWidth = w; aside.querySelectorAll('[data-sb-label]').forEach((n: any) => { n.style.display = c ? 'none' : ''; });${hdrHide}${ftrHide} })); }}`;
+      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; const fw = '${escapeAttr(sidebarWidth)}'; let c = false; toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; const w = c ? '48px' : fw; aside.style.width = w; aside.style.minWidth = w; aside.querySelectorAll('[data-sb-label]').forEach((n: any) => { n.style.display = c ? 'none' : ''; });${hdrHide}${ftrHide} b.querySelectorAll('[data-sb-open-icon]').forEach((i: any) => { i.style.display = c ? '' : 'none'; }); b.querySelectorAll('[data-sb-close-icon]').forEach((i: any) => { i.style.display = c ? 'none' : ''; }); })); }}`;
     } else {
       // offcanvas: hide the aside entirely
-      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; let c = false; toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; aside.style.display = c ? 'none' : ''; })); }}`;
+      refAttr = ` ref={(el: any) => { if (!el || el.__sbInit) return; el.__sbInit = true; const aside = el.querySelector('[data-sb-aside]'); const toggles = el.querySelectorAll('[data-sb-toggle]'); if (!aside || !toggles.length) return; let c = false; toggles.forEach((b: any) => b.addEventListener('click', () => { c = !c; aside.style.display = c ? 'none' : ''; b.querySelectorAll('[data-sb-open-icon]').forEach((i: any) => { i.style.display = c ? '' : 'none'; }); b.querySelectorAll('[data-sb-close-icon]').forEach((i: any) => { i.style.display = c ? 'none' : ''; }); })); }}`;
     }
   }
 
@@ -2594,9 +2598,26 @@ function renderSidebar(
   // Inset panel
   lines.push(`${pad}  <main className="${escapeAttr(insetCls)}">`);
   if (isCollapsible) {
-    const toggleArrow = side === "left" ? "←" : "→";
+    const iconSize = (node.props?.toggleIconSize as string) || "4";
+    const openIconName = (node.props?.toggleOpenIcon as string) || "";
+    const closeIconName = (node.props?.toggleCloseIcon as string) || "";
+    const hasIcons = openIconName || closeIconName;
+    let buttonContent: string;
+    if (hasIcons) {
+      const openArrow = side === "left" ? "→" : "←";
+      const closeArrow = side === "left" ? "←" : "→";
+      const openPart = openIconName
+        ? `<${openIconName} data-sb-open-icon className="h-${iconSize} w-${iconSize}" style={{ display: 'none' }} />`
+        : `<span data-sb-open-icon style={{ display: 'none' }}>${openArrow}</span>`;
+      const closePart = closeIconName
+        ? `<${closeIconName} data-sb-close-icon className="h-${iconSize} w-${iconSize}" />`
+        : `<span data-sb-close-icon>${closeArrow}</span>`;
+      buttonContent = openPart + closePart;
+    } else {
+      buttonContent = side === "left" ? "←" : "→";
+    }
     lines.push(`${pad}    <div className="flex items-center border-b px-2 py-1">`);
-    lines.push(`${pad}      <button data-sb-toggle type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground">${toggleArrow}</button>`);
+    lines.push(`${pad}      <button data-sb-toggle type="button" className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground">${buttonContent}</button>`);
     lines.push(`${pad}    </div>`);
   }
   const insetContentCls = ["flex-1 overflow-auto", slotClassName("sidebar_inset")].filter(Boolean).join(" ");

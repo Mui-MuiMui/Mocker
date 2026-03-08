@@ -302,6 +302,9 @@ interface CraftSidebarProps {
   insetBgClass?: string;
   insetBorderColor?: string;
   insetShadow?: string;
+  toggleOpenIcon?: string;
+  toggleCloseIcon?: string;
+  toggleIconSize?: string;
   className?: string;
 }
 
@@ -330,6 +333,9 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
   insetBgClass = "",
   insetBorderColor = "",
   insetShadow = "",
+  toggleOpenIcon = "",
+  toggleCloseIcon = "",
+  toggleIconSize = "4",
   className = "",
 }) => {
   const {
@@ -443,7 +449,12 @@ export const CraftSidebar: UserComponent<CraftSidebarProps> = ({
             className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             title={collapsed ? "サイドバーを開く" : "サイドバーを閉じる"}
           >
-            {side === "left" ? (collapsed ? "→" : "←") : collapsed ? "←" : "→"}
+            {(() => {
+              const iconName = collapsed ? toggleOpenIcon : toggleCloseIcon;
+              const IconComp = iconName ? (LucideIcons as Record<string, any>)[iconName] : null;
+              if (IconComp) return <IconComp className={`h-${toggleIconSize} w-${toggleIconSize}`} />;
+              return side === "left" ? (collapsed ? "→" : "←") : collapsed ? "←" : "→";
+            })()}
           </button>
         </div>
       )}
@@ -506,6 +517,9 @@ CraftSidebar.craft = {
     insetBgClass: "",
     insetBorderColor: "",
     insetShadow: "",
+    toggleOpenIcon: "",
+    toggleCloseIcon: "",
+    toggleIconSize: "4",
     className: "",
   },
   rules: {
