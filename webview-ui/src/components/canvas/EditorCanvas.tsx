@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Frame, Element } from "@craftjs/core";
+import { Frame, Element, useEditor } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftContainer } from "../../crafts/layout/CraftContainer";
@@ -27,6 +27,68 @@ const ZOOM_STEP = 0.1;
 const ZOOM_MIN = 0.25;
 const ZOOM_MAX = 2;
 
+/**
+ * 自由配置モードでパレットからドロップされたコンポーネントをドロップ座標に配置する。
+ * canvasScaleRef: zoom 変換が適用されたキャンバス div への参照
+ */
+function AbsoluteDropPositioner({
+  canvasRef,
+}: {
+  canvasRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  const prevNodeIdsRef = useRef<Set<string>>(new Set());
+  const zoom = useEditorStore((s) => s.zoom);
+  const layoutMode = useEditorStore((s) => s.layoutMode);
+  const { nodes, actions } = useEditor((state) => ({ nodes: state.nodes }));
+
+  // マウス座標を常時追跡
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
+    };
+    document.addEventListener("mousemove", onMove);
+    return () => document.removeEventListener("mousemove", onMove);
+  }, []);
+
+  // 新規ノードを検出してドロップ座標を設定
+  useEffect(() => {
+    const currentIds = new Set(Object.keys(nodes));
+
+    if (layoutMode === "absolute" && prevNodeIdsRef.current.size > 0) {
+      const canvas = canvasRef.current;
+
+      for (const newId of currentIds) {
+        if (prevNodeIdsRef.current.has(newId)) continue;
+
+        const node = nodes[newId];
+        // ROOT の直接子のみ対象（CraftGroup 内の子は親が ROOT でないのでスキップ）
+        if (!node || node.data.parent !== "ROOT") continue;
+
+        // top/left が既に設定されている = ファイルロードによる追加 → スキップ
+        const nodeProps = node.data.props as Record<string, unknown>;
+        if (nodeProps.top !== undefined || nodeProps.left !== undefined) continue;
+
+        if (!canvas) continue;
+
+        // getBoundingClientRect() は zoom 後の視覚座標を返すため zoom で割り戻す
+        const rect = canvas.getBoundingClientRect();
+        const x = Math.max(0, Math.round((lastMousePos.current.x - rect.left) / zoom));
+        const y = Math.max(0, Math.round((lastMousePos.current.y - rect.top) / zoom));
+
+        actions.setProp(newId, (props: Record<string, unknown>) => {
+          props.top = `${y}px`;
+          props.left = `${x}px`;
+        });
+      }
+    }
+
+    prevNodeIdsRef.current = currentIds;
+  }, [nodes, layoutMode, zoom, actions, canvasRef]);
+
+  return null;
+}
+
 export function EditorCanvas() {
   const { t } = useTranslation();
   const themeMode = useEditorStore((s) => s.themeMode);
@@ -44,6 +106,7 @@ export function EditorCanvas() {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollContentRef = useRef<HTMLDivElement>(null);
+  const canvasScaleRef = useRef<HTMLDivElement>(null);
   const isSpaceHeld = useRef(false);
   const isPanning = useRef(false);
   const panStart = useRef({ x: 0, y: 0, scrollLeft: 0, scrollTop: 0 });
@@ -261,6 +324,7 @@ export function EditorCanvas() {
             }}
           >
             <div
+              ref={canvasScaleRef}
               style={{
                 width: viewportWidth,
                 minHeight: viewportHeight,
@@ -276,6 +340,7 @@ export function EditorCanvas() {
               </div>
               <div data-momoc-viewport className={themeMode === "dark" ? "dark" : ""}>
                 <div className="min-h-full bg-background text-foreground">
+                  <AbsoluteDropPositioner canvasRef={canvasScaleRef} />
                   <Frame>
                     {layoutMode === "absolute" ? (
                       <Element is={CraftFreeCanvas} canvas width="100%" height="100%" />
