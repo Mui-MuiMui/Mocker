@@ -322,7 +322,7 @@ const INTERACTION_DEFAULTS: Record<string, unknown> = {
 
 /** フロー配置専用プロパティ — layoutMode === "flow" のみ表示 */
 const FLOW_KEYS = new Set([
-  "display", "flexDirection", "justifyContent", "alignItems", "gap", "gridCols",
+  "display", "flexDirection", "gap", "gridCols",
 ]);
 
 /** 自由配置専用プロパティ — layoutMode === "absolute" のみ表示 */
@@ -335,8 +335,6 @@ const LAYOUT_ALL_KEYS = new Set([...COMMON_KEYS, ...FLOW_KEYS, ...ABSOLUTE_KEYS]
 const FLOW_DEFAULTS: Record<string, unknown> = {
   display: "flex",
   flexDirection: "row",
-  justifyContent: "start",
-  alignItems: "start",
   gap: "4",
   gridCols: 3,
 };

@@ -4,8 +4,6 @@ import { cn } from "../../utils/cn";
 interface CraftContainerProps {
   display?: "flex" | "grid";
   flexDirection?: "row" | "column";
-  justifyContent?: "start" | "center" | "end" | "between" | "around" | "evenly";
-  alignItems?: "start" | "center" | "end" | "stretch" | "baseline";
   gap?: string;
   gridCols?: number;
   linkedMocPath?: string;
@@ -15,23 +13,6 @@ interface CraftContainerProps {
   className?: string;
   children?: React.ReactNode;
 }
-
-const justifyMap: Record<string, string> = {
-  start: "justify-start",
-  center: "justify-center",
-  end: "justify-end",
-  between: "justify-between",
-  around: "justify-around",
-  evenly: "justify-evenly",
-};
-
-const alignMap: Record<string, string> = {
-  start: "items-start",
-  center: "items-center",
-  end: "items-end",
-  stretch: "items-stretch",
-  baseline: "items-baseline",
-};
 
 const gapMap: Record<string, string> = {
   "0": "gap-0",
@@ -67,8 +48,6 @@ const gridColsMap: Record<number, string> = {
 export const CraftContainer: UserComponent<CraftContainerProps> = ({
   display = "flex",
   flexDirection = "row",
-  justifyContent = "start",
-  alignItems = "start",
   gap = "4",
   gridCols = 3,
   linkedMocPath = "",
@@ -84,13 +63,7 @@ export const CraftContainer: UserComponent<CraftContainerProps> = ({
 
   const layoutClasses =
     display === "flex"
-      ? cn(
-          "flex",
-          flexDirection === "row" ? "flex-row" : "flex-col",
-          justifyMap[justifyContent],
-          alignMap[alignItems],
-          gapMap[gap],
-        )
+      ? cn("flex", flexDirection === "row" ? "flex-row" : "flex-col", gapMap[gap])
       : cn("grid", gridColsMap[gridCols], gapMap[gap]);
 
   return (
@@ -125,8 +98,6 @@ CraftContainer.craft = {
   props: {
     display: "flex",
     flexDirection: "row",
-    justifyContent: "start",
-    alignItems: "start",
     gap: "4",
     gridCols: 3,
     linkedMocPath: "",

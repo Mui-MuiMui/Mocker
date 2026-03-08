@@ -447,8 +447,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftLabel: { text: "Label", tooltipText: "", tooltipSide: "" },
   CraftCard: { title: "Card Title", description: "", contextMenuMocPath: "", linkedMocPath: "" },
   CraftContainer: {
-    display: "flex", flexDirection: "column", justifyContent: "start",
-    alignItems: "stretch", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
+    display: "flex", flexDirection: "column", gap: "4", gridCols: 3, contextMenuMocPath: "", linkedMocPath: "",
   },
   CraftDiv: { contextMenuMocPath: "" },
   // Phase 1
@@ -1491,20 +1490,6 @@ function buildContainerClasses(props: Record<string, unknown>): string {
     const dir = (props?.flexDirection as string) || "column";
     if (dir === "row") classes.push("flex-row");
     else classes.push("flex-col");
-
-    const justify = (props?.justifyContent as string) || "start";
-    const justifyMap: Record<string, string> = {
-      start: "justify-start", center: "justify-center", end: "justify-end",
-      between: "justify-between", around: "justify-around", evenly: "justify-evenly",
-    };
-    if (justifyMap[justify] && justify !== "start") classes.push(justifyMap[justify]);
-
-    const align = (props?.alignItems as string) || "stretch";
-    const alignMap: Record<string, string> = {
-      start: "items-start", center: "items-center", end: "items-end",
-      stretch: "items-stretch", baseline: "items-baseline",
-    };
-    if (alignMap[align] && align !== "stretch") classes.push(alignMap[align]);
   } else {
     const cols = (props?.gridCols as number) || 3;
     classes.push(`grid-cols-${cols}`);
