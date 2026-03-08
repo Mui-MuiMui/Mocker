@@ -746,7 +746,12 @@ function CustomComponentCard({
     <div
       ref={(ref) => {
         elementRef.current = ref;
-        if (!ref || layoutMode === "absolute") return;
+        if (!ref) return;
+        if (layoutMode === "absolute") {
+          // HTML5 drag を無効化して mouseup ベースのカスタムドラッグを機能させる
+          ref.setAttribute("draggable", "false");
+          return;
+        }
         connectors.create(ref, () => {
           const tree = buildGroupTreeFromCraftState(entry.craftState);
           if (!tree) return <div />;
@@ -810,7 +815,12 @@ function PaletteItemCard({
     <div
       ref={(ref) => {
         elementRef.current = ref;
-        if (!ref || layoutMode === "absolute") return;
+        if (!ref) return;
+        if (layoutMode === "absolute") {
+          // HTML5 drag を無効化して mouseup ベースのカスタムドラッグを機能させる
+          ref.setAttribute("draggable", "false");
+          return;
+        }
         connectors.create(
           ref,
           <Element is={Component} canvas={item.isCanvas ?? false} {...item.defaultProps} />,
