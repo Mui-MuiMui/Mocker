@@ -31,7 +31,6 @@ export const CraftFreeCanvas: UserComponent<CraftFreeCanvasProps> = ({
       }}
       className={cn("relative", className)}
       style={{ width: effectiveWidth, height: effectiveHeight }}
-      {...(layoutMode === "absolute" ? { "data-momoc-absolute-canvas": "" } : {})}
     >
       {children}
     </div>
