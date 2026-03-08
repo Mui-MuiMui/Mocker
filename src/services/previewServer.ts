@@ -778,7 +778,7 @@ export function Badge(props: any) {
   separator: `import { cn } from "@/components/ui/_cn";
 export function Separator(props: any) {
   const { className = "", orientation = "horizontal", ...rest } = props;
-  const base = orientation === "horizontal" ? "shrink-0 bg-border h-[1px] w-full" : "shrink-0 bg-border h-full w-[1px]";
+  const base = orientation === "horizontal" ? "shrink-0 bg-border relative z-[1] h-[1px] w-full" : "shrink-0 bg-border relative z-[1] h-full w-[1px]";
   const cls = cn(base, className);
   return <div role="separator" className={cls} {...rest} />;
 }`,
