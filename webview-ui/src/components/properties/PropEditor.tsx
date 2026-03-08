@@ -576,8 +576,16 @@ export function PropEditor() {
     .map((k) => [k, selectedProps[k] ?? "auto"]);
 
   // フロー配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
+  // display の値に応じて flex 専用 / grid 専用プロパティを非表示にする
+  const currentDisplay = (selectedProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
   const flowEntries: [string, unknown][] = layoutMode === "flow"
-    ? Array.from(FLOW_KEYS).map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
+    ? Array.from(FLOW_KEYS)
+        .filter((k) => {
+          if (currentDisplay === "grid" && (k === "flexDirection" || k === "justifyContent" || k === "alignItems")) return false;
+          if (currentDisplay === "flex" && k === "gridCols") return false;
+          return true;
+        })
+        .map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
     : [];
 
   // 自由配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
