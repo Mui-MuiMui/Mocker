@@ -46,6 +46,7 @@ interface CraftButtonProps {
   overlayType?: "none" | "dialog" | "alert-dialog" | "sheet" | "drawer" | "popover" | "dropdown-menu";
   linkedMocPath?: string;
   sheetSide?: "top" | "right" | "bottom" | "left";
+  alertDialogPattern?: "cancel-continue" | "continue-cancel" | "yes-no" | "no-yes" | "ok-cancel" | "cancel-ok";
   overlayWidth?: string;
   overlayHeight?: string;
   overlayClassName?: string;
@@ -66,6 +67,7 @@ export const CraftButton: UserComponent<CraftButtonProps> = ({
   overlayType = "none",
   linkedMocPath = "",
   sheetSide = "right",
+  alertDialogPattern = "cancel-continue",
   overlayWidth = "",
   overlayHeight = "",
   overlayClassName = "",
@@ -126,6 +128,7 @@ CraftButton.craft = {
     overlayType: "none",
     linkedMocPath: "",
     sheetSide: "right",
+    alertDialogPattern: "cancel-continue",
     overlayWidth: "",
     overlayHeight: "",
     overlayClassName: "",

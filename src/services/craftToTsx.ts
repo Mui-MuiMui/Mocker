@@ -437,7 +437,7 @@ const DEFAULT_DROPDOWN_DATA_STR = JSON.stringify([
 /** Default prop values to omit from generated TSX */
 const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
   CraftButton: { variant: "default", size: "default", disabled: false, text: "Button",
-    overlayType: "none", linkedMocPath: "", sheetSide: "right", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
+    overlayType: "none", linkedMocPath: "", sheetSide: "right", alertDialogPattern: "cancel-continue", overlayWidth: "", overlayHeight: "", overlayClassName: "", tooltipText: "", tooltipSide: "", toastText: "", toastPosition: "bottom-right" },
   CraftInput: { type: "text", disabled: false, tooltipText: "", tooltipSide: "", tooltipTrigger: "hover" },
   CraftBadge: { variant: "default", text: "Badge", tooltipText: "", tooltipSide: "" },
   CraftSeparator: { orientation: "horizontal" },
@@ -3027,7 +3027,17 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
         `${pad}  </DialogContent>`,
         `${pad}</Dialog>`,
       ].join("\n");
-    case "alert-dialog":
+    case "alert-dialog": {
+      const pattern = (props?.alertDialogPattern as string) || "cancel-continue";
+      const ALERT_DIALOG_PATTERNS: Record<string, [string, string]> = {
+        "cancel-continue": ["Cancel", "Continue"],
+        "continue-cancel": ["Continue", "Cancel"],
+        "yes-no": ["Yes", "No"],
+        "no-yes": ["No", "Yes"],
+        "ok-cancel": ["OK", "Cancel"],
+        "cancel-ok": ["Cancel", "OK"],
+      };
+      const [leftBtn, rightBtn] = ALERT_DIALOG_PATTERNS[pattern] ?? ["Cancel", "Continue"];
       return [
         `${pad}<AlertDialog>`,
         `${pad}  <AlertDialogTrigger asChild>`,
@@ -3036,12 +3046,13 @@ function wrapWithOverlay(rendered: string, props: Record<string, unknown>, pad: 
         `${pad}  <AlertDialogContent${classAttr}${styleAttr}>`,
         `${pad}    ${contentComment}`,
         `${pad}    <div className="flex justify-end gap-8">`,
-        `${pad}      <AlertDialogCancel>Cancel</AlertDialogCancel>`,
-        `${pad}      <AlertDialogAction>Continue</AlertDialogAction>`,
+        `${pad}      <AlertDialogCancel>${leftBtn}</AlertDialogCancel>`,
+        `${pad}      <AlertDialogAction>${rightBtn}</AlertDialogAction>`,
         `${pad}    </div>`,
         `${pad}  </AlertDialogContent>`,
         `${pad}</AlertDialog>`,
       ].join("\n");
+    }
     case "sheet": {
       const side = (props?.sheetSide as string) || "right";
       const sideAttr = side !== "right" ? ` side="${side}"` : "";

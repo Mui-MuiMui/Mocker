@@ -27,6 +27,7 @@ const PROP_OPTIONS: Record<string, string[]> = {
   objectFit: ["cover", "contain", "fill", "none", "scale-down"],
   overlayType: ["none", "dialog", "alert-dialog", "sheet", "drawer", "popover", "dropdown-menu"],
   sheetSide: ["top", "right", "bottom", "left"],
+  alertDialogPattern: ["cancel-continue", "continue-cancel", "yes-no", "no-yes", "ok-cancel", "cancel-ok"],
   tooltipSide: ["", "top", "right", "bottom", "left"],
   tooltipTrigger: ["hover", "focus"],
   hoverCardSide: ["bottom", "top", "left", "right"],
