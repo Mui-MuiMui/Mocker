@@ -55,6 +55,12 @@ const ALIGN_SELF_OPTIONS = [
   { label: "Stretch", cls: "self-stretch" },
 ];
 
+const FLEX_WRAP_OPTIONS = [
+  { label: "wrap", cls: "flex-wrap" },
+  { label: "nowrap", cls: "flex-nowrap" },
+  { label: "wrap-rev", cls: "flex-wrap-reverse" },
+];
+
 // 3×3 Content Align グリッド (flex-row前提: justify=水平, items=垂直)
 const CONTENT_ALIGN_GRID = [
   { justify: "justify-start",  items: "items-start"  },
@@ -254,6 +260,7 @@ export function TailwindEditor() {
   const fontWeightGroup = FONT_WEIGHT_OPTIONS.map((w) => `font-${w}`);
   const borderRadiusGroup = BORDER_RADIUS_OPTIONS.map((r) => `rounded-${r}`);
   const alignSelfGroup = ALIGN_SELF_OPTIONS.map((o) => o.cls);
+  const flexWrapGroup = FLEX_WRAP_OPTIONS.map((o) => o.cls);
 
   // Flex shorthand: detect current class and sync state
   const currentFlexClass = classes.find((c) => FLEX_SHORTHAND_RE.test(c)) || "";
@@ -475,6 +482,19 @@ export function TailwindEditor() {
                 </button>
               );
             })}
+          </div>
+        </TailwindSection>
+
+        <TailwindSection title="Flex Wrap">
+          <div className="flex flex-wrap gap-1">
+            {FLEX_WRAP_OPTIONS.map((o) => (
+              <ClassButton
+                key={o.cls}
+                label={o.label}
+                active={activeSet.has(o.cls)}
+                onClick={() => setGroupClass(o.cls, flexWrapGroup)}
+              />
+            ))}
           </div>
         </TailwindSection>
 
