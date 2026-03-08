@@ -1,5 +1,6 @@
 import type { MocDocument, MocMetadata, MocEditorData } from "../shared/types.js";
 import { COMPONENT_SCHEMAS, SLOT_COMPONENT_NAMES } from "../shared/componentSchemas.js";
+import { MOC_VERSION } from "../shared/constants.js";
 
 export function serializeMocFile(doc: MocDocument): string {
   const usedComponents = extractUsedComponents(doc.editorData?.craftState);
@@ -95,7 +96,7 @@ function serializeMetadata(metadata: MocMetadata, usedComponents: string[], uses
   lines.push(" *   @moc-memo <メモ>     - 付箋メモの概要");
   lines.push(" *");
 
-  lines.push(` * @moc-version ${metadata.version}`);
+  lines.push(` * @moc-version ${MOC_VERSION}`);
   lines.push(` * @moc-intent ${metadata.intent}`);
   lines.push(` * @moc-theme ${metadata.theme}`);
   lines.push(` * @moc-layout ${metadata.layout}`);

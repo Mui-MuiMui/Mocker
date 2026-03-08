@@ -24,7 +24,7 @@ describe("mocSerializer", () => {
 
       const content = serializeMocFile(doc);
 
-      expect(content).toContain("@moc-version 1.0.0");
+      expect(content).toContain("@moc-version 1.1.0");
       expect(content).toContain("@moc-intent Test component");
       expect(content).toContain("@moc-theme light");
       expect(content).toContain("@moc-layout flow");
@@ -132,7 +132,8 @@ export default function RoundTrip() {
       const serialized = serializeMocFile(parsed);
       const reparsed = parseMocFile(serialized);
 
-      expect(reparsed.metadata.version).toBe(parsed.metadata.version);
+      // serialize 時に常に MOC_VERSION へ更新されるため、元ファイルのバージョンとは異なる場合がある
+      expect(reparsed.metadata.version).toBe("1.1.0");
       expect(reparsed.metadata.intent).toBe(parsed.metadata.intent);
       expect(reparsed.metadata.theme).toBe(parsed.metadata.theme);
       expect(reparsed.metadata.layout).toBe(parsed.metadata.layout);
