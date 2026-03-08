@@ -602,7 +602,9 @@ export function PropEditor() {
       !excludedProps.has(key) &&
       // Typography: items は ul/ol のみ表示、text は ul/ol では非表示
       !(componentName === "Typography" && key === "items" && selectedProps.variant !== "ul" && selectedProps.variant !== "ol") &&
-      !(componentName === "Typography" && key === "text" && (selectedProps.variant === "ul" || selectedProps.variant === "ol")),
+      !(componentName === "Typography" && key === "text" && (selectedProps.variant === "ul" || selectedProps.variant === "ol")) &&
+      // Button: alertDialogPattern は alert-dialog 選択時のみ表示
+      !(componentName === "Button" && key === "alertDialogPattern" && selectedProps.overlayType !== "alert-dialog"),
   ).map(([key, defaultVal]) => {
     const selectedVal = selectedProps[key];
     // selectedProps の値の型が craftDefaultProps のデフォルト値と一致する場合のみ使用
