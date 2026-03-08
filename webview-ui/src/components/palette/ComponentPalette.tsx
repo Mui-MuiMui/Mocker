@@ -643,16 +643,16 @@ export function ComponentPalette() {
 /**
  * 自由配置モード専用ドラッグ実装。
  * Craft.js DnD を使わずゴーストを表示し、mouseup 位置でノードを直接 ROOT へ追加する。
+ * ネイティブキャプチャフェーズから呼び出すため MouseEvent を受け取る。
  */
 function startAbsoluteDrag(
-  startEvent: React.MouseEvent,
+  startEvent: MouseEvent,
   label: string,
   getTree: () => NodeTree | null,
   zoom: number,
   actions: ReturnType<typeof useEditor>["actions"],
 ) {
   startEvent.preventDefault();
-  startEvent.stopPropagation();
 
   // ゴースト要素を作成
   const ghost = document.createElement("div");
@@ -724,19 +724,34 @@ function CustomComponentCard({
   const layoutMode = useEditorStore((s) => s.layoutMode);
   const zoom = useEditorStore((s) => s.zoom);
 
+  const stateRef = useRef({ layoutMode, zoom, actions, entry });
+  stateRef.current = { layoutMode, zoom, actions, entry };
+  const elementRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const el = elementRef.current;
+    if (!el) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (stateRef.current.layoutMode !== "absolute") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const { zoom, actions, entry } = stateRef.current;
+      startAbsoluteDrag(e, entry.name, () => buildGroupTreeFromCraftState(entry.craftState), zoom, actions);
+    };
+    el.addEventListener("mousedown", onMouseDown, true);
+    return () => el.removeEventListener("mousedown", onMouseDown, true);
+  }, []);
+
   return (
     <div
       ref={(ref) => {
+        elementRef.current = ref;
         if (!ref || layoutMode === "absolute") return;
         connectors.create(ref, () => {
           const tree = buildGroupTreeFromCraftState(entry.craftState);
           if (!tree) return <div />;
           return tree;
         });
-      }}
-      onMouseDown={(e) => {
-        if (layoutMode !== "absolute") return;
-        startAbsoluteDrag(e, entry.name, () => buildGroupTreeFromCraftState(entry.craftState), zoom, actions);
       }}
       onContextMenu={onContextMenu}
       className="flex cursor-grab items-center gap-2 rounded border border-transparent px-2 py-1.5 text-left text-xs text-[var(--vscode-foreground,#ccc)] transition-colors hover:border-[var(--vscode-focusBorder,#007fd4)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] active:cursor-grabbing"
@@ -760,28 +775,45 @@ function PaletteItemCard({
   const IconComponent = (Icons as unknown as Record<string, React.ComponentType<{ size?: number }>>)[item.icon];
   const Component = resolvers[item.resolverKey as ResolverKey];
 
+  // stateRef で最新の値をネイティブリスナーから参照
+  const stateRef = useRef({ layoutMode, zoom, query, actions });
+  stateRef.current = { layoutMode, zoom, query, actions };
+  const elementRef = useRef<HTMLDivElement | null>(null);
+
+  // キャプチャフェーズで Craft.js より先に処理し、自由配置ドラッグを開始
+  useEffect(() => {
+    const el = elementRef.current;
+    if (!el) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (stateRef.current.layoutMode !== "absolute") return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const { zoom, query, actions } = stateRef.current;
+      startAbsoluteDrag(
+        e,
+        item.label,
+        () =>
+          query
+            .parseReactElement(
+              <Element is={Component} canvas={item.isCanvas ?? false} {...item.defaultProps} />,
+            )
+            .toNodeTree(),
+        zoom,
+        actions,
+      );
+    };
+    el.addEventListener("mousedown", onMouseDown, true);
+    return () => el.removeEventListener("mousedown", onMouseDown, true);
+  }, []); // stateRef で最新値を参照するため依存配列は空
+
   return (
     <div
       ref={(ref) => {
+        elementRef.current = ref;
         if (!ref || layoutMode === "absolute") return;
         connectors.create(
           ref,
           <Element is={Component} canvas={item.isCanvas ?? false} {...item.defaultProps} />,
-        );
-      }}
-      onMouseDown={(e) => {
-        if (layoutMode !== "absolute") return;
-        startAbsoluteDrag(
-          e,
-          item.label,
-          () =>
-            query
-              .parseReactElement(
-                <Element is={Component} canvas={item.isCanvas ?? false} {...item.defaultProps} />,
-              )
-              .toNodeTree(),
-          zoom,
-          actions,
         );
       }}
       className="flex cursor-grab flex-col items-center gap-1 rounded border border-transparent p-2 text-center text-xs text-[var(--vscode-foreground,#ccc)] transition-colors hover:border-[var(--vscode-focusBorder,#007fd4)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] active:cursor-grabbing"
