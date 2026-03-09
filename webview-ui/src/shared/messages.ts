@@ -45,7 +45,8 @@ export type ExtensionToWebviewMessage =
   | { type: "customComponent:all"; payload: CustomComponentEntry[] }
   | { type: "customComponent:reloadResult"; payload: { id: string; entry: CustomComponentEntry | null } }
   | { type: "customComponent:removeResult"; payload: { id: string } }
-  | { type: "customComponent:updatePathResult"; payload: { id: string; entry: CustomComponentEntry | null } };
+  | { type: "customComponent:updatePathResult"; payload: { id: string; entry: CustomComponentEntry | null } }
+  | { type: "settings:update"; payload: { historyLimit: number } };
 
 /** Webview → Extension */
 export type WebviewToExtensionMessage =

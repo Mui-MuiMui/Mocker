@@ -33,6 +33,7 @@ interface EditorState {
   isPaletteOpen: boolean;
   isPropertiesOpen: boolean;
   isFileLoading: boolean;
+  historyLimit: number;
 
   setLayoutMode: (mode: LayoutMode) => void;
   setThemeMode: (mode: ThemeMode) => void;
@@ -51,6 +52,7 @@ interface EditorState {
   togglePalette: () => void;
   toggleProperties: () => void;
   setFileLoading: (loading: boolean) => void;
+  setHistoryLimit: (limit: number) => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -69,6 +71,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   isPaletteOpen: true,
   isPropertiesOpen: true,
   isFileLoading: true,
+  historyLimit: 50,
 
   setLayoutMode: (mode) => set({ layoutMode: mode }),
   setThemeMode: (mode) => set({ themeMode: mode }),
@@ -92,4 +95,5 @@ export const useEditorStore = create<EditorState>((set) => ({
   togglePalette: () => set((state) => ({ isPaletteOpen: !state.isPaletteOpen })),
   toggleProperties: () => set((state) => ({ isPropertiesOpen: !state.isPropertiesOpen })),
   setFileLoading: (loading) => set({ isFileLoading: loading }),
+  setHistoryLimit: (limit) => set({ historyLimit: limit }),
 }));

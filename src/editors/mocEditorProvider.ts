@@ -121,14 +121,33 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
           type: "i18n:locale",
           payload: { locale, messages: {} },
         });
+
+        // Send current history limit setting
+        const historyLimit = vscode.workspace.getConfiguration("momoc").get<number>("historyLimit", 50);
+        webviewPanel.webview.postMessage({
+          type: "settings:update",
+          payload: { historyLimit },
+        });
         return;
       }
 
       await this.handleWebviewMessage(message, document, webviewPanel);
     });
 
+    const changeConfigSubscription =
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration("momoc.historyLimit")) {
+          const historyLimit = vscode.workspace.getConfiguration("momoc").get<number>("historyLimit", 50);
+          webviewPanel.webview.postMessage({
+            type: "settings:update",
+            payload: { historyLimit },
+          });
+        }
+      });
+
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      changeConfigSubscription.dispose();
       this.documentMetadata.delete(document.uri.toString());
       if (this.activeWebviewPanel === webviewPanel) {
         this.activeWebviewPanel = undefined;

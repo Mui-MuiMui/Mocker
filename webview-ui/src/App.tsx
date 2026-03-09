@@ -17,7 +17,7 @@ const SAVE_DEBOUNCE_MS = 800;
 
 export default function App() {
   const { i18n } = useTranslation();
-  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode } =
+  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode, setHistoryLimit } =
     useEditorStore();
   const isFileLoading = useEditorStore((s) => s.isFileLoading);
 
@@ -180,9 +180,13 @@ export default function App() {
           setLayoutMode(newLayout);
           break;
         }
+        case "settings:update": {
+          setHistoryLimit(message.payload.historyLimit);
+          break;
+        }
       }
     },
-    [setDocumentContent, setFileName, setThemeMode, setLayoutMode, i18n],
+    [setDocumentContent, setFileName, setThemeMode, setLayoutMode, setHistoryLimit, i18n],
   );
 
   useVscodeMessage(handleMessage);

@@ -89,7 +89,8 @@ export type ExtensionToWebviewMessage =
   | { type: "resolve:imageUri:result"; payload: { src: string; uri: string } }
   | { type: "browse:mocFile:result"; payload: { relativePath: string; targetProp?: string } }
   | { type: "browse:imageFile:result"; payload: { relativePath: string; targetProp?: string } }
-  | { type: "resolve:mocFile:result"; payload: { path: string; exists: boolean } };
+  | { type: "resolve:mocFile:result"; payload: { path: string; exists: boolean } }
+  | { type: "settings:update"; payload: { historyLimit: number } };
 
 /** Webview → Extension */
 export type WebviewToExtensionMessage =

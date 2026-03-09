@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { useEditor } from "@craftjs/core";
 import { useEditorStore, type Memo } from "../stores/editorStore";
+import { useHistoryLimit } from "../hooks/useHistoryLimit";
 
 interface EditorLoaderProps {
   loadingRef: MutableRefObject<boolean>;
@@ -20,6 +21,8 @@ export function EditorLoader({
 }: EditorLoaderProps) {
   const { actions, query } = useEditor();
   const { documentContent, setMemos, setViewportMode, setCustomViewportSize, setIntent, setLayoutMode, setFileLoading } = useEditorStore();
+  const historyLimit = useEditorStore((s) => s.historyLimit);
+  useHistoryLimit(historyLimit);
   const lastDeserializedRef = useRef<string>("");
   const actionsRef = useRef(actions);
   actionsRef.current = actions;

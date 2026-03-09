@@ -114,6 +114,13 @@
           "minimum": 1024,
           "maximum": 65535,
           "description": "プレビューサーバーのベースポート番号。未設定の場合はランダムポートを使用します。ポートが使用中の場合は +1 ずつ空きポートを探します（最大10回試行）。"
+        },
+        "momoc.historyLimit": {
+          "type": "number",
+          "default": 50,
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "エディタの操作履歴（Undo/Redo）の最大保持数。長時間の編集セッションでのメモリ使用量を制限します。"
         }
       }
     }
