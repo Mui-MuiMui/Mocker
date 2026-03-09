@@ -32,6 +32,8 @@ interface EditorState {
   intent: string;
   isPaletteOpen: boolean;
   isPropertiesOpen: boolean;
+  isFileLoading: boolean;
+  historyLimit: number;
 
   setLayoutMode: (mode: LayoutMode) => void;
   setThemeMode: (mode: ThemeMode) => void;
@@ -49,6 +51,8 @@ interface EditorState {
   setIntent: (intent: string) => void;
   togglePalette: () => void;
   toggleProperties: () => void;
+  setFileLoading: (loading: boolean) => void;
+  setHistoryLimit: (limit: number) => void;
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
@@ -66,6 +70,8 @@ export const useEditorStore = create<EditorState>((set) => ({
   intent: "",
   isPaletteOpen: true,
   isPropertiesOpen: true,
+  isFileLoading: true,
+  historyLimit: 50,
 
   setLayoutMode: (mode) => set({ layoutMode: mode }),
   setThemeMode: (mode) => set({ themeMode: mode }),
@@ -88,4 +94,6 @@ export const useEditorStore = create<EditorState>((set) => ({
   setIntent: (intent) => set({ intent }),
   togglePalette: () => set((state) => ({ isPaletteOpen: !state.isPaletteOpen })),
   toggleProperties: () => set((state) => ({ isPropertiesOpen: !state.isPropertiesOpen })),
+  setFileLoading: (loading) => set({ isFileLoading: loading }),
+  setHistoryLimit: (limit) => set({ historyLimit: limit }),
 }));

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import * as LucideIcons from "lucide-react";
 
 /** Popular icons shown when search is empty */
@@ -14,7 +14,7 @@ const ALL_ICON_NAMES: string[] = Object.keys(LucideIcons)
   .filter((key) => /^[A-Z]/.test(key))
   .sort();
 
-const MAX_RESULTS = 50;
+const PAGE_SIZE = 50;
 
 const INPUT_CLASS =
   "rounded border border-[var(--vscode-input-border,#3c3c3c)] bg-[var(--vscode-input-background,#3c3c3c)] px-2 py-1 text-xs text-[var(--vscode-input-foreground,#ccc)] focus:outline-none focus:ring-1 focus:ring-[var(--vscode-focusBorder,#007fd4)]";
@@ -24,14 +24,69 @@ interface IconComboboxProps {
   onChange: (value: string) => void;
 }
 
+/** Sort candidates: exact match first, then prefix match, then includes */
+function sortByRelevance(candidates: string[], query: string): string[] {
+  const lower = query.toLowerCase();
+  return candidates.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    const aExact = aLower === lower;
+    const bExact = bLower === lower;
+    if (aExact !== bExact) return aExact ? -1 : 1;
+    const aPrefix = aLower.startsWith(lower);
+    const bPrefix = bLower.startsWith(lower);
+    if (aPrefix !== bPrefix) return aPrefix ? -1 : 1;
+    return a.localeCompare(b);
+  });
+}
+
 export function IconCombobox({ value, onChange }: IconComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const containerRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
-  const candidates = search
-    ? ALL_ICON_NAMES.filter((name) => name.toLowerCase().includes(search.toLowerCase())).slice(0, MAX_RESULTS)
+  const allCandidates = search
+    ? sortByRelevance(
+        ALL_ICON_NAMES.filter((name) => name.toLowerCase().includes(search.toLowerCase())),
+        search,
+      )
     : POPULAR_ICONS;
+
+  const candidates = allCandidates.slice(0, visibleCount);
+
+  // Reset visible count when search changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search]);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const list = listRef.current;
+    if (!sentinel || !list || !open) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => prev + PAGE_SIZE);
+        }
+      },
+      { root: list, threshold: 0.1 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [open, search]);
+
+  const handleSelect = useCallback(
+    (name: string) => {
+      onChange(name === value ? "" : name);
+      setOpen(false);
+    },
+    [onChange, value],
+  );
 
   const CurrentIcon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[value];
 
@@ -50,7 +105,10 @@ export function IconCombobox({ value, onChange }: IconComboboxProps) {
         />
       </div>
       {open && (
-        <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded border border-[var(--vscode-dropdown-border,#3c3c3c)] bg-[var(--vscode-dropdown-background,#252526)] shadow-lg">
+        <div
+          ref={listRef}
+          className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded border border-[var(--vscode-dropdown-border,#3c3c3c)] bg-[var(--vscode-dropdown-background,#252526)] shadow-lg"
+        >
           {!search && (
             <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-[var(--vscode-descriptionForeground,#888)]">
               Popular
@@ -69,8 +127,7 @@ export function IconCombobox({ value, onChange }: IconComboboxProps) {
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  onChange(name === value ? "" : name);
-                  setOpen(false);
+                  handleSelect(name);
                 }}
                 className={`flex w-full items-center gap-2 px-2 py-1 text-xs hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] ${
                   name === value ? "bg-[var(--vscode-list-activeSelectionBackground,#094771)] text-[var(--vscode-list-activeSelectionForeground,#fff)]" : "text-[var(--vscode-dropdown-foreground,#ccc)]"
@@ -81,10 +138,8 @@ export function IconCombobox({ value, onChange }: IconComboboxProps) {
               </button>
             );
           })}
-          {search && candidates.length === MAX_RESULTS && (
-            <div className="px-2 py-1 text-[10px] text-[var(--vscode-descriptionForeground,#888)]">
-              ...and more. Keep typing to narrow down.
-            </div>
+          {visibleCount < allCandidates.length && (
+            <div ref={sentinelRef} className="h-4" />
           )}
         </div>
       )}

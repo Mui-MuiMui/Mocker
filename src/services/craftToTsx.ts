@@ -389,6 +389,12 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: false,
   },
+  // CraftIcon: special rendering (lucide-react icon)
+  CraftIcon: {
+    tag: "span",
+    propsMap: [],
+    isContainer: false,
+  },
 };
 
 /** Overlay type to import configuration */
@@ -511,6 +517,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
     collapsible: "icon",
     sidebarWidth: "240px",
   },
+  CraftIcon: { icon: "Heart", iconSize: "6", clickThrough: true },
 };
 
 export function craftStateToTsx(
@@ -540,6 +547,12 @@ export function craftStateToTsx(
     const mapping = COMPONENT_MAP[resolvedName];
     if (mapping?.importFrom && mapping?.importName) {
       addImport(mapping.importFrom, mapping.importName);
+    }
+
+    // Collect lucide-react icon import for CraftIcon
+    if (resolvedName === "CraftIcon") {
+      const icon = (node.props?.icon as string) || "Heart";
+      addImport("lucide-react", icon);
     }
 
     // Collect lucide-react icon import for CraftAlert
@@ -1372,6 +1385,27 @@ export function craftStateToTsx(
         ? `\n${pad}  <${icon} className="h-4 w-4" />${escapedText ? `\n${pad}  ${escapedText}` : ""}\n${pad}`
         : escapedText;
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>${inner}</${tag}>`;
+      return applyCommonWrappers(rendered);
+    }
+
+    // CraftIcon: Lucide アイコン単体描画
+    if (resolvedName === "CraftIcon") {
+      const icon = (node.props?.icon as string) || "Heart";
+      const iconSize = (node.props?.iconSize as string) || "6";
+      const clickThrough = node.props?.clickThrough;
+      // clickThrough がデフォルト true → pointer-events: none を出力
+      // ユーザーが false に変更した場合のみクリック可能にする
+      const isClickThrough = clickThrough !== false && clickThrough !== "false";
+      let iconStyleAttr = styleAttr;
+      if (isClickThrough) {
+        if (iconStyleAttr) {
+          // 既存 style={{ ... }} の末尾 }} の前に追加
+          iconStyleAttr = iconStyleAttr.replace(/\s*}}$/, `, pointerEvents: "none" }}`);
+        } else {
+          iconStyleAttr = ` style={{ pointerEvents: "none" }}`;
+        }
+      }
+      rendered = `${mocComments}\n${pad}<span${classNameAttr}${iconStyleAttr}>\n${pad}  <${icon} className="h-${iconSize} w-${iconSize}" />\n${pad}</span>`;
       return applyCommonWrappers(rendered);
     }
 

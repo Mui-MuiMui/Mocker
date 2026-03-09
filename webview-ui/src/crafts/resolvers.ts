@@ -50,6 +50,7 @@ import { CraftCommand } from "./shadcn/CraftCommand";
 import { CraftTooltip } from "./shadcn/CraftTooltip";
 import { CraftTypography } from "./shadcn/CraftTypography";
 import { CraftSidebar, SidebarHeaderSlot, SidebarFooterSlot, SidebarInsetSlot, DEFAULT_SIDEBAR_DATA } from "./shadcn/CraftSidebar";
+import { CraftIcon } from "./icon/CraftIcon";
 
 export const resolvers = {
   CraftDiv,
@@ -113,6 +114,8 @@ export const resolvers = {
   SidebarHeaderSlot,
   SidebarFooterSlot,
   SidebarInsetSlot,
+  // Icon
+  CraftIcon,
 };
 
 // 自由配置モード時に全コンポーネントの Craft.js DnD を無効化
@@ -134,15 +137,17 @@ export type ResolverKey = keyof typeof resolvers;
 export interface PaletteItem {
   resolverKey: ResolverKey;
   label: string;
-  category: "shadcn" | "html" | "layout";
+  category: "shadcn" | "html" | "layout" | "icon";
   /** shadcn コンポーネントの中カテゴリ */
-  subCategory?: "action" | "display" | "form" | "layout" | "navigation" | "overlay";
+  subCategory?: "action" | "display" | "form" | "layout" | "navigation" | "overlay" | "lucide";
   icon: string;
   defaultProps: Record<string, unknown>;
   /** When true, the element is created as a Craft.js canvas that accepts children */
   isCanvas?: boolean;
   /** false にするとパレットから非表示になる。省略時は表示（デフォルト true） */
   enabled?: boolean;
+  /** true にするとコンポーネントモード（absolute）でのみ表示される */
+  absoluteOnly?: boolean;
 }
 
 export const paletteItems: PaletteItem[] = [
@@ -173,6 +178,7 @@ export const paletteItems: PaletteItem[] = [
     defaultProps: {},
     isCanvas: true,
     enabled: true,
+    absoluteOnly: true,
   },
   // HTML
   {
@@ -579,6 +585,16 @@ export const paletteItems: PaletteItem[] = [
     subCategory: "overlay",
     icon: "MousePointer",
     defaultProps: {},
+    enabled: true,
+  },
+  // Icon
+  {
+    resolverKey: "CraftIcon",
+    label: "Icon",
+    category: "icon",
+    subCategory: "lucide",
+    icon: "Sparkles",
+    defaultProps: { icon: "Heart" },
     enabled: true,
   },
 ];
