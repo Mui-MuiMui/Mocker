@@ -522,7 +522,7 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
           if (mocDoc.metadata.layout !== "absolute") {
             webviewPanel.webview.postMessage({
               type: "customComponent:importResult",
-              payload: { error: "フローモードの .moc ファイルは埋め込めません。自由配置モードのファイルを選択してください。" },
+              payload: { error: "ページモードの .moc ファイルは埋め込めません。コンポーネントモードのファイルを選択してください。" },
             } satisfies ExtensionToWebviewMessage);
             break;
           }
@@ -639,7 +639,7 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
               type: "customComponent:updatePathResult",
               payload: { id, entry: null },
             } satisfies ExtensionToWebviewMessage);
-            vscode.window.showErrorMessage("フローモードの .moc ファイルは使用できません。");
+            vscode.window.showErrorMessage("ページモードの .moc ファイルは使用できません。");
             break;
           }
 

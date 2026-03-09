@@ -279,8 +279,8 @@ type PropGroup = "common" | "flow" | "absolute" | "component";
 
 const GROUP_LABELS: Record<PropGroup, string> = {
   common: "共通",
-  flow: "フロー配置",
-  absolute: "自由配置",
+  flow: "ページ配置",
+  absolute: "コンポーネント配置",
   component: "コンポーネント",
 };
 
@@ -321,18 +321,18 @@ const INTERACTION_DEFAULTS: Record<string, unknown> = {
   hoverCardTrigger: "hover",
 };
 
-/** フロー配置専用プロパティ — layoutMode === "flow" のみ表示 */
+/** ページ配置専用プロパティ — layoutMode === "flow" のみ表示 */
 const FLOW_KEYS = new Set([
   "display", "flexDirection", "gap", "gridCols",
 ]);
 
-/** 自由配置専用プロパティ — layoutMode === "absolute" のみ表示 */
+/** コンポーネント配置専用プロパティ — layoutMode === "absolute" のみ表示 */
 const ABSOLUTE_KEYS = new Set(["top", "left", "zIndex"]);
 
-/** 共通/フロー/自由配置 以外はコンポーネント固有として扱う */
+/** 共通/ページ/コンポーネント配置 以外はコンポーネント固有として扱う */
 const LAYOUT_ALL_KEYS = new Set([...COMMON_KEYS, ...FLOW_KEYS, ...ABSOLUTE_KEYS]);
 
-/** フロー配置のデフォルト値 (selectedProps に無い場合に使用) */
+/** ページ配置のデフォルト値 (selectedProps に無い場合に使用) */
 const FLOW_DEFAULTS: Record<string, unknown> = {
   display: "flex",
   flexDirection: "row",
@@ -340,7 +340,7 @@ const FLOW_DEFAULTS: Record<string, unknown> = {
   gridCols: 3,
 };
 
-/** 自由配置のデフォルト値 */
+/** コンポーネント配置のデフォルト値 */
 const ABSOLUTE_DEFAULTS: Record<string, unknown> = {
   top: "0px",
   left: "0px",
@@ -580,7 +580,7 @@ export function PropEditor() {
     .filter((k) => !excludedProps.has(k))
     .map((k) => [k, selectedProps[k] ?? "auto"]);
 
-  // フロー配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
+  // ページ配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
   // display の値に応じて flex 専用 / grid 専用プロパティを非表示にする
   const currentDisplay = (selectedProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
   const flowEntries: [string, unknown][] = layoutMode === "flow"
@@ -593,7 +593,7 @@ export function PropEditor() {
         .map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
     : [];
 
-  // 自由配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
+  // コンポーネント配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
   const absoluteEntries: [string, unknown][] = layoutMode === "absolute"
     ? Array.from(ABSOLUTE_KEYS).map((k) => [k, selectedProps[k] ?? ABSOLUTE_DEFAULTS[k]])
     : [];
