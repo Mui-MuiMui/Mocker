@@ -36,7 +36,8 @@ export const CraftIcon: UserComponent<CraftIconProps> = ({
       style={{
         width: width && width !== "auto" ? width : undefined,
         height: height && height !== "auto" ? height : undefined,
-        pointerEvents: pointerEvents ? undefined : "none",
+        // pointerEvents はエディタ上では常に有効（選択・ドラッグ可能にする）
+        // プレビュー出力（craftToTsx）でのみ pointerEvents: "none" を反映
       }}
     >
       {IconComponent && <IconComponent className={`h-${iconSize} w-${iconSize}`} />}
