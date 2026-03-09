@@ -274,6 +274,7 @@ export function ComponentPalette() {
     layout: true,
     shadcn: true,
     html: true,
+    icon: true,
   });
   const [expandedSubCategories, setExpandedSubCategories] = useState<Record<string, boolean>>({
     "shadcn:action": true,
@@ -282,6 +283,7 @@ export function ComponentPalette() {
     "shadcn:layout": true,
     "shadcn:navigation": true,
     "shadcn:overlay": true,
+    "icon:lucide": true,
   });
   const [customComponents, setCustomComponents] = useState<CustomComponentEntry[]>([]);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
@@ -341,6 +343,7 @@ export function ComponentPalette() {
     { key: "layout" as const, label: "Layout" },
     { key: "shadcn" as const, label: t("palette.shadcn") },
     { key: "html" as const, label: t("palette.html") },
+    { key: "icon" as const, label: t("palette.icon") },
   ];
 
   const toggleCategory = (key: string) => {
@@ -540,16 +543,17 @@ export function ComponentPalette() {
                   </button>
 
                   {expandedCategories[cat.key] && (
-                    cat.key === "shadcn" ? (
-                      // shadcn は中カテゴリでグループ化
+                    cat.key === "shadcn" || cat.key === "icon" ? (
+                      // shadcn / icon は中カテゴリでグループ化
                       <div className="ml-2">
                         {(() => {
-                          const visibleSubs = SUB_CATEGORIES.filter(
-                            (sub) => catItems.filter((i) => i.subCategory === sub).length > 0,
-                          );
+                          const uniqueSubs = [...new Set(catItems.map((i) => i.subCategory).filter(Boolean))] as string[];
+                          const visibleSubs = cat.key === "shadcn"
+                            ? (SUB_CATEGORIES as readonly string[]).filter((sub) => catItems.some((i) => i.subCategory === sub))
+                            : uniqueSubs;
                           return visibleSubs.map((sub, subIdx) => {
                             const subItems = catItems.filter((i) => i.subCategory === sub);
-                            const subKey = `shadcn:${sub}`;
+                            const subKey = `${cat.key}:${sub}`;
                             const subLabel = t(`palette.sub.${sub}`);
                             return (
                               <div key={sub} className={subIdx > 0 ? "mt-2" : ""}>

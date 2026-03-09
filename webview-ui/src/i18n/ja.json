@@ -30,6 +30,8 @@
   "palette.sub.layout": "Layout",
   "palette.sub.navigation": "Navigation",
   "palette.sub.overlay": "Overlay",
+  "palette.icon": "アイコン",
+  "palette.sub.lucide": "Lucide",
   "properties.title": "プロパティ",
   "properties.props": "Props",
   "properties.tailwind": "Tailwind CSS",

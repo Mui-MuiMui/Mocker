@@ -389,6 +389,12 @@ const COMPONENT_MAP: Record<string, ComponentMapping> = {
     propsMap: [],
     isContainer: false,
   },
+  // CraftIcon: special rendering (lucide-react icon)
+  CraftIcon: {
+    tag: "span",
+    propsMap: [],
+    isContainer: false,
+  },
 };
 
 /** Overlay type to import configuration */
@@ -511,6 +517,7 @@ const DEFAULT_PROPS: Record<string, Record<string, unknown>> = {
     collapsible: "icon",
     sidebarWidth: "240px",
   },
+  CraftIcon: { icon: "Heart", iconSize: "6", pointerEvents: true },
 };
 
 export function craftStateToTsx(
@@ -540,6 +547,12 @@ export function craftStateToTsx(
     const mapping = COMPONENT_MAP[resolvedName];
     if (mapping?.importFrom && mapping?.importName) {
       addImport(mapping.importFrom, mapping.importName);
+    }
+
+    // Collect lucide-react icon import for CraftIcon
+    if (resolvedName === "CraftIcon") {
+      const icon = (node.props?.icon as string) || "Heart";
+      addImport("lucide-react", icon);
     }
 
     // Collect lucide-react icon import for CraftAlert
@@ -1372,6 +1385,16 @@ export function craftStateToTsx(
         ? `\n${pad}  <${icon} className="h-4 w-4" />${escapedText ? `\n${pad}  ${escapedText}` : ""}\n${pad}`
         : escapedText;
       rendered = `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr}>${inner}</${tag}>`;
+      return applyCommonWrappers(rendered);
+    }
+
+    // CraftIcon: Lucide アイコン単体描画
+    if (resolvedName === "CraftIcon") {
+      const icon = (node.props?.icon as string) || "Heart";
+      const iconSize = (node.props?.iconSize as string) || "6";
+      const pointerEvents = node.props?.pointerEvents;
+      const peStyle = pointerEvents === false ? ` style={{ pointerEvents: "none" }}` : "";
+      rendered = `${mocComments}\n${pad}<span${classNameAttr}${styleAttr}${peStyle}>\n${pad}  <${icon} className="h-${iconSize} w-${iconSize}" />\n${pad}</span>`;
       return applyCommonWrappers(rendered);
     }
 
