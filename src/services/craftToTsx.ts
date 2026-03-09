@@ -1393,9 +1393,11 @@ export function craftStateToTsx(
       const icon = (node.props?.icon as string) || "Heart";
       const iconSize = (node.props?.iconSize as string) || "6";
       const pointerEvents = node.props?.pointerEvents;
-      // pointerEvents: "none" を既存の styleAttr に統合（別 style 属性だと上書きされる）
+      // pointerEvents が false / "false" / 未設定でない限りクリック可能（デフォルト true）
+      // Craft.js シリアライズで型が変わる可能性があるため、truthy でないかつ undefined でもない場合に透過
+      const isPointerEventsNone = pointerEvents !== undefined && pointerEvents !== true && pointerEvents !== "true";
       let iconStyleAttr = styleAttr;
-      if (pointerEvents === false || pointerEvents === "false" || pointerEvents === 0) {
+      if (isPointerEventsNone) {
         if (iconStyleAttr) {
           // 既存 style={{ ... }} の閉じ括弧の前に追加
           iconStyleAttr = iconStyleAttr.replace(/\s*}\s*}}$/, `, pointerEvents: "none" }}`);
