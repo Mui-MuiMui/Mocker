@@ -1395,7 +1395,7 @@ export function craftStateToTsx(
       const pointerEvents = node.props?.pointerEvents;
       // pointerEvents: "none" を既存の styleAttr に統合（別 style 属性だと上書きされる）
       let iconStyleAttr = styleAttr;
-      if (pointerEvents === false) {
+      if (pointerEvents === false || pointerEvents === "false" || pointerEvents === 0) {
         if (iconStyleAttr) {
           // 既存 style={{ ... }} の閉じ括弧の前に追加
           iconStyleAttr = iconStyleAttr.replace(/\s*}\s*}}$/, `, pointerEvents: "none" }}`);
