@@ -1393,8 +1393,17 @@ export function craftStateToTsx(
       const icon = (node.props?.icon as string) || "Heart";
       const iconSize = (node.props?.iconSize as string) || "6";
       const pointerEvents = node.props?.pointerEvents;
-      const peStyle = pointerEvents === false ? ` style={{ pointerEvents: "none" }}` : "";
-      rendered = `${mocComments}\n${pad}<span${classNameAttr}${styleAttr}${peStyle}>\n${pad}  <${icon} className="h-${iconSize} w-${iconSize}" />\n${pad}</span>`;
+      // pointerEvents: "none" を既存の styleAttr に統合（別 style 属性だと上書きされる）
+      let iconStyleAttr = styleAttr;
+      if (pointerEvents === false) {
+        if (iconStyleAttr) {
+          // 既存 style={{ ... }} の閉じ括弧の前に追加
+          iconStyleAttr = iconStyleAttr.replace(/\s*}\s*}}$/, `, pointerEvents: "none" }}`);
+        } else {
+          iconStyleAttr = ` style={{ pointerEvents: "none" }}`;
+        }
+      }
+      rendered = `${mocComments}\n${pad}<span${classNameAttr}${iconStyleAttr}>\n${pad}  <${icon} className="h-${iconSize} w-${iconSize}" />\n${pad}</span>`;
       return applyCommonWrappers(rendered);
     }
 
