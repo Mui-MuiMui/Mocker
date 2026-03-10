@@ -111,13 +111,19 @@ export function EditorLoader({
         }
         loadingRef.current = false;
 
-        // Wait for browser to finish rendering all components before hiding spinner
-        const hideSpinner = () => setFileLoading(false);
-        if (typeof requestIdleCallback === "function") {
-          requestIdleCallback(hideSpinner);
-        } else {
-          setTimeout(hideSpinner, 300);
-        }
+        // Wait for React to finish rendering all components before hiding spinner.
+        // deserialize() updates Craft.js state synchronously, but React renders
+        // child components over multiple frames. Nest rAF calls to let the
+        // browser paint incrementally before removing the overlay.
+        let remaining = 5;
+        const waitForRender = () => {
+          if (--remaining > 0) {
+            requestAnimationFrame(waitForRender);
+          } else {
+            setFileLoading(false);
+          }
+        };
+        requestAnimationFrame(waitForRender);
       });
     } catch {
       // Not valid JSON - new or empty file, use default editor state
