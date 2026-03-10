@@ -31,7 +31,8 @@ export function EditorLoader({
 
   useEffect(() => {
     if (!documentContent) {
-      setFileLoading(false);
+      // Don't dismiss spinner here — wait for doc:load message.
+      // Empty/new files are handled in App.tsx when doc:load arrives with empty content.
       return;
     }
 

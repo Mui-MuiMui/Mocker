@@ -17,7 +17,7 @@ const SAVE_DEBOUNCE_MS = 800;
 
 export default function App() {
   const { i18n } = useTranslation();
-  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode, setHistoryLimit } =
+  const { setDocumentContent, setFileName, setThemeMode, setIsDirty, setLayoutMode, setHistoryLimit, setFileLoading } =
     useEditorStore();
   const isFileLoading = useEditorStore((s) => s.isFileLoading);
 
@@ -155,6 +155,10 @@ export default function App() {
         case "doc:load": {
           setDocumentContent(message.payload.content);
           setFileName(message.payload.fileName);
+          // Empty/new file: no deserialization needed, dismiss spinner immediately
+          if (!message.payload.content) {
+            setFileLoading(false);
+          }
           break;
         }
         case "doc:externalChange": {
@@ -186,7 +190,7 @@ export default function App() {
         }
       }
     },
-    [setDocumentContent, setFileName, setThemeMode, setLayoutMode, setHistoryLimit, i18n],
+    [setDocumentContent, setFileName, setThemeMode, setFileLoading, setLayoutMode, setHistoryLimit, i18n],
   );
 
   useVscodeMessage(handleMessage);
