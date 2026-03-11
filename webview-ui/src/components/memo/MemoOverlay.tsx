@@ -182,7 +182,7 @@ function MemoSticker({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // --- Resize handlers ---
-  const MEMO_MIN_WIDTH = 200;
+  const MEMO_MIN_WIDTH = 256;
   const MEMO_MIN_HEIGHT = 80;
 
   const memoElRef = useRef<HTMLDivElement>(null);
