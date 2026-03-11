@@ -5,7 +5,6 @@ describe("isExtToWebMessage", () => {
   it("payloadなし型の正常メッセージ → true", () => {
     expect(isExtToWebMessage({ type: "command:toggleTheme" })).toBe(true);
     expect(isExtToWebMessage({ type: "command:switchLayoutMode" })).toBe(true);
-    expect(isExtToWebMessage({ type: "capture:start" })).toBe(true);
   });
 
   it("payloadあり型の正常メッセージ → true", () => {

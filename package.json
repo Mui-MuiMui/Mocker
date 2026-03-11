@@ -162,6 +162,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
+    "puppeteer-core": "^24.39.0",
     "ts-morph": "^25.0.0"
   },
   "pnpm": {

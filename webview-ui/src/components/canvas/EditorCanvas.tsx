@@ -7,9 +7,6 @@ import { CraftFreeCanvas } from "../../crafts/layout/CraftFreeCanvas";
 import { layoutModeRef } from "../../crafts/layoutModeRef";
 import { MemoAddButton, MemoStickers } from "../memo/MemoOverlay";
 import { ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
-import { useVscodeMessage } from "../../hooks/useVscodeMessage";
-import { captureViewport } from "../../utils/captureImage";
-import { getVsCodeApi } from "../../utils/vscodeApi";
 
 const VIEWPORT_WIDTHS: Record<string, number> = {
   desktop: 1280,
@@ -269,29 +266,6 @@ export function EditorCanvas() {
       stopPan();
     };
   }, [setCursor, stopPan, expandContent, shrinkContent]);
-
-  useVscodeMessage(
-    useCallback(
-      (msg) => {
-        if (msg.type === "capture:start") {
-          captureViewport(viewportWidth, viewportHeight)
-            .then((dataUrl) => {
-              getVsCodeApi().postMessage({
-                type: "capture:complete",
-                payload: { dataUrl },
-              });
-            })
-            .catch((err) => {
-              getVsCodeApi().postMessage({
-                type: "capture:error",
-                payload: { error: String(err) },
-              });
-            });
-        }
-      },
-      [viewportWidth, viewportHeight],
-    ),
-  );
 
   return (
     <div data-momoc-canvas className="relative flex-1">

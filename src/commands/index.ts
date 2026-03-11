@@ -4,6 +4,7 @@ import { generateFlatTsx } from "../services/flatExportService.js";
 import { MocEditorProvider } from "../editors/mocEditorProvider.js";
 import { startPreviewServer, getActiveSession } from "../services/previewServer.js";
 import { parseMocFile } from "../services/mocParser.js";
+import { captureScreenshot } from "../services/screenshotService.js";
 
 export function registerCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -114,10 +115,86 @@ export function registerCommands(context: vscode.ExtensionContext): void {
       await vscode.env.openExternal(vscode.Uri.parse(url));
     }),
 
-    vscode.commands.registerCommand("momoc.exportImage", () => {
-      if (!MocEditorProvider.postToWebview({ type: "capture:start" })) {
-        vscode.window.showWarningMessage("No active Momoc editor");
+    vscode.commands.registerCommand("momoc.exportImage", async () => {
+      const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+      let uri: vscode.Uri | undefined;
+
+      const editor = vscode.window.activeTextEditor;
+      if (editor && editor.document.fileName.endsWith(".moc")) {
+        uri = editor.document.uri;
+      } else if (activeTab?.input && typeof activeTab.input === "object") {
+        const input = activeTab.input as { uri?: vscode.Uri };
+        if (input.uri?.fsPath.endsWith(".moc")) {
+          uri = input.uri;
+        }
       }
+
+      if (!uri) {
+        vscode.window.showWarningMessage("No active Momoc editor");
+        return;
+      }
+
+      const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      if (!workspaceRoot) {
+        vscode.window.showErrorMessage("No workspace folder open");
+        return;
+      }
+
+      const mocFilePath = uri.fsPath;
+
+      // .moc ファイルからメタデータを読み取り
+      const content = new TextDecoder().decode(
+        await vscode.workspace.fs.readFile(uri),
+      );
+      const mocDoc = parseMocFile(content);
+      const theme = mocDoc.metadata.theme;
+
+      // viewport サイズを決定
+      const vpStr = mocDoc.metadata.viewport;
+      const VIEWPORT_SIZES: Record<string, { width: number; height: number }> = {
+        desktop: { width: 1280, height: 800 },
+        tablet: { width: 768, height: 1024 },
+        mobile: { width: 375, height: 812 },
+      };
+      let viewport = VIEWPORT_SIZES[vpStr];
+      if (!viewport) {
+        const match = vpStr.match(/^(\d+)x(\d+)$/);
+        viewport = match
+          ? { width: Number(match[1]), height: Number(match[2]) }
+          : VIEWPORT_SIZES["desktop"];
+      }
+
+      await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: vscode.l10n.t("Capturing screenshot..."),
+          cancellable: false,
+        },
+        async () => {
+          try {
+            const buffer = await captureScreenshot(mocFilePath, workspaceRoot, theme, viewport);
+
+            const defaultUri = vscode.Uri.file(
+              mocFilePath.replace(/\.moc$/, ".png"),
+            );
+            const saveUri = await vscode.window.showSaveDialog({
+              defaultUri,
+              filters: { "PNG Image": ["png"] },
+            });
+
+            if (saveUri) {
+              await vscode.workspace.fs.writeFile(saveUri, buffer);
+              vscode.window.showInformationMessage(
+                vscode.l10n.t("Image saved: {0}", saveUri.fsPath),
+              );
+            }
+          } catch (err) {
+            vscode.window.showErrorMessage(
+              vscode.l10n.t("Image capture failed: {0}", err instanceof Error ? err.message : String(err)),
+            );
+          }
+        },
+      );
     }),
 
     vscode.commands.registerCommand("momoc.exportFlatTsx", async () => {

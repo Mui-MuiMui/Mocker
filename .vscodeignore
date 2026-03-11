@@ -11,6 +11,7 @@ webview-ui/index.html
 webview-ui/tsconfig.tsbuildinfo
 test/**
 node_modules/**
+!node_modules/puppeteer-core/**
 .gitignore
 .eslintrc*
 eslint.config.js
