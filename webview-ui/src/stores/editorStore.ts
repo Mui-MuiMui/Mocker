@@ -31,6 +31,7 @@ interface EditorState {
   fileName: string;
   isDirty: boolean;
   selectedNodeId: string | null;
+  selectedNodeIds: string[];
   memos: Memo[];
   memosVisible: boolean;
   memoLineMode: MemoLineMode;
@@ -50,6 +51,7 @@ interface EditorState {
   setFileName: (name: string) => void;
   setIsDirty: (dirty: boolean) => void;
   setSelectedNodeId: (id: string | null) => void;
+  setSelectedNodeIds: (ids: string[]) => void;
   setMemos: (memos: Memo[]) => void;
   addMemo: (memo: Memo) => void;
   updateMemo: (id: string, updates: Partial<Memo>) => void;
@@ -76,6 +78,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   fileName: "",
   isDirty: false,
   selectedNodeId: null,
+  selectedNodeIds: [],
   memos: [],
   memosVisible: true,
   memoLineMode: "hover",
@@ -96,6 +99,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   setFileName: (name) => set({ fileName: name }),
   setIsDirty: (dirty) => set({ isDirty: dirty }),
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
   setMemos: (memos) => set({ memos }),
   addMemo: (memo) => set((state) => ({ memos: [...state.memos, memo] })),
   updateMemo: (id, updates) =>

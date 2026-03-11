@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from "react";
-import { Editor } from "@craftjs/core";
+import { Editor, DefaultEventHandlers } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { Toolbar } from "./components/toolbar/Toolbar";
 import { ComponentPalette } from "./components/palette/ComponentPalette";
@@ -219,6 +219,13 @@ export default function App() {
       resolver={resolvers}
       onRender={RenderNode}
       onNodesChange={handleNodesChange}
+      handlers={(store) =>
+        new DefaultEventHandlers({
+          store,
+          isMultiSelectEnabled: (e) => e.ctrlKey || e.metaKey || e.shiftKey,
+          removeHoverOnMouseleave: true,
+        })
+      }
     >
       <EditorLoader
         loadingRef={loadingRef}

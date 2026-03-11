@@ -9,8 +9,9 @@ export function PropertiesPanel() {
   const { t } = useTranslation();
   const isPropertiesOpen = useEditorStore((s) => s.isPropertiesOpen);
   const toggleProperties = useEditorStore((s) => s.toggleProperties);
-  const { selected, selectedNodeDisplayName } = useEditor((state) => {
-    const currentNodeId = state.events.selected?.values().next().value;
+  const { selected, selectedNodeDisplayName, selectedCount, isSameType, commonTypeName } = useEditor((state) => {
+    const ids = state.events.selected ? Array.from(state.events.selected) : [];
+    const currentNodeId = ids[0];
     let selectedNodeDisplayName = "";
 
     if (currentNodeId) {
@@ -19,9 +20,28 @@ export function PropertiesPanel() {
         node?.data?.displayName || node?.data?.name || "";
     }
 
+    // Check if all selected nodes are the same component type
+    let isSameType = true;
+    let commonTypeName = selectedNodeDisplayName;
+    if (ids.length > 1) {
+      const firstNode = state.nodes[ids[0]];
+      const firstType = firstNode?.data?.type;
+      for (let i = 1; i < ids.length; i++) {
+        const node = state.nodes[ids[i]];
+        if (node?.data?.type !== firstType) {
+          isSameType = false;
+          commonTypeName = "";
+          break;
+        }
+      }
+    }
+
     return {
       selected: currentNodeId || null,
       selectedNodeDisplayName,
+      selectedCount: ids.length,
+      isSameType,
+      commonTypeName,
     };
   });
 
@@ -56,9 +76,16 @@ export function PropertiesPanel() {
             <ChevronRight size={14} />
           </button>
         </div>
-        {selected && (
+        {selected && selectedCount === 1 && (
           <p className="mt-1 text-xs text-[var(--vscode-descriptionForeground,#888)]">
             {selectedNodeDisplayName}
+          </p>
+        )}
+        {selectedCount > 1 && (
+          <p className="mt-1 text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            {isSameType
+              ? t("properties.multiSelectSameType", { count: selectedCount, name: commonTypeName })
+              : t("properties.multiSelect", { count: selectedCount })}
           </p>
         )}
       </div>
@@ -66,9 +93,11 @@ export function PropertiesPanel() {
       <div className="flex-1 overflow-y-auto">
         {selected ? (
           <div className="flex flex-col">
-            <PanelSection title={t("properties.props")}>
-              <PropEditor />
-            </PanelSection>
+            {(selectedCount === 1 || isSameType) && (
+              <PanelSection title={t("properties.props")}>
+                <PropEditor />
+              </PanelSection>
+            )}
             <PanelSection title={t("properties.tailwind")}>
               <TailwindEditor />
             </PanelSection>

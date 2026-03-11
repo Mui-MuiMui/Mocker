@@ -48,7 +48,9 @@ export const RenderNode = React.memo(function RenderNode({
 
   const layoutMode = useEditorStore((s) => s.layoutMode);
 
-  const { actions: editorActions } = useEditor();
+  const { actions: editorActions, isMultiSelected } = useEditor((state) => ({
+    isMultiSelected: state.events.selected ? state.events.selected.size > 1 : false,
+  }));
 
   // 親ノードが CraftGroup かどうか（layoutMode に関わらず常に absolute 配置を適用するため）
   const { parentIsGroup } = useEditor((state) => {
@@ -317,7 +319,7 @@ export const RenderNode = React.memo(function RenderNode({
     handlesRef.current.forEach((h) => h.remove());
     handlesRef.current = [];
 
-    if (!isActive || noResize) return;
+    if (!isActive || noResize || isMultiSelected) return;
 
     dom.style.position =
       dom.style.position === "static" ? "relative" : dom.style.position || "relative";
@@ -385,7 +387,7 @@ export const RenderNode = React.memo(function RenderNode({
       handlesRef.current.forEach((h) => h.remove());
       handlesRef.current = [];
     };
-  }, [dom, isActive, noResize, onMouseDown]);
+  }, [dom, isActive, noResize, isMultiSelected, onMouseDown]);
 
   return <>{render}</>;
 });

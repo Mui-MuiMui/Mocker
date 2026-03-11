@@ -137,41 +137,50 @@ export function ContextMenu() {
   const [hasClipboard, setHasClipboard] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const { actions, selected, query } = useEditor((state) => {
-    const nodeId = state.events.selected
-      ? Array.from(state.events.selected)[0]
-      : undefined;
+  const { actions, selected, selectedIds, query } = useEditor((state) => {
+    const ids = state.events.selected
+      ? Array.from(state.events.selected)
+      : [];
     return {
-      selected: nodeId || null,
+      selected: ids[0] || null,
+      selectedIds: ids,
     };
   });
 
+  const isMultiSelected = selectedIds.length > 1;
+
   // Sync Craft.js selection → editorStore so memo linking works
   const setSelectedNodeId = useEditorStore((s) => s.setSelectedNodeId);
+  const setSelectedNodeIds = useEditorStore((s) => s.setSelectedNodeIds);
   useEffect(() => {
     setSelectedNodeId(selected);
-  }, [selected, setSelectedNodeId]);
+    setSelectedNodeIds(selectedIds);
+  }, [selected, selectedIds, setSelectedNodeId, setSelectedNodeIds]);
 
   // Use refs to always access latest values in event handlers
   const selectedRef = useRef(selected);
+  const selectedIdsRef = useRef(selectedIds);
   const queryRef = useRef(query);
   const actionsRef = useRef(actions);
   selectedRef.current = selected;
+  selectedIdsRef.current = selectedIds;
   queryRef.current = query;
   actionsRef.current = actions;
 
   const deleteSelected = useCallback(() => {
-    const sel = selectedRef.current;
-    if (!sel) return;
-    try {
-      const nodeHelper = queryRef.current.node(sel);
-      const node = nodeHelper.get();
-      if (!node) return;
-      if (nodeHelper.isRoot() || nodeHelper.isTopLevelNode()) return;
-      if (!nodeHelper.isDeletable()) return;
-      actionsRef.current.delete(sel);
-    } catch {
-      // Node may have already been removed
+    const ids = selectedIdsRef.current;
+    if (ids.length === 0) return;
+    for (const nodeId of ids) {
+      try {
+        const nodeHelper = queryRef.current.node(nodeId);
+        const node = nodeHelper.get();
+        if (!node) continue;
+        if (nodeHelper.isRoot() || nodeHelper.isTopLevelNode()) continue;
+        if (!nodeHelper.isDeletable()) continue;
+        actionsRef.current.delete(nodeId);
+      } catch {
+        // Node may have already been removed
+      }
     }
     setMenuPos(null);
   }, []);
@@ -255,7 +264,7 @@ export function ContextMenu() {
 
   const handleContextMenu = useCallback(
     (e: MouseEvent) => {
-      if (!selectedRef.current) return;
+      if (selectedIdsRef.current.length === 0) return;
       const target = e.target as HTMLElement;
       if (target.closest("[data-momoc-canvas]")) {
         e.preventDefault();
@@ -271,7 +280,7 @@ export function ContextMenu() {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (!selectedRef.current) return;
+      if (selectedIdsRef.current.length === 0) return;
 
       // Don't handle if focused on input/textarea
       const tag = (e.target as HTMLElement).tagName;
@@ -281,21 +290,24 @@ export function ContextMenu() {
         e.preventDefault();
         deleteSelected();
       }
-      if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-        e.preventDefault();
-        copySelected();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "x") {
-        e.preventDefault();
-        cutSelected();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-        e.preventDefault();
-        pasteClipboard();
-      }
-      if ((e.ctrlKey || e.metaKey) && e.key === "d") {
-        e.preventDefault();
-        duplicateSelected();
+      // Copy/Cut/Paste/Duplicate are single-selection only
+      if (selectedIdsRef.current.length <= 1) {
+        if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+          e.preventDefault();
+          copySelected();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "x") {
+          e.preventDefault();
+          cutSelected();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+          e.preventDefault();
+          pasteClipboard();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "d") {
+          e.preventDefault();
+          duplicateSelected();
+        }
       }
     },
     [deleteSelected, copySelected, cutSelected, pasteClipboard, duplicateSelected],
@@ -312,7 +324,7 @@ export function ContextMenu() {
     };
   }, [handleContextMenu, handleClick, handleKeyDown]);
 
-  if (!menuPos || !selected) return null;
+  if (!menuPos || selectedIds.length === 0) return null;
 
   return (
     <div
@@ -325,25 +337,28 @@ export function ContextMenu() {
         label={t("contextMenu.copy")}
         shortcut="Ctrl+C"
         onClick={copySelected}
+        disabled={isMultiSelected}
       />
       <MenuItem
         icon={<Scissors size={14} />}
         label={t("contextMenu.cut")}
         shortcut="Ctrl+X"
         onClick={cutSelected}
+        disabled={isMultiSelected}
       />
       <MenuItem
         icon={<ClipboardPaste size={14} />}
         label={t("contextMenu.paste")}
         shortcut="Ctrl+V"
         onClick={pasteClipboard}
-        disabled={!hasClipboard}
+        disabled={!hasClipboard || isMultiSelected}
       />
       <MenuItem
         icon={<CopyPlus size={14} />}
         label={t("contextMenu.duplicate")}
         shortcut="Ctrl+D"
         onClick={duplicateSelected}
+        disabled={isMultiSelected}
       />
       <div className="my-1 h-px bg-[var(--vscode-menu-separatorBackground,#454545)]" />
       <MenuItem

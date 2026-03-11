@@ -151,16 +151,39 @@ function parsePaletteClass(cls: string): { prefix: string; family: string; shade
 }
 
 export function TailwindEditor() {
-  const { selectedNodeId, currentClassName, hasClassName, actions } = useEditor((state) => {
-    const nodeId = state.events.selected?.values().next().value;
-    if (!nodeId) return { selectedNodeId: null, currentClassName: "", hasClassName: true };
+  const { selectedNodeId, selectedNodeIds, currentClassName, hasClassName, actions } = useEditor((state) => {
+    const ids = state.events.selected ? Array.from(state.events.selected) : [];
+    const nodeId = ids[0];
+    if (!nodeId) return { selectedNodeId: null, selectedNodeIds: [] as string[], currentClassName: "", hasClassName: true };
 
     const node = state.nodes[nodeId];
     const craftProps = (node?.data?.type as any)?.craft?.props ?? null;
+
+    // For multi-select: use className only if all nodes have the same value
+    let className = (node?.data?.props?.className as string) || "";
+    if (ids.length > 1) {
+      const allSame = ids.every(id => {
+        const n = state.nodes[id];
+        return ((n?.data?.props?.className as string) || "") === className;
+      });
+      if (!allSame) className = "";
+    }
+
+    // hasClassName: all selected nodes must support className
+    let allHaveClassName = craftProps ? "className" in craftProps : true;
+    if (ids.length > 1) {
+      allHaveClassName = ids.every(id => {
+        const n = state.nodes[id];
+        const cp = (n?.data?.type as any)?.craft?.props ?? null;
+        return cp ? "className" in cp : true;
+      });
+    }
+
     return {
       selectedNodeId: nodeId,
-      currentClassName: (node?.data?.props?.className as string) || "",
-      hasClassName: craftProps ? "className" in craftProps : true,
+      selectedNodeIds: ids,
+      currentClassName: className,
+      hasClassName: allHaveClassName,
     };
   });
 
@@ -223,9 +246,11 @@ export function TailwindEditor() {
 
   const updateClassName = (newClassName: string) => {
     setRawInput(newClassName);
-    actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
-      props.className = newClassName;
-    });
+    for (const nodeId of selectedNodeIds) {
+      actions.setProp(nodeId, (props: Record<string, unknown>) => {
+        props.className = newClassName;
+      });
+    }
   };
 
   const setGroupClass = (cls: string, groupClasses: string[]) => {
