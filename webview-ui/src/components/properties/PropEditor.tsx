@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useEditor } from "@craftjs/core";
+import { useTranslation } from "react-i18next";
 import { getVsCodeApi } from "../../utils/vscodeApi";
 import { IconCombobox } from "./IconCombobox";
 import { TableMetaEditor } from "./TableMetaEditor";
@@ -12,6 +13,21 @@ import { ButtonGroupMetaEditor } from "./ButtonGroupMetaEditor";
 import { CommandMetaEditor } from "./CommandMetaEditor";
 import { ColumnDefsEditor } from "./ColumnDefsEditor";
 import { useEditorStore } from "../../stores/editorStore";
+
+/** Structure/meta editor props that are too complex for multi-select editing */
+const STRUCTURE_EDITOR_PROPS = new Set([
+  "tableMeta", "tabMeta", "slideMeta", "panelMeta",
+  "buttonData", "menuData", "sidebarData", "commandData",
+  "columnDefs", "csvData", "items", "descriptions", "linkedMocPaths",
+]);
+
+/** Get merged value across multiple nodes' props for a given key */
+function getMergedValue(propsArray: Record<string, unknown>[], key: string): { value: unknown; isMixed: boolean } {
+  const values = propsArray.map(p => p[key]);
+  const first = values[0];
+  const isMixed = values.some(v => v !== first);
+  return { value: isMixed ? undefined : first, isMixed };
+}
 
 /** Mapping of property names to their allowed values (select options). */
 const PROP_OPTIONS: Record<string, string[]> = {
@@ -469,23 +485,47 @@ function SizeInput({
 }
 
 export function PropEditor() {
-  const { selectedProps, actions, selectedNodeId, componentName, craftDefaultProps } = useEditor(
+  const { t } = useTranslation();
+  const { selectedProps, actions, selectedNodeId, selectedNodeIds, selectedPropsArray, componentName, craftDefaultProps, isMultiSelected, isSameType } = useEditor(
     (state) => {
-      const nodeId = state.events.selected?.values().next().value;
+      const ids = state.events.selected ? Array.from(state.events.selected) : [];
+      const nodeId = ids[0];
       if (!nodeId)
         return {
           selectedProps: null,
           selectedNodeId: null,
+          selectedNodeIds: [] as string[],
+          selectedPropsArray: [] as Record<string, unknown>[],
           componentName: "",
           craftDefaultProps: null,
+          isMultiSelected: false,
+          isSameType: true,
         };
 
       const node = state.nodes[nodeId];
+      const propsArray = ids.map(id => (state.nodes[id]?.data?.props || {}) as Record<string, unknown>);
+
+      // Check if all selected nodes are the same component type
+      let sameType = true;
+      if (ids.length > 1) {
+        const firstType = node?.data?.type;
+        for (let i = 1; i < ids.length; i++) {
+          if (state.nodes[ids[i]]?.data?.type !== firstType) {
+            sameType = false;
+            break;
+          }
+        }
+      }
+
       return {
         selectedProps: node?.data?.props || {},
         selectedNodeId: nodeId,
+        selectedNodeIds: ids,
+        selectedPropsArray: propsArray,
         componentName: node?.data?.displayName || node?.data?.name || "",
         craftDefaultProps: (node?.data?.type as any)?.craft?.props ?? null,
+        isMultiSelected: ids.length > 1,
+        isSameType: sameType,
       };
     },
   );
@@ -533,7 +573,7 @@ export function PropEditor() {
     return null;
   }
 
-  if (componentName === "ResizablePanelSlot") {
+  if (!isMultiSelected && componentName === "ResizablePanelSlot") {
     return (
       <div className="px-3 py-2 text-xs text-[var(--vscode-descriptionForeground,#777)] italic">
         サイズは親の Resizable コンポーネントで管理されます
@@ -542,14 +582,16 @@ export function PropEditor() {
   }
 
   const handlePropChange = (key: string, value: unknown) => {
-    actions.setProp(selectedNodeId, (props: Record<string, unknown>) => {
-      props[key] = value;
-      // AspectRatio: width/height の片方を手打ちしたら、もう片方を "auto" にリセット
-      if (componentName === "AspectRatio") {
-        if (key === "width" && value !== "auto") props.height = "auto";
-        if (key === "height" && value !== "auto") props.width = "auto";
-      }
-    });
+    for (const nodeId of selectedNodeIds) {
+      actions.setProp(nodeId, (props: Record<string, unknown>) => {
+        props[key] = value;
+        // AspectRatio: width/height の片方を手打ちしたら、もう片方を "auto" にリセット
+        if (componentName === "AspectRatio") {
+          if (key === "width" && value !== "auto") props.height = "auto";
+          if (key === "height" && value !== "auto") props.width = "auto";
+        }
+      });
+    }
   };
 
   const getOptions = (key: string): string[] | null => {
@@ -575,44 +617,67 @@ export function PropEditor() {
 
   const excludedProps = COMPONENT_EXCLUDED_PROPS[componentName] ?? new Set<string>();
 
+  // Multi-select: compute mixed value state
+  const mixedKeys = new Set<string>();
+  const mergedProps: Record<string, unknown> = {};
+  if (isMultiSelected) {
+    const allKeys = new Set<string>();
+    for (const p of selectedPropsArray) {
+      for (const k of Object.keys(p)) allKeys.add(k);
+    }
+    for (const k of allKeys) {
+      const { value, isMixed } = getMergedValue(selectedPropsArray, k);
+      mergedProps[k] = value;
+      if (isMixed) mixedKeys.add(k);
+    }
+  }
+
+  // effectiveProps: merged values for multi-select, selectedProps for single
+  const effectiveProps = isMultiSelected ? mergedProps : selectedProps;
+
   // 共通グループ: width/height を selectedProps から取得（無ければデフォルト値）
   const commonEntries: [string, unknown][] = Array.from(COMMON_KEYS)
     .filter((k) => !excludedProps.has(k))
-    .map((k) => [k, selectedProps[k] ?? "auto"]);
+    .map((k) => [k, effectiveProps[k] ?? "auto"]);
 
   // ページ配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
   // display の値に応じて flex 専用 / grid 専用プロパティを非表示にする
-  const currentDisplay = (selectedProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
-  const flowEntries: [string, unknown][] = layoutMode === "flow"
+  // 異なる種別のマルチセレクト時は共通グループ（width/height）のみ表示
+  const showComponentSpecific = !isMultiSelected || isSameType;
+
+  const currentDisplay = (effectiveProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
+  const flowEntries: [string, unknown][] = showComponentSpecific && layoutMode === "flow"
     ? Array.from(FLOW_KEYS)
         .filter((k) => {
           if (currentDisplay === "grid" && k === "flexDirection") return false;
           if (currentDisplay === "flex" && k === "gridCols") return false;
           return true;
         })
-        .map((k) => [k, selectedProps[k] ?? FLOW_DEFAULTS[k]])
+        .map((k) => [k, effectiveProps[k] ?? FLOW_DEFAULTS[k]])
     : [];
 
   // コンポーネント配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
-  const absoluteEntries: [string, unknown][] = layoutMode === "absolute"
-    ? Array.from(ABSOLUTE_KEYS).map((k) => [k, selectedProps[k] ?? ABSOLUTE_DEFAULTS[k]])
+  const absoluteEntries: [string, unknown][] = showComponentSpecific && layoutMode === "absolute"
+    ? Array.from(ABSOLUTE_KEYS).map((k) => [k, effectiveProps[k] ?? ABSOLUTE_DEFAULTS[k]])
     : [];
 
   // インタラクション共通: 対象外コンポーネント以外で常時表示、selectedProps に無ければデフォルト値
   const isInteractionExcluded = INTERACTION_EXCLUDED_COMPONENTS.has(componentName);
-  const interactionEntries: [string, unknown][] = isInteractionExcluded
+  const interactionEntries: [string, unknown][] = !showComponentSpecific || isInteractionExcluded
     ? []
-    : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (selectedProps[k] ?? INTERACTION_DEFAULTS[k])]);
+    : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (effectiveProps[k] ?? INTERACTION_DEFAULTS[k])]);
 
   // コンポーネントグループ: craftDefaultProps に定義されているキーをベースに（selectedProps になければデフォルト値を使用）
   // craftDefaultProps ベースにすることで、後から追加された prop も既存ノードで表示される
-  const componentEntries: [string, unknown][] = Object.entries(craftDefaultProps ?? selectedProps).filter(
+  const componentEntries: [string, unknown][] = !showComponentSpecific ? [] : Object.entries(craftDefaultProps ?? selectedProps).filter(
     ([key]) =>
       key !== "children" &&
       key !== "className" &&
       !LAYOUT_ALL_KEYS.has(key) &&
       !INTERACTION_KEYS.has(key) &&
       !excludedProps.has(key) &&
+      // Multi-select: hide structure/meta editor props
+      !(isMultiSelected && STRUCTURE_EDITOR_PROPS.has(key)) &&
       // Typography: items は ul/ol のみ表示、text は ul/ol では非表示
       !(componentName === "Typography" && key === "items" && selectedProps.variant !== "ul" && selectedProps.variant !== "ol") &&
       !(componentName === "Typography" && key === "text" && (selectedProps.variant === "ul" || selectedProps.variant === "ol")) &&
@@ -625,6 +690,11 @@ export function PropEditor() {
       // Sidebar: toggle icon props は collapsible !== "none" のときのみ表示
       !(componentName === "Sidebar" && (key === "toggleOpenIcon" || key === "toggleCloseIcon" || key === "toggleIconSize") && selectedProps.collapsible === "none"),
   ).map(([key, defaultVal]) => {
+    if (isMultiSelected) {
+      const { value, isMixed } = getMergedValue(selectedPropsArray, key);
+      if (isMixed) mixedKeys.add(key);
+      return [key, value ?? defaultVal];
+    }
     const selectedVal = selectedProps[key];
     // selectedProps の値の型が craftDefaultProps のデフォルト値と一致する場合のみ使用
     // 型不一致（旧boolean等）は無効値として破棄しデフォルト値を使う
@@ -642,7 +712,10 @@ export function PropEditor() {
   // 常にグループヘッダーを表示
   const activeGroups = GROUP_ORDER.filter((g) => (grouped.get(g)?.length ?? 0) > 0);
 
+  const mixedPlaceholder = t("properties.mixed");
+
   function renderProp(key: string, value: unknown) {
+    const isMixed = mixedKeys.has(key);
     // Custom UI for iconSize / toggleIconSize (slider)
     if (key === "iconSize" || key === "toggleIconSize") {
       const ICON_SIZE_SCALE = ["2","2.5","3","3.5","4","5","6","7","8","9","10","11","12","14","16","20","24","28","32","36","40","44","48","52","56","60","64","72","80","96"];
@@ -1578,7 +1651,7 @@ export function PropEditor() {
                 type="button"
                 onClick={() => handlePropChange(key, value === opt ? "" : opt)}
                 className={`rounded px-1.5 py-0.5 text-[10px] transition-colors ${
-                  value === opt && opt !== ""
+                  !isMixed && value === opt && opt !== ""
                     ? "bg-[var(--vscode-button-background,#0e639c)] text-[var(--vscode-button-foreground,#fff)]"
                     : "bg-[var(--vscode-input-background,#3c3c3c)] text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-toolbar-hoverBackground,#444)]"
                 }`}
@@ -1593,37 +1666,45 @@ export function PropEditor() {
 
     const options = getOptions(key);
 
+    // Determine effective value type: for mixed values, infer from craftDefaultProps
+    const effectiveValue = isMixed ? (craftDefaultProps?.[key] ?? value) : value;
+    const isBooleanProp = typeof effectiveValue === "boolean";
+    const isNumberProp = typeof effectiveValue === "number";
+
     return (
       <div key={key} className="flex flex-col gap-1">
         <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
           {PROP_DISPLAY_LABELS[key] ?? key}
         </label>
-        {typeof value === "boolean" ? (
+        {isBooleanProp ? (
           <label className="flex items-center gap-2 text-xs text-[var(--vscode-foreground,#ccc)]">
             <input
               type="checkbox"
-              checked={value}
+              checked={isMixed ? false : !!value}
+              ref={(el) => { if (el) el.indeterminate = isMixed; }}
               onChange={(e) => handlePropChange(key, e.target.checked)}
               className="h-4 w-4"
             />
-            {value ? "ON" : "OFF"}
+            {isMixed ? mixedPlaceholder : (value ? "ON" : "OFF")}
           </label>
         ) : options ? (
           <select
-            value={String(value ?? "")}
+            value={isMixed ? "" : String(value ?? "")}
             onChange={(e) => handlePropChange(key, e.target.value)}
             className={`${INPUT_CLASS} w-full`}
           >
+            {isMixed && <option value="">{mixedPlaceholder}</option>}
             {options.map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
               </option>
             ))}
           </select>
-        ) : typeof value === "number" ? (
+        ) : isNumberProp ? (
           <input
             type="number"
-            value={value}
+            value={isMixed ? "" : (value as number)}
+            placeholder={isMixed ? mixedPlaceholder : undefined}
             onChange={(e) =>
               handlePropChange(key, Number(e.target.value))
             }
@@ -1658,7 +1739,8 @@ export function PropEditor() {
             )}
             <textarea
               data-prop-key={key}
-              value={String(value ?? "")}
+              value={isMixed ? "" : String(value ?? "")}
+              placeholder={isMixed ? mixedPlaceholder : undefined}
               onChange={(e) => handlePropChange(key, e.target.value)}
               rows={2}
               className={`${INPUT_CLASS} w-full resize-y`}
@@ -1667,7 +1749,8 @@ export function PropEditor() {
         ) : (
           <input
             type="text"
-            value={String(value ?? "")}
+            value={isMixed ? "" : String(value ?? "")}
+            placeholder={isMixed ? mixedPlaceholder : undefined}
             onChange={(e) => handlePropChange(key, e.target.value)}
             className={`${INPUT_CLASS} w-full`}
           />
@@ -1678,20 +1761,22 @@ export function PropEditor() {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Read-only node ID */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
-          id
-        </label>
-        <input
-          type="text"
-          value={selectedNodeId}
-          readOnly
-          className={`${INPUT_CLASS} w-full cursor-default opacity-60`}
-          title={selectedNodeId}
-          onClick={(e) => (e.target as HTMLInputElement).select()}
-        />
-      </div>
+      {/* Read-only node ID (single selection only) */}
+      {!isMultiSelected && (
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-[var(--vscode-descriptionForeground,#888)]">
+            id
+          </label>
+          <input
+            type="text"
+            value={selectedNodeId}
+            readOnly
+            className={`${INPUT_CLASS} w-full cursor-default opacity-60`}
+            title={selectedNodeId}
+            onClick={(e) => (e.target as HTMLInputElement).select()}
+          />
+        </div>
+      )}
 
       {activeGroups.map((group) => {
         const entries = grouped.get(group)!;

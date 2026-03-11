@@ -236,11 +236,11 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Build @moc-memo tags from full memos (simplified for AI readability)
     const mocMemos = memos
-      .filter((m) => m.targetNodeId && (m.title || m.body))
-      .map((m) => ({
-        targetId: m.targetNodeId!,
+      .filter((m) => (m.targetNodeIds?.length ?? 0) > 0 && (m.title || m.body))
+      .flatMap((m) => (m.targetNodeIds ?? []).map((tid) => ({
+        targetId: tid,
         text: m.title ? (m.body ? `${m.title}: ${m.body}` : m.title) : m.body,
-      }));
+      })));
 
     // Retrieve or create metadata
     const existingMeta = this.documentMetadata.get(docKey);
@@ -370,38 +370,7 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
       }
 
       case "command:exportImage": {
-        webviewPanel.webview.postMessage({ type: "capture:start" });
-        break;
-      }
-
-      case "capture:complete": {
-        const { dataUrl } = message.payload;
-
-        const defaultUri = vscode.Uri.file(
-          document.fileName.replace(/\.moc$/, ".png"),
-        );
-
-        const saveUri = await vscode.window.showSaveDialog({
-          defaultUri,
-          filters: { "PNG Image": ["png"] },
-        });
-
-        if (saveUri) {
-          const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
-          const buffer = Buffer.from(base64, "base64");
-          await vscode.workspace.fs.writeFile(saveUri, buffer);
-          vscode.window.showInformationMessage(
-            vscode.l10n.t("Image saved: {0}", saveUri.fsPath),
-          );
-        }
-        break;
-      }
-
-      case "capture:error": {
-        const { error } = message.payload;
-        vscode.window.showErrorMessage(
-          vscode.l10n.t("Image capture failed: {0}", error),
-        );
+        await vscode.commands.executeCommand("momoc.exportImage");
         break;
       }
 

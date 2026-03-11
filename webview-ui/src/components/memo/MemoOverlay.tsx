@@ -32,6 +32,7 @@ export function MemoAddButton() {
       collapsed: false,
       x: 100 + memos.length * 20,
       y: 100 + memos.length * 20,
+      targetNodeIds: [],
     };
     addMemo(newMemo);
   };
@@ -99,31 +100,40 @@ function MemoSticker({
 }) {
   const { t } = useTranslation();
   const { query } = useEditor();
-  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
+  const setHoveredMemoId = useEditorStore((s) => s.setHoveredMemoId);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
   const [position, setPosition] = useState({ x: memo.x, y: memo.y });
+  const [currentWidth, setCurrentWidth] = useState(memo.width || 256);
+  const [currentHeight, setCurrentHeight] = useState(memo.height);
   const [showColorPicker, setShowColorPicker] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+  const resizeStartRef = useRef({ mouseX: 0, mouseY: 0, startWidth: 256, startHeight: 0 });
 
   const colors = getColorScheme(memo.color);
 
-  // Get linked node display label (e.g. "Button[qqU5A87koR]")
-  const linkedNodeLabel = (() => {
-    if (!memo.targetNodeId) return null;
-    try {
-      const node = query.node(memo.targetNodeId).get();
-      if (!node) return null;
-      const displayName =
-        node.data.custom?.displayName ||
-        node.data.displayName ||
-        (typeof node.data.type === "string"
-          ? node.data.type
-          : node.data.type?.name) ||
-        "Element";
-      return `${String(displayName)}[${memo.targetNodeId}]`;
-    } catch {
-      return null;
-    }
+  const targetNodeIds = memo.targetNodeIds ?? [];
+
+  // Get linked node display labels (e.g. "Button[qqU5A87koR]")
+  const linkedNodeLabels = (() => {
+    if (targetNodeIds.length === 0) return [];
+    return targetNodeIds.map((nodeId) => {
+      try {
+        const node = query.node(nodeId).get();
+        if (!node) return { id: nodeId, label: `[${nodeId}]` };
+        const displayName =
+          node.data.custom?.displayName ||
+          node.data.displayName ||
+          (typeof node.data.type === "string"
+            ? node.data.type
+            : node.data.type?.name) ||
+          "Element";
+        return { id: nodeId, label: `${String(displayName)}[${nodeId}]` };
+      } catch {
+        return { id: nodeId, label: `[${nodeId}]` };
+      }
+    });
   })();
 
   const positionRef = useRef(position);
@@ -176,24 +186,92 @@ function MemoSticker({
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // --- Resize handlers ---
+  const MEMO_MIN_WIDTH = 256;
+  const MEMO_MIN_HEIGHT = 80;
+
+  const memoElRef = useRef<HTMLDivElement>(null);
+
+  const handleResizeMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Measure actual rendered height as start value
+    const actualHeight = memoElRef.current?.offsetHeight || currentHeight || 120;
+    setIsResizing(true);
+    resizeStartRef.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      startWidth: currentWidth,
+      startHeight: actualHeight,
+    };
+    // Lock height once resize starts (switch from auto to explicit)
+    setCurrentHeight(actualHeight);
+  };
+
+  const handleResizeMouseMove = useCallback(
+    (e: MouseEvent) => {
+      const dx = e.clientX - resizeStartRef.current.mouseX;
+      const dy = e.clientY - resizeStartRef.current.mouseY;
+      setCurrentWidth(Math.max(MEMO_MIN_WIDTH, resizeStartRef.current.startWidth + dx));
+      setCurrentHeight(Math.max(MEMO_MIN_HEIGHT, resizeStartRef.current.startHeight + dy));
+    },
+    [],
+  );
+
+  const currentWidthRef = useRef(currentWidth);
+  currentWidthRef.current = currentWidth;
+  const currentHeightRef = useRef(currentHeight);
+  currentHeightRef.current = currentHeight;
+
+  const handleResizeMouseUp = useCallback(() => {
+    setIsResizing(false);
+    onUpdate(memo.id, { width: currentWidthRef.current, height: currentHeightRef.current });
+  }, [memo.id, onUpdate]);
+
+  useEffect(() => {
+    if (!isResizing) return;
+    document.addEventListener("mousemove", handleResizeMouseMove);
+    document.addEventListener("mouseup", handleResizeMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleResizeMouseMove);
+      document.removeEventListener("mouseup", handleResizeMouseUp);
+    };
+  }, [isResizing, handleResizeMouseMove, handleResizeMouseUp]);
+
   const toggleCollapse = () => {
     onUpdate(memo.id, { collapsed: !memo.collapsed });
   };
 
   const handleLinkNode = () => {
-    if (memo.targetNodeId) {
-      // Unlink
-      onUpdate(memo.id, { targetNodeId: undefined });
-    } else if (selectedNodeId) {
-      // Link to currently selected node
-      onUpdate(memo.id, { targetNodeId: selectedNodeId });
+    if (selectedNodeIds.length > 0) {
+      // Check if all selected nodes are already linked → unlink them (toggle)
+      const allAlreadyLinked = selectedNodeIds.every((id) => targetNodeIds.includes(id));
+      if (allAlreadyLinked) {
+        const newIds = targetNodeIds.filter((id) => !selectedNodeIds.includes(id));
+        onUpdate(memo.id, { targetNodeIds: newIds });
+      } else {
+        // Add selected nodes (deduplicate)
+        const merged = [...new Set([...targetNodeIds, ...selectedNodeIds])];
+        onUpdate(memo.id, { targetNodeIds: merged });
+      }
+    } else if (targetNodeIds.length > 0) {
+      // No selection, unlink all
+      onUpdate(memo.id, { targetNodeIds: [] });
     }
+  };
+
+  const handleUnlinkOne = (nodeId: string) => {
+    onUpdate(memo.id, { targetNodeIds: targetNodeIds.filter((id) => id !== nodeId) });
   };
 
   return (
     <div
-      className={`absolute z-40 w-64 rounded shadow-lg ${colors.bg} ${isDragging ? "select-none" : ""}`}
-      style={{ left: position.x, top: position.y }}
+      ref={memoElRef}
+      className={`absolute z-40 flex flex-col rounded shadow-lg ${colors.bg} ${isDragging || isResizing ? "select-none" : ""}`}
+      data-memo-id={memo.id}
+      style={{ left: position.x, top: position.y, width: currentWidth, ...(currentHeight != null ? { height: currentHeight } : {}) }}
+      onMouseEnter={() => setHoveredMemoId(memo.id)}
+      onMouseLeave={() => setHoveredMemoId(null)}
     >
       {/* Header */}
       <div
@@ -228,16 +306,21 @@ function MemoSticker({
           type="button"
           onClick={handleLinkNode}
           title={
-            memo.targetNodeId
-              ? t("memo.unlink")
-              : selectedNodeId
-                ? t("memo.linkSelected")
+            targetNodeIds.length > 0 && selectedNodeIds.length === 0
+              ? t("memo.unlinkAll")
+              : selectedNodeIds.length > 0
+                ? t("memo.linkSelectedMultiple")
                 : t("memo.selectToLink")
           }
-          className={`shrink-0 ${memo.targetNodeId ? "text-blue-600" : colors.headerText} hover:opacity-70 ${!memo.targetNodeId && !selectedNodeId ? "opacity-30" : ""}`}
-          disabled={!memo.targetNodeId && !selectedNodeId}
+          className={`relative shrink-0 ${targetNodeIds.length > 0 ? "text-blue-600" : colors.headerText} hover:opacity-70 ${targetNodeIds.length === 0 && selectedNodeIds.length === 0 ? "opacity-30" : ""}`}
+          disabled={targetNodeIds.length === 0 && selectedNodeIds.length === 0}
         >
-          {memo.targetNodeId ? <Unlink size={12} /> : <Link2 size={12} />}
+          {targetNodeIds.length > 0 ? <Unlink size={12} /> : <Link2 size={12} />}
+          {targetNodeIds.length > 1 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">
+              {targetNodeIds.length}
+            </span>
+          )}
         </button>
 
         <div className="relative">
@@ -275,26 +358,47 @@ function MemoSticker({
         </button>
       </div>
 
-      {/* Linked element indicator */}
-      {linkedNodeLabel && (
-        <div className={`flex items-center gap-1 px-2 py-0.5 text-[10px] ${colors.text} opacity-70 border-b ${colors.border}`}>
-          <Link2 size={10} />
-          <span className="truncate font-mono">{linkedNodeLabel}</span>
+      {/* Linked element indicators */}
+      {linkedNodeLabels.length > 0 && (
+        <div className={`flex flex-col border-b ${colors.border}`}>
+          {linkedNodeLabels.map((item) => (
+            <div key={item.id} className={`flex items-center gap-1 px-2 py-0.5 text-[10px] ${colors.text} opacity-70`}>
+              <Link2 size={10} className="shrink-0" />
+              <span className="flex-1 truncate font-mono">{item.label}</span>
+              <button
+                type="button"
+                onClick={() => handleUnlinkOne(item.id)}
+                className={`shrink-0 ${colors.headerText} hover:text-red-600`}
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Body - collapsible */}
       {!memo.collapsed && (
-        <div className={`border-t ${colors.border}`}>
+        <div className={`flex-1 overflow-hidden border-t ${colors.border}`}>
           <textarea
             value={memo.body}
             onChange={(e) => onUpdate(memo.id, { body: e.target.value })}
             placeholder={t("memo.placeholder")}
-            className={`w-full resize-none bg-transparent p-2 text-xs ${colors.text} ${colors.placeholder} focus:outline-none`}
-            rows={3}
+            className={`h-full w-full resize-none bg-transparent p-2 text-xs ${colors.text} ${colors.placeholder} focus:outline-none`}
+            rows={currentHeight != null ? undefined : 3}
           />
         </div>
       )}
+
+      {/* Resize handle */}
+      <div
+        className={`absolute bottom-0 right-0 h-3 w-3 cursor-nwse-resize ${colors.headerText} opacity-30 hover:opacity-70`}
+        onMouseDown={handleResizeMouseDown}
+      >
+        <svg viewBox="0 0 12 12" fill="currentColor" className="h-full w-full">
+          <path d="M11 6L6 11M11 9L9 11" stroke="currentColor" strokeWidth="1.5" fill="none" />
+        </svg>
+      </div>
     </div>
   );
 }

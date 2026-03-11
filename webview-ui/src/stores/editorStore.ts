@@ -5,6 +5,8 @@ export type ThemeMode = "light" | "dark";
 export type ViewportMode = "desktop" | "tablet" | "mobile" | "custom";
 export type MemoColor = "yellow" | "blue" | "green" | "pink" | "purple" | "orange";
 
+export type MemoLineMode = "all" | "hover";
+
 export interface Memo {
   id: string;
   title: string;
@@ -13,8 +15,10 @@ export interface Memo {
   collapsed: boolean;
   x: number;
   y: number;
-  /** Craft.js node ID this memo is associated with (for AI context) */
-  targetNodeId?: string;
+  width?: number;
+  height?: number;
+  /** Craft.js node IDs this memo is associated with (for AI context) */
+  targetNodeIds: string[];
 }
 
 interface EditorState {
@@ -27,7 +31,11 @@ interface EditorState {
   fileName: string;
   isDirty: boolean;
   selectedNodeId: string | null;
+  selectedNodeIds: string[];
   memos: Memo[];
+  memosVisible: boolean;
+  memoLineMode: MemoLineMode;
+  hoveredMemoId: string | null;
   zoom: number;
   intent: string;
   isPaletteOpen: boolean;
@@ -43,10 +51,15 @@ interface EditorState {
   setFileName: (name: string) => void;
   setIsDirty: (dirty: boolean) => void;
   setSelectedNodeId: (id: string | null) => void;
+  setSelectedNodeIds: (ids: string[]) => void;
   setMemos: (memos: Memo[]) => void;
   addMemo: (memo: Memo) => void;
   updateMemo: (id: string, updates: Partial<Memo>) => void;
   removeMemo: (id: string) => void;
+  toggleMemosVisible: () => void;
+  setMemosVisible: (visible: boolean) => void;
+  setMemoLineMode: (mode: MemoLineMode) => void;
+  setHoveredMemoId: (id: string | null) => void;
   setZoom: (zoom: number) => void;
   setIntent: (intent: string) => void;
   togglePalette: () => void;
@@ -65,7 +78,11 @@ export const useEditorStore = create<EditorState>((set) => ({
   fileName: "",
   isDirty: false,
   selectedNodeId: null,
+  selectedNodeIds: [],
   memos: [],
+  memosVisible: true,
+  memoLineMode: "hover",
+  hoveredMemoId: null,
   zoom: 1,
   intent: "",
   isPaletteOpen: true,
@@ -82,6 +99,7 @@ export const useEditorStore = create<EditorState>((set) => ({
   setFileName: (name) => set({ fileName: name }),
   setIsDirty: (dirty) => set({ isDirty: dirty }),
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
   setMemos: (memos) => set({ memos }),
   addMemo: (memo) => set((state) => ({ memos: [...state.memos, memo] })),
   updateMemo: (id, updates) =>
@@ -90,6 +108,10 @@ export const useEditorStore = create<EditorState>((set) => ({
     })),
   removeMemo: (id) =>
     set((state) => ({ memos: state.memos.filter((m) => m.id !== id) })),
+  toggleMemosVisible: () => set((state) => ({ memosVisible: !state.memosVisible })),
+  setMemosVisible: (visible) => set({ memosVisible: visible }),
+  setMemoLineMode: (mode) => set({ memoLineMode: mode }),
+  setHoveredMemoId: (id) => set({ hoveredMemoId: id }),
   setZoom: (zoom) => set({ zoom }),
   setIntent: (intent) => set({ intent }),
   togglePalette: () => set((state) => ({ isPaletteOpen: !state.isPaletteOpen })),

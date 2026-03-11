@@ -28,6 +28,8 @@ export interface MocDocument {
 export interface MocEditorData {
   craftState: Record<string, unknown>;
   memos: MocEditorMemo[];
+  memosVisible?: boolean;
+  memoLineMode?: "all" | "hover";
   viewport?: {
     mode: string;
     width: number;
@@ -44,7 +46,9 @@ export interface MocEditorMemo {
   collapsed: boolean;
   x: number;
   y: number;
-  targetNodeId?: string;
+  width?: number;
+  height?: number;
+  targetNodeIds: string[];
 }
 
 export interface SelectionContext {
@@ -85,7 +89,6 @@ export type ExtensionToWebviewMessage =
   | { type: "command:switchLayoutMode" }
   | { type: "build:error"; payload: { componentId: string; error: string } }
   | { type: "build:result"; payload: { componentId: string; jsCode: string } }
-  | { type: "capture:start" }
   | { type: "resolve:imageUri:result"; payload: { src: string; uri: string } }
   | { type: "browse:mocFile:result"; payload: { relativePath: string; targetProp?: string } }
   | { type: "browse:imageFile:result"; payload: { relativePath: string; targetProp?: string } }
@@ -101,8 +104,6 @@ export type WebviewToExtensionMessage =
   | { type: "selection:change"; payload: SelectionContext }
   | { type: "command:openBrowserPreview" }
   | { type: "command:exportImage" }
-  | { type: "capture:complete"; payload: { dataUrl: string } }
-  | { type: "capture:error"; payload: { error: string } }
   | { type: "resolve:imageUri"; payload: { src: string } }
   | { type: "browse:mocFile"; payload: { currentPath?: string; targetProp?: string } }
   | { type: "browse:imageFile"; payload: { currentPath?: string; targetProp?: string } }
@@ -116,7 +117,6 @@ export type WebviewToExtensionMessage =
 const EXT_TO_WEB_NO_PAYLOAD: ReadonlySet<string> = new Set([
   "command:toggleTheme",
   "command:switchLayoutMode",
-  "capture:start",
 ]);
 
 /** payloadあり ExtensionToWebview type */
@@ -154,8 +154,6 @@ const WEB_TO_EXT_WITH_PAYLOAD: ReadonlySet<string> = new Set([
   "doc:requestBuild",
   "shadcn:install",
   "selection:change",
-  "capture:complete",
-  "capture:error",
   "resolve:imageUri",
   "browse:mocFile",
   "browse:imageFile",

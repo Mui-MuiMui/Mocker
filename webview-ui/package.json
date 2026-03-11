@@ -1,7 +1,7 @@
 {
   "name": "webview-ui",
   "private": true,
-  "version": "0.5.3",
+  "version": "0.5.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -42,7 +42,6 @@
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
-    "html-to-image": "^1.11.13",
     "i18next": "^24.0.0",
     "lucide-react": "^0.469.0",
     "react": "^19.0.0",
