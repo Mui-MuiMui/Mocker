@@ -236,11 +236,11 @@ export class MocEditorProvider implements vscode.CustomTextEditorProvider {
 
     // Build @moc-memo tags from full memos (simplified for AI readability)
     const mocMemos = memos
-      .filter((m) => m.targetNodeId && (m.title || m.body))
-      .map((m) => ({
-        targetId: m.targetNodeId!,
+      .filter((m) => (m.targetNodeIds?.length ?? 0) > 0 && (m.title || m.body))
+      .flatMap((m) => (m.targetNodeIds ?? []).map((tid) => ({
+        targetId: tid,
         text: m.title ? (m.body ? `${m.title}: ${m.body}` : m.title) : m.body,
-      }));
+      })));
 
     // Retrieve or create metadata
     const existingMeta = this.documentMetadata.get(docKey);

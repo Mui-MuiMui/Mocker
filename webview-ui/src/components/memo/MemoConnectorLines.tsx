@@ -12,6 +12,7 @@ const MEMO_COLOR_HEX: Record<string, string> = {
 };
 
 interface LineData {
+  key: string;
   memoId: string;
   x1: number;
   y1: number;
@@ -49,7 +50,7 @@ export function MemoConnectorLines({
     if (!content) return;
     const contentRect = content.getBoundingClientRect();
 
-    const linkedMemos = memos.filter((m) => m.targetNodeId);
+    const linkedMemos = memos.filter((m) => (m.targetNodeIds ?? []).length > 0);
     if (linkedMemos.length === 0) {
       setLines([]);
       return;
@@ -60,24 +61,15 @@ export function MemoConnectorLines({
       if (memoLineMode === "all") return true;
       // hover mode: show if this memo is hovered or its target node is hovered
       if (m.id === hoveredMemoId) return true;
-      if (m.targetNodeId === hoveredCraftNodeId) return true;
+      if ((m.targetNodeIds ?? []).includes(hoveredCraftNodeId ?? "")) return true;
       return false;
     });
 
     const newLines: LineData[] = [];
 
     for (const m of visibleMemos) {
-      if (!m.targetNodeId) continue;
-
-      let nodeDom: HTMLElement | null = null;
-      try {
-        nodeDom = query.node(m.targetNodeId).get()?.dom as HTMLElement | null;
-      } catch {
-        continue;
-      }
-      if (!nodeDom) continue;
-
-      const nodeRect = nodeDom.getBoundingClientRect();
+      const ids = m.targetNodeIds ?? [];
+      if (ids.length === 0) continue;
 
       // Memo anchor: use actual DOM element for accurate position
       const memoStickerEl = content.querySelector(`[data-memo-id="${m.id}"]`);
@@ -88,25 +80,34 @@ export function MemoConnectorLines({
         mx = memoRect.left - contentRect.left + memoRect.width / 2;
         my = memoRect.top - contentRect.top + memoRect.height / 2;
       } else {
-        // Fallback: approximate from stored position (won't be scroll-accurate)
         const memoWidth = m.width || 256;
         mx = m.x + memoWidth / 2;
         my = m.y + 30;
       }
 
-      // Node anchor: center of node (convert from screen to scrollContent coordinates)
-      // SVG is absolute inside scrollContent, so screen-to-SVG = screen - contentRect
-      const ncx = nodeRect.left - contentRect.left + nodeRect.width / 2;
-      const ncy = nodeRect.top - contentRect.top + nodeRect.height / 2;
+      for (const targetId of ids) {
+        let nodeDom: HTMLElement | null = null;
+        try {
+          nodeDom = query.node(targetId).get()?.dom as HTMLElement | null;
+        } catch {
+          continue;
+        }
+        if (!nodeDom) continue;
 
-      newLines.push({
-        memoId: m.id,
-        x1: mx,
-        y1: my,
-        x2: ncx,
-        y2: ncy,
-        color: MEMO_COLOR_HEX[m.color] || MEMO_COLOR_HEX.yellow,
-      });
+        const nodeRect = nodeDom.getBoundingClientRect();
+        const ncx = nodeRect.left - contentRect.left + nodeRect.width / 2;
+        const ncy = nodeRect.top - contentRect.top + nodeRect.height / 2;
+
+        newLines.push({
+          key: `${m.id}-${targetId}`,
+          memoId: m.id,
+          x1: mx,
+          y1: my,
+          x2: ncx,
+          y2: ncy,
+          color: MEMO_COLOR_HEX[m.color] || MEMO_COLOR_HEX.yellow,
+        });
+      }
     }
 
     setLines(newLines);
@@ -144,7 +145,7 @@ export function MemoConnectorLines({
       style={{ width: "100%", height: "100%", overflow: "visible" }}
     >
       {lines.map((line) => (
-        <g key={line.memoId}>
+        <g key={line.key}>
           <line
             x1={line.x1}
             y1={line.y1}

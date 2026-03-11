@@ -32,6 +32,7 @@ export function MemoAddButton() {
       collapsed: false,
       x: 100 + memos.length * 20,
       y: 100 + memos.length * 20,
+      targetNodeIds: [],
     };
     addMemo(newMemo);
   };
@@ -99,7 +100,7 @@ function MemoSticker({
 }) {
   const { t } = useTranslation();
   const { query } = useEditor();
-  const selectedNodeId = useEditorStore((s) => s.selectedNodeId);
+  const selectedNodeIds = useEditorStore((s) => s.selectedNodeIds);
   const setHoveredMemoId = useEditorStore((s) => s.setHoveredMemoId);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -112,23 +113,27 @@ function MemoSticker({
 
   const colors = getColorScheme(memo.color);
 
-  // Get linked node display label (e.g. "Button[qqU5A87koR]")
-  const linkedNodeLabel = (() => {
-    if (!memo.targetNodeId) return null;
-    try {
-      const node = query.node(memo.targetNodeId).get();
-      if (!node) return null;
-      const displayName =
-        node.data.custom?.displayName ||
-        node.data.displayName ||
-        (typeof node.data.type === "string"
-          ? node.data.type
-          : node.data.type?.name) ||
-        "Element";
-      return `${String(displayName)}[${memo.targetNodeId}]`;
-    } catch {
-      return null;
-    }
+  const targetNodeIds = memo.targetNodeIds ?? [];
+
+  // Get linked node display labels (e.g. "Button[qqU5A87koR]")
+  const linkedNodeLabels = (() => {
+    if (targetNodeIds.length === 0) return [];
+    return targetNodeIds.map((nodeId) => {
+      try {
+        const node = query.node(nodeId).get();
+        if (!node) return { id: nodeId, label: `[${nodeId}]` };
+        const displayName =
+          node.data.custom?.displayName ||
+          node.data.displayName ||
+          (typeof node.data.type === "string"
+            ? node.data.type
+            : node.data.type?.name) ||
+          "Element";
+        return { id: nodeId, label: `${String(displayName)}[${nodeId}]` };
+      } catch {
+        return { id: nodeId, label: `[${nodeId}]` };
+      }
+    });
   })();
 
   const positionRef = useRef(position);
@@ -238,13 +243,25 @@ function MemoSticker({
   };
 
   const handleLinkNode = () => {
-    if (memo.targetNodeId) {
-      // Unlink
-      onUpdate(memo.id, { targetNodeId: undefined });
-    } else if (selectedNodeId) {
-      // Link to currently selected node
-      onUpdate(memo.id, { targetNodeId: selectedNodeId });
+    if (selectedNodeIds.length > 0) {
+      // Check if all selected nodes are already linked → unlink them (toggle)
+      const allAlreadyLinked = selectedNodeIds.every((id) => targetNodeIds.includes(id));
+      if (allAlreadyLinked) {
+        const newIds = targetNodeIds.filter((id) => !selectedNodeIds.includes(id));
+        onUpdate(memo.id, { targetNodeIds: newIds });
+      } else {
+        // Add selected nodes (deduplicate)
+        const merged = [...new Set([...targetNodeIds, ...selectedNodeIds])];
+        onUpdate(memo.id, { targetNodeIds: merged });
+      }
+    } else if (targetNodeIds.length > 0) {
+      // No selection, unlink all
+      onUpdate(memo.id, { targetNodeIds: [] });
     }
+  };
+
+  const handleUnlinkOne = (nodeId: string) => {
+    onUpdate(memo.id, { targetNodeIds: targetNodeIds.filter((id) => id !== nodeId) });
   };
 
   return (
@@ -289,16 +306,21 @@ function MemoSticker({
           type="button"
           onClick={handleLinkNode}
           title={
-            memo.targetNodeId
-              ? t("memo.unlink")
-              : selectedNodeId
-                ? t("memo.linkSelected")
+            targetNodeIds.length > 0 && selectedNodeIds.length === 0
+              ? t("memo.unlinkAll")
+              : selectedNodeIds.length > 0
+                ? t("memo.linkSelectedMultiple")
                 : t("memo.selectToLink")
           }
-          className={`shrink-0 ${memo.targetNodeId ? "text-blue-600" : colors.headerText} hover:opacity-70 ${!memo.targetNodeId && !selectedNodeId ? "opacity-30" : ""}`}
-          disabled={!memo.targetNodeId && !selectedNodeId}
+          className={`relative shrink-0 ${targetNodeIds.length > 0 ? "text-blue-600" : colors.headerText} hover:opacity-70 ${targetNodeIds.length === 0 && selectedNodeIds.length === 0 ? "opacity-30" : ""}`}
+          disabled={targetNodeIds.length === 0 && selectedNodeIds.length === 0}
         >
-          {memo.targetNodeId ? <Unlink size={12} /> : <Link2 size={12} />}
+          {targetNodeIds.length > 0 ? <Unlink size={12} /> : <Link2 size={12} />}
+          {targetNodeIds.length > 1 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-3 w-3 items-center justify-center rounded-full bg-blue-600 text-[8px] text-white">
+              {targetNodeIds.length}
+            </span>
+          )}
         </button>
 
         <div className="relative">
@@ -336,11 +358,22 @@ function MemoSticker({
         </button>
       </div>
 
-      {/* Linked element indicator */}
-      {linkedNodeLabel && (
-        <div className={`flex items-center gap-1 px-2 py-0.5 text-[10px] ${colors.text} opacity-70 border-b ${colors.border}`}>
-          <Link2 size={10} />
-          <span className="truncate font-mono">{linkedNodeLabel}</span>
+      {/* Linked element indicators */}
+      {linkedNodeLabels.length > 0 && (
+        <div className={`flex flex-col border-b ${colors.border}`}>
+          {linkedNodeLabels.map((item) => (
+            <div key={item.id} className={`flex items-center gap-1 px-2 py-0.5 text-[10px] ${colors.text} opacity-70`}>
+              <Link2 size={10} className="shrink-0" />
+              <span className="flex-1 truncate font-mono">{item.label}</span>
+              <button
+                type="button"
+                onClick={() => handleUnlinkOne(item.id)}
+                className={`shrink-0 ${colors.headerText} hover:text-red-600`}
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 

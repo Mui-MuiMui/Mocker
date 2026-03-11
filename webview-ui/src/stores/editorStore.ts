@@ -17,8 +17,8 @@ export interface Memo {
   y: number;
   width?: number;
   height?: number;
-  /** Craft.js node ID this memo is associated with (for AI context) */
-  targetNodeId?: string;
+  /** Craft.js node IDs this memo is associated with (for AI context) */
+  targetNodeIds: string[];
 }
 
 interface EditorState {

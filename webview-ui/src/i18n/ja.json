@@ -54,6 +54,8 @@
   "memo.changeColor": "色を変更",
   "memo.linkSelected": "選択中の要素にリンク",
   "memo.unlink": "要素リンクを解除",
+  "memo.linkSelectedMultiple": "選択中の要素をリンク",
+  "memo.unlinkAll": "すべてのリンクを解除",
   "memo.selectToLink": "要素を選択してからリンク",
   "memo.showAll": "すべてのメモを表示",
   "memo.hideAll": "すべてのメモを非表示",

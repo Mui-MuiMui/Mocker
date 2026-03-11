@@ -48,7 +48,7 @@ export interface MocEditorMemo {
   y: number;
   width?: number;
   height?: number;
-  targetNodeId?: string;
+  targetNodeIds: string[];
 }
 
 export interface SelectionContext {

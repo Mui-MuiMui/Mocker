@@ -56,7 +56,10 @@ export function EditorLoader({
       if (parsed.version && parsed.craftState) {
         // New format: { version: 1, craftState: {...}, memos: [...], viewport: {...} }
         craftStateStr = JSON.stringify(parsed.craftState);
-        memos = Array.isArray(parsed.memos) ? parsed.memos : [];
+        memos = (Array.isArray(parsed.memos) ? parsed.memos : []).map((m: Memo & { targetNodeId?: string }) => ({
+          ...m,
+          targetNodeIds: m.targetNodeIds ?? (m.targetNodeId ? [m.targetNodeId] : []),
+        }));
         // Restore canvas size settings
         if (parsed.viewport) {
           const v = parsed.viewport;

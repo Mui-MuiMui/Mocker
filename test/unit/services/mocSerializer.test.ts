@@ -184,7 +184,7 @@ const __mocEditorData = \`
       "collapsed": false,
       "x": 0,
       "y": 0,
-      "targetNodeId": "node1"
+      "targetNodeIds": ["node1"]
     }
   ],
   "viewport": {

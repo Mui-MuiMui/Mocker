@@ -54,6 +54,8 @@
   "memo.changeColor": "Change color",
   "memo.linkSelected": "Link to selected element",
   "memo.unlink": "Unlink element",
+  "memo.linkSelectedMultiple": "Link selected elements",
+  "memo.unlinkAll": "Unlink all",
   "memo.selectToLink": "Select an element to link",
   "memo.showAll": "Show all memos",
   "memo.hideAll": "Hide all memos",

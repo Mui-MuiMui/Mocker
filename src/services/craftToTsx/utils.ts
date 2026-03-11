@@ -178,7 +178,7 @@ export function buildMocComments(
     comments.push(`${pad}{/* @moc-role "${role}" */}`);
   }
   if (memos) {
-    const memo = memos.find((m) => m.targetNodeId === nodeId);
+    const memo = memos.find((m) => (m.targetNodeIds ?? []).includes(nodeId));
     if (memo) {
       const summary = memo.title ? (memo.body ? `${memo.title}: ${memo.body}` : memo.title) : memo.body;
       if (summary) {
