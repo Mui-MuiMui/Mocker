@@ -93,11 +93,9 @@ export function PropertiesPanel() {
       <div className="flex-1 overflow-y-auto">
         {selected ? (
           <div className="flex flex-col">
-            {(selectedCount === 1 || isSameType) && (
-              <PanelSection title={t("properties.props")}>
-                <PropEditor />
-              </PanelSection>
-            )}
+            <PanelSection title={t("properties.props")}>
+              <PropEditor />
+            </PanelSection>
             <PanelSection title={t("properties.tailwind")}>
               <TailwindEditor />
             </PanelSection>

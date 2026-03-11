@@ -486,7 +486,7 @@ function SizeInput({
 
 export function PropEditor() {
   const { t } = useTranslation();
-  const { selectedProps, actions, selectedNodeId, selectedNodeIds, selectedPropsArray, componentName, craftDefaultProps, isMultiSelected } = useEditor(
+  const { selectedProps, actions, selectedNodeId, selectedNodeIds, selectedPropsArray, componentName, craftDefaultProps, isMultiSelected, isSameType } = useEditor(
     (state) => {
       const ids = state.events.selected ? Array.from(state.events.selected) : [];
       const nodeId = ids[0];
@@ -499,10 +499,24 @@ export function PropEditor() {
           componentName: "",
           craftDefaultProps: null,
           isMultiSelected: false,
+          isSameType: true,
         };
 
       const node = state.nodes[nodeId];
       const propsArray = ids.map(id => (state.nodes[id]?.data?.props || {}) as Record<string, unknown>);
+
+      // Check if all selected nodes are the same component type
+      let sameType = true;
+      if (ids.length > 1) {
+        const firstType = node?.data?.type;
+        for (let i = 1; i < ids.length; i++) {
+          if (state.nodes[ids[i]]?.data?.type !== firstType) {
+            sameType = false;
+            break;
+          }
+        }
+      }
+
       return {
         selectedProps: node?.data?.props || {},
         selectedNodeId: nodeId,
@@ -511,6 +525,7 @@ export function PropEditor() {
         componentName: node?.data?.displayName || node?.data?.name || "",
         craftDefaultProps: (node?.data?.type as any)?.craft?.props ?? null,
         isMultiSelected: ids.length > 1,
+        isSameType: sameType,
       };
     },
   );
@@ -558,7 +573,7 @@ export function PropEditor() {
     return null;
   }
 
-  if (componentName === "ResizablePanelSlot") {
+  if (!isMultiSelected && componentName === "ResizablePanelSlot") {
     return (
       <div className="px-3 py-2 text-xs text-[var(--vscode-descriptionForeground,#777)] italic">
         サイズは親の Resizable コンポーネントで管理されます
@@ -627,8 +642,11 @@ export function PropEditor() {
 
   // ページ配置グループ: layoutMode === "flow" のみ。selectedProps に無ければデフォルト値
   // display の値に応じて flex 専用 / grid 専用プロパティを非表示にする
+  // 異なる種別のマルチセレクト時は共通グループ（width/height）のみ表示
+  const showComponentSpecific = !isMultiSelected || isSameType;
+
   const currentDisplay = (effectiveProps["display"] ?? FLOW_DEFAULTS["display"]) as string;
-  const flowEntries: [string, unknown][] = layoutMode === "flow"
+  const flowEntries: [string, unknown][] = showComponentSpecific && layoutMode === "flow"
     ? Array.from(FLOW_KEYS)
         .filter((k) => {
           if (currentDisplay === "grid" && k === "flexDirection") return false;
@@ -639,19 +657,19 @@ export function PropEditor() {
     : [];
 
   // コンポーネント配置グループ: layoutMode === "absolute" のみ。selectedProps に無ければデフォルト値
-  const absoluteEntries: [string, unknown][] = layoutMode === "absolute"
+  const absoluteEntries: [string, unknown][] = showComponentSpecific && layoutMode === "absolute"
     ? Array.from(ABSOLUTE_KEYS).map((k) => [k, effectiveProps[k] ?? ABSOLUTE_DEFAULTS[k]])
     : [];
 
   // インタラクション共通: 対象外コンポーネント以外で常時表示、selectedProps に無ければデフォルト値
   const isInteractionExcluded = INTERACTION_EXCLUDED_COMPONENTS.has(componentName);
-  const interactionEntries: [string, unknown][] = isInteractionExcluded
+  const interactionEntries: [string, unknown][] = !showComponentSpecific || isInteractionExcluded
     ? []
     : INTERACTION_ORDERED.map((k) => [k, k === "__sep__" ? null : (effectiveProps[k] ?? INTERACTION_DEFAULTS[k])]);
 
   // コンポーネントグループ: craftDefaultProps に定義されているキーをベースに（selectedProps になければデフォルト値を使用）
   // craftDefaultProps ベースにすることで、後から追加された prop も既存ノードで表示される
-  const componentEntries: [string, unknown][] = Object.entries(craftDefaultProps ?? selectedProps).filter(
+  const componentEntries: [string, unknown][] = !showComponentSpecific ? [] : Object.entries(craftDefaultProps ?? selectedProps).filter(
     ([key]) =>
       key !== "children" &&
       key !== "className" &&
