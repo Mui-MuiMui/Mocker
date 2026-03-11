@@ -48,7 +48,7 @@ export const RenderNode = React.memo(function RenderNode({
 
   const layoutMode = useEditorStore((s) => s.layoutMode);
 
-  const { actions: editorActions, isMultiSelected } = useEditor((state) => ({
+  const { actions: editorActions, isMultiSelected, query: editorQuery } = useEditor((state) => ({
     isMultiSelected: state.events.selected ? state.events.selected.size > 1 : false,
   }));
 
@@ -123,6 +123,7 @@ export const RenderNode = React.memo(function RenderNode({
 
   // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
   // resolvers.ts の canDrag: false により Craft.js DnD は起動しないため、通常の bubble phase で処理
+  // マルチセレクト時は全選択ノードを一括移動
   useEffect(() => {
     if (!dom || layoutMode !== "absolute" || parentIsGroup || id === "ROOT") return;
 
@@ -133,9 +134,25 @@ export const RenderNode = React.memo(function RenderNode({
 
       const startX = e.clientX;
       const startY = e.clientY;
-      const startTop = parseInt(dom.style.top || "0", 10);
-      const startLeft = parseInt(dom.style.left || "0", 10);
       let dragging = false;
+
+      // Gather all selected nodes' start positions and DOM references
+      const state = editorQuery.getState();
+      const selectedIds = isActive && state.events.selected
+        ? Array.from(state.events.selected)
+        : [id];
+
+      const peers: { nodeId: string; dom: HTMLElement; startTop: number; startLeft: number }[] = [];
+      for (const nodeId of selectedIds) {
+        const node = state.nodes[nodeId];
+        if (!node?.dom) continue;
+        peers.push({
+          nodeId,
+          dom: node.dom,
+          startTop: parseInt(node.dom.style.top || "0", 10),
+          startLeft: parseInt(node.dom.style.left || "0", 10),
+        });
+      }
 
       const onMove = (ev: MouseEvent) => {
         const dx = ev.clientX - startX;
@@ -144,18 +161,24 @@ export const RenderNode = React.memo(function RenderNode({
           if (Math.hypot(dx, dy) < 5) return;
           dragging = true;
         }
-        dom.style.top = `${startTop + dy}px`;
-        dom.style.left = `${startLeft + dx}px`;
+        for (const peer of peers) {
+          peer.dom.style.top = `${peer.startTop + dy}px`;
+          peer.dom.style.left = `${peer.startLeft + dx}px`;
+        }
       };
 
       const onUp = (ev: MouseEvent) => {
         document.removeEventListener("mousemove", onMove);
         document.removeEventListener("mouseup", onUp);
         if (!dragging) return;
-        editorActions.setProp(id, (props: Record<string, unknown>) => {
-          props.top = `${startTop + ev.clientY - startY}px`;
-          props.left = `${startLeft + ev.clientX - startX}px`;
-        });
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        for (const peer of peers) {
+          editorActions.setProp(peer.nodeId, (props: Record<string, unknown>) => {
+            props.top = `${peer.startTop + dy}px`;
+            props.left = `${peer.startLeft + dx}px`;
+          });
+        }
       };
 
       document.addEventListener("mousemove", onMove);
@@ -164,7 +187,7 @@ export const RenderNode = React.memo(function RenderNode({
 
     dom.addEventListener("mousedown", onMouseDown);
     return () => dom.removeEventListener("mousedown", onMouseDown);
-  }, [dom, layoutMode, editorActions, id, parentIsGroup]);
+  }, [dom, layoutMode, editorActions, editorQuery, id, parentIsGroup, isActive]);
 
   // Label badge
   useEffect(() => {
