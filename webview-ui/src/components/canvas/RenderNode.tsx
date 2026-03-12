@@ -1,5 +1,5 @@
 import { useNode, useEditor } from "@craftjs/core";
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftGroup } from "../../crafts/layout/CraftGroup";
 
@@ -106,27 +106,21 @@ export const RenderNode = React.memo(function RenderNode({
   }, [dom, isActive, isHover, isCanvas, parentIsGroup]);
 
   // Apply absolute positioning when layoutMode === "absolute" OR when inside CraftGroup
-  useEffect(() => {
+  // useLayoutEffect でブラウザ描画前に位置を適用し、配置時のフラッシュを防止
+  useLayoutEffect(() => {
     if (!dom) return;
     if (layoutMode === "absolute" || parentIsGroup) {
       dom.style.position = "absolute";
-      if (nodeTop == null && nodeLeft == null && id !== "ROOT") {
-        // 位置未確定の新規ノード → 位置が設定されるまで非表示
-        dom.style.visibility = "hidden";
-      } else {
-        dom.style.visibility = "";
-        dom.style.top = nodeTop || "0px";
-        dom.style.left = nodeLeft || "0px";
-      }
+      dom.style.top = nodeTop || "0px";
+      dom.style.left = nodeLeft || "0px";
       dom.style.zIndex = nodeZIndex != null ? String(nodeZIndex) : "";
     } else {
       dom.style.position = "";
       dom.style.top = "";
       dom.style.left = "";
       dom.style.zIndex = "";
-      dom.style.visibility = "";
     }
-  }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup, id]);
+  }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
 
   // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
   // resolvers.ts の canDrag: false により Craft.js DnD は起動しないため、通常の bubble phase で処理
