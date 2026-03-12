@@ -1,5 +1,5 @@
 import { useNode, useEditor } from "@craftjs/core";
-import React, { useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 import { useEditorStore } from "../../stores/editorStore";
 import { CraftGroup } from "../../crafts/layout/CraftGroup";
 
@@ -106,8 +106,7 @@ export const RenderNode = React.memo(function RenderNode({
   }, [dom, isActive, isHover, isCanvas, parentIsGroup]);
 
   // Apply absolute positioning when layoutMode === "absolute" OR when inside CraftGroup
-  // useLayoutEffect でブラウザ描画前に位置を適用し、配置時のフラッシュを防止
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!dom) return;
     if (layoutMode === "absolute" || parentIsGroup) {
       dom.style.position = "absolute";
@@ -412,24 +411,6 @@ export const RenderNode = React.memo(function RenderNode({
       handlesRef.current = [];
     };
   }, [dom, isActive, noResize, isMultiSelected, onMouseDown]);
-
-  // 初回レンダー時に dom が null のため useEffect/useLayoutEffect では
-  // ブラウザ描画前に位置を適用できない。React.cloneElement で render 要素に
-  // 初期スタイルを注入し、最初の描画から正しい位置に表示する。
-  const needsAbsolute = layoutMode === "absolute" || parentIsGroup;
-  const initialStyle = needsAbsolute
-    ? {
-        position: "absolute" as const,
-        top: nodeTop || "0px",
-        left: nodeLeft || "0px",
-        zIndex: nodeZIndex != null ? nodeZIndex : undefined,
-      }
-    : undefined;
-
-  if (initialStyle && React.isValidElement(render)) {
-    const existingStyle = (render.props as Record<string, unknown>)?.style as Record<string, unknown> | undefined;
-    return <>{React.cloneElement(render, { style: { ...existingStyle, ...initialStyle } } as Record<string, unknown>)}</>;
-  }
 
   return <>{render}</>;
 });
