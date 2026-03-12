@@ -110,16 +110,23 @@ export const RenderNode = React.memo(function RenderNode({
     if (!dom) return;
     if (layoutMode === "absolute" || parentIsGroup) {
       dom.style.position = "absolute";
-      dom.style.top = nodeTop || "0px";
-      dom.style.left = nodeLeft || "0px";
+      if (nodeTop == null && nodeLeft == null && id !== "ROOT") {
+        // 位置未確定の新規ノード → 位置が設定されるまで非表示
+        dom.style.visibility = "hidden";
+      } else {
+        dom.style.visibility = "";
+        dom.style.top = nodeTop || "0px";
+        dom.style.left = nodeLeft || "0px";
+      }
       dom.style.zIndex = nodeZIndex != null ? String(nodeZIndex) : "";
     } else {
       dom.style.position = "";
       dom.style.top = "";
       dom.style.left = "";
       dom.style.zIndex = "";
+      dom.style.visibility = "";
     }
-  }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup]);
+  }, [dom, layoutMode, nodeTop, nodeLeft, nodeZIndex, parentIsGroup, id]);
 
   // Drag-to-move in absolute mode (non-ROOT, not inside CraftGroup)
   // resolvers.ts の canDrag: false により Craft.js DnD は起動しないため、通常の bubble phase で処理
