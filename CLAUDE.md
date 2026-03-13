@@ -17,25 +17,22 @@
 
 タスクに応じて以下のサブエージェントを活用してください。
 
-| エージェント | モデル | 用途 |
-|-------------|--------|------|
-| [pre-commit-check](.claude/agents/pre-commit-check.md) | haiku | ビルド+テスト実行、結果サマリー返却 |
-| [craft-component-scaffold](.claude/agents/craft-component-scaffold.md) | sonnet | 新規Craftコンポーネント追加時の既存パターン調査 |
-| [impact-analysis](.claude/agents/impact-analysis.md) | sonnet | ファイル変更の影響範囲分析 |
-| [code-review](.claude/agents/code-review.md) | opus | コード変更のレビュー（Error/Warning/Suggestion 3段階） |
-| [moc-data-validator](.claude/agents/moc-data-validator.md) | haiku | .mocファイルとcraft.props定義の整合性検証 |
+| エージェント                                                           | モデル | 用途                                                   |
+| ---------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| [pre-commit-check](.claude/agents/pre-commit-check.md)                 | haiku  | ビルド+テスト実行、結果サマリー返却                    |
+| [craft-component-scaffold](.claude/agents/craft-component-scaffold.md) | sonnet | 新規Craftコンポーネント追加時の既存パターン調査        |
+| [impact-analysis](.claude/agents/impact-analysis.md)                   | sonnet | ファイル変更の影響範囲分析                             |
+| [code-review](.claude/agents/code-review.md)                           | opus   | コード変更のレビュー（Error/Warning/Suggestion 3段階） |
+| [moc-data-validator](.claude/agents/moc-data-validator.md)             | haiku  | .mocファイルとcraft.props定義の整合性検証              |
 
 ## Skillについて
 
 動作に合わせて関連するスキルを参照してください。
 
-- **フロントエンドデザインに関するスキル**
-  - [frontend-design](.agents\skills\frontend-design)
-- **E2Eテストに関するスキル**
-  - [e2e-testing-patterns](.agents\skills\e2e-testing-patterns)
-- **コーディングに関するスキル**
-  - [clean-code](.agents\skills\clean-code)
-- **ダイアグラムに関するスキル**
-  - [drawio-diagram](.agents\skills\drawio-diagram)
-- **リリースコメント作成に関するスキル**
-  - [release-notes](.agents\skills\release-notes)
+| ファイル                                                    | 内容                                 |
+| ----------------------------------------------------------- | ------------------------------------ |
+| [frontend-design](.agents\skills\frontend-design)           | フロントエンドデザインに関するスキル |
+| [e2e-testing-patterns](.agents\skills\e2e-testing-patterns) | E2Eテストに関するスキル              |
+| [clean-code](.agents\skills\clean-code)                     | コーディングに関するスキル           |
+| [drawio-diagram](.agents\skills\drawio-diagram)             | ダイアグラムに関するスキル           |
+| [release-notes](.agents\skills\release-notes)               | リリースコメント作成に関するスキル   |
