@@ -54,9 +54,7 @@ AIネイティブなデータ形式を採用しています。<br/>
 
 - [x] MVP作成
 - [x] shadcn/uiのコンポーネントを追加(v0.5.6相当)
-- [ ] プロパティ要素の拡充(作業時:v0.6.xx相当予定)(完了後アルファからベータバージョンへ昇格)
-   この項目では既存のTailwindCSSのclassを手打ちで使えるようにする(したい)
-   現在は部分的に対応
+- [x] プロパティ要素の拡充(作業時:v0.6.xx相当予定)
 - [ ] ~~アイコン(SVG)配置機能の追加(作業時:v0.7.xx相当予定だったが既に追加済み)~~
 - [ ] UIの整理(作業時:v0.8.xx相当予定)
 - [ ] リリース(v1.0.x予定)
@@ -106,9 +104,7 @@ It also allows AI to assist with implementation by reading the intent written on
 
 - [x] Build MVP
 - [x] Add shadcn/ui components (around v0.5.6)
-- [ ] Expand property options (expected around v0.6.xx) (promotion from alpha to beta upon completion)
-   Enable manual input of existing TailwindCSS classes (planned)
-   Currently partially supported
+- [x] Expand property options (expected around v0.6.xx)
 - [ ] ~~Add icon (SVG) placement feature (was expected around v0.7.xx, but already added)~~
 - [ ] UI/UX polish (expected around v0.8.xx)
 - [ ] Release (v1.0.x planned)
