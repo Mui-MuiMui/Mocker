@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useEditor, Element, type NodeTree } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { paletteItems, resolvers, type ResolverKey } from "../../crafts/resolvers";
-import { Search, ChevronLeft, ChevronRight, Upload, RotateCcw, Pencil, Trash2 } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Upload, RotateCcw, Pencil, Trash2, Replace, RefreshCw } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useVscodeMessage, useSendMessage } from "../../hooks/useVscodeMessage";
@@ -33,7 +33,7 @@ type SubCategory = (typeof SUB_CATEGORIES)[number];
 
 export function ComponentPalette() {
   const { t } = useTranslation();
-  const { connectors } = useEditor();
+  const { connectors, actions, query } = useEditor();
   const isPaletteOpen = useEditorStore((s) => s.isPaletteOpen);
   const togglePalette = useEditorStore((s) => s.togglePalette);
   const [search, setSearch] = useState("");
@@ -58,6 +58,63 @@ export function ComponentPalette() {
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; id: string } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const sendMessage = useSendMessage();
+
+  const actionsRef = useRef(actions);
+  const queryRef = useRef(query);
+  actionsRef.current = actions;
+  queryRef.current = query;
+
+  const pageFilePath = useEditorStore((s) => s.fileName);
+  const pageFilePathRef = useRef(pageFilePath);
+  pageFilePathRef.current = pageFilePath;
+
+  const [pendingReplaceComponentId, setPendingReplaceComponentId] = useState<string | null>(null);
+  const pendingReplaceComponentIdRef = useRef(pendingReplaceComponentId);
+  pendingReplaceComponentIdRef.current = pendingReplaceComponentId;
+
+  // 一括「再読み込みして差し替え」で待機中のコンポーネントID集合
+  const pendingReloadAllIdsRef = useRef<Set<string>>(new Set());
+
+  // 1ノードをエントリで差し替える（ref パターン・stale closure 回避）
+  const replaceGroupInPlaceRef = useRef<(nodeId: string, entry: CustomComponentEntry) => void>(() => {});
+  replaceGroupInPlaceRef.current = (nodeId: string, entry: CustomComponentEntry) => {
+    try {
+      const node = queryRef.current.node(nodeId).get();
+      if (!node) return;
+      const { top, left, className } = node.data.props as Record<string, string>;
+      const parentId = node.data.parent;
+      if (!parentId) return;
+      const tree = buildGroupTreeFromCraftState(entry.craftState, entry.path, pageFilePathRef.current, entry.id);
+      if (!tree) return;
+      const root = tree.nodes[tree.rootNodeId];
+      if (top) root.data.props.top = top;
+      if (left) root.data.props.left = left;
+      if (className) root.data.props.className = className;
+      actionsRef.current.delete(nodeId);
+      actionsRef.current.addNodeTree(tree, parentId);
+    } catch {
+      // Node may have been removed
+    }
+  };
+
+  // 指定コンポーネントIDの全インスタンスを差し替える
+  const replaceAllInstancesRef = useRef<(componentId: string, entry: CustomComponentEntry) => void>(() => {});
+  replaceAllInstancesRef.current = (componentId: string, entry: CustomComponentEntry) => {
+    const state = queryRef.current.getState();
+    const matchingIds = Object.keys(state.nodes).filter(
+      (id) => state.nodes[id]?.data?.custom?.customComponentId === componentId,
+    );
+    for (const nodeId of matchingIds) {
+      replaceGroupInPlaceRef.current(nodeId, entry);
+    }
+  };
+
+  // 右クリック「再読み込みして差し替え」のタイムアウト
+  useEffect(() => {
+    if (!pendingReplaceComponentId) return;
+    const timer = setTimeout(() => setPendingReplaceComponentId(null), 15_000);
+    return () => clearTimeout(timer);
+  }, [pendingReplaceComponentId]);
 
   // 初回マウント時にカスタムコンポーネント一覧を取得
   useEffect(() => {
@@ -89,6 +146,16 @@ export function ComponentPalette() {
             useEditorStore.getState().setCustomComponents(updated);
             return updated;
           });
+          // 右クリック「再読み込みして差し替え」の待機中なら全インスタンスを置換
+          if (pendingReplaceComponentIdRef.current === id) {
+            setPendingReplaceComponentId(null);
+            replaceAllInstancesRef.current(id, entry);
+          }
+          // 一括「再読み込みして差し替え」の待機中なら全インスタンスを置換
+          if (pendingReloadAllIdsRef.current.has(id)) {
+            pendingReloadAllIdsRef.current.delete(id);
+            replaceAllInstancesRef.current(id, entry);
+          }
         }
       } else if (message.type === "customComponent:removeResult") {
         setCustomComponents((prev) => {
@@ -273,6 +340,24 @@ export function ComponentPalette() {
               <Upload size={12} />
               .moc をインポート
             </button>
+            {customComponents.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  for (const entry of customComponents) {
+                    pendingReloadAllIdsRef.current.add(entry.id);
+                    sendMessage({ type: "customComponent:reload", payload: { id: entry.id } });
+                  }
+                  // 15秒でタイムアウトし、未受信のIDを破棄する
+                  setTimeout(() => { pendingReloadAllIdsRef.current.clear(); }, 15_000);
+                }}
+                title="全て再読み込みして差し替え"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--vscode-panel-border,#333)] px-2 py-1.5 text-xs text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)] transition-colors"
+              >
+                <RefreshCw size={12} />
+                全て再読み込みして差し替え
+              </button>
+            )}
             {customComponents.length === 0 ? (
               <p className="mt-4 text-center text-[10px] text-[var(--vscode-foreground,#666)]">
                 インポートした .moc がここに表示されます
@@ -393,6 +478,31 @@ export function ComponentPalette() {
           style={{ position: "fixed", left: contextMenu.x, top: contextMenu.y, zIndex: 9999 }}
           className="rounded border border-[var(--vscode-panel-border,#333)] bg-[var(--vscode-menu-background,#252526)] py-1 shadow-lg"
         >
+          <button
+            type="button"
+            onClick={() => {
+              const entry = customComponents.find((c) => c.id === contextMenu.id);
+              if (entry) replaceAllInstancesRef.current(contextMenu.id, entry);
+              setContextMenu(null);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-1 text-xs text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]"
+          >
+            <Replace size={12} />
+            差し替え
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingReplaceComponentId(contextMenu.id);
+              sendMessage({ type: "customComponent:reload", payload: { id: contextMenu.id } });
+              setContextMenu(null);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-1 text-xs text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]"
+          >
+            <RefreshCw size={12} />
+            再読み込みして差し替え
+          </button>
+          <hr className="my-1 border-[var(--vscode-panel-border,#333)]" />
           <button
             type="button"
             onClick={() => {

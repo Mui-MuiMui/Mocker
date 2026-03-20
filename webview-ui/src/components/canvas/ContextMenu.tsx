@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useEditor, type NodeTree, type Node } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { useEditorStore } from "../../stores/editorStore";
-import { Trash2, Copy, Scissors, ClipboardPaste, CopyPlus, RefreshCw, Replace } from "lucide-react";
+import { Trash2, Copy, Scissors, ClipboardPaste, CopyPlus, Replace } from "lucide-react";
 import { resolvers } from "../../crafts/resolvers";
-import { useVscodeMessage, useSendMessage } from "../../hooks/useVscodeMessage";
 import { buildGroupTreeFromCraftState, cloneTreeWithFreshIds } from "../../utils/customComponentUtils";
 import type { CustomComponentEntry } from "../../shared/messages";
 
@@ -100,9 +99,7 @@ export function ContextMenu() {
 
   const isMultiSelected = selectedIds.length > 1;
 
-  const sendMessage = useSendMessage();
   const pageFilePath = useEditorStore((s) => s.fileName);
-  const [pendingReplace, setPendingReplace] = useState<{ nodeId: string; componentId: string } | null>(null);
 
   // Sync Craft.js selection → editorStore so memo linking works
   const setSelectedNodeId = useEditorStore((s) => s.setSelectedNodeId);
@@ -119,14 +116,12 @@ export function ContextMenu() {
   const actionsRef = useRef(actions);
   const selectedCustomComponentIdRef = useRef(selectedCustomComponentId);
   const pageFilePathRef = useRef(pageFilePath);
-  const pendingReplaceRef = useRef(pendingReplace);
   selectedRef.current = selected;
   selectedIdsRef.current = selectedIds;
   queryRef.current = query;
   actionsRef.current = actions;
   selectedCustomComponentIdRef.current = selectedCustomComponentId;
   pageFilePathRef.current = pageFilePath;
-  pendingReplaceRef.current = pendingReplace;
 
   const deleteSelected = useCallback(() => {
     const ids = selectedIdsRef.current;
@@ -259,38 +254,6 @@ export function ContextMenu() {
     replaceGroupInPlaceRef.current(nodeId, entry);
     setMenuPos(null);
   }, []);
-
-  const reloadAndReplace = useCallback(() => {
-    const nodeId = selectedRef.current;
-    const compId = selectedCustomComponentIdRef.current;
-    if (!nodeId || !compId) return;
-    setPendingReplace({ nodeId, componentId: compId });
-    sendMessage({ type: "customComponent:reload", payload: { id: compId } });
-    setMenuPos(null);
-  }, [sendMessage]);
-
-  // Warning 6: 15秒でタイムアウトし pendingReplace をクリア
-  useEffect(() => {
-    if (!pendingReplace) return;
-    const timer = setTimeout(() => setPendingReplace(null), 15_000);
-    return () => clearTimeout(timer);
-  }, [pendingReplace]);
-
-  // Error 3: reloadResult 受信後にストアも更新する
-  useVscodeMessage(useCallback((message) => {
-    if (message.type !== "customComponent:reloadResult") return;
-    const pending = pendingReplaceRef.current;
-    if (!pending || message.payload.id !== pending.componentId) return;
-    const { entry } = message.payload;
-    setPendingReplace(null);
-    if (!entry) return;
-    // ストアを最新状態に更新
-    const updated = useEditorStore.getState().customComponents.map((c) =>
-      c.id === entry.id ? entry : c,
-    );
-    useEditorStore.getState().setCustomComponents(updated);
-    replaceGroupInPlaceRef.current(pending.nodeId, entry);
-  }, []));
 
   const handleContextMenu = useCallback(
     (e: MouseEvent) => {
@@ -426,12 +389,6 @@ export function ContextMenu() {
             icon={<Replace size={14} />}
             label="差し替え"
             onClick={replaceSelected}
-            disabled={isMultiSelected}
-          />
-          <MenuItem
-            icon={<RefreshCw size={14} />}
-            label="再読み込みして差し替え"
-            onClick={reloadAndReplace}
             disabled={isMultiSelected}
           />
         </>
