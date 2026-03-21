@@ -209,7 +209,11 @@ export async function startPreviewServer(
 
     for (const [relPath, absPath] of toProcess) {
       try {
-        linkedAbsPaths.add(absPath);
+        // スナップショットがあるファイルはウォッチ対象から外す
+        // → C.moc を保存してもプレビューが自動更新されない（明示的な再読み込みが必要）
+        if (!snapshotMap[absPath]) {
+          linkedAbsPaths.add(absPath);
+        }
         let linkedTsx: string;
         if (snapshotMap[absPath]) {
           // スナップショット優先: ディスク読み込みをスキップ
