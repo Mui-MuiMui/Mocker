@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useEditor, Element, type NodeTree } from "@craftjs/core";
 import { useTranslation } from "react-i18next";
 import { paletteItems, resolvers, type ResolverKey } from "../../crafts/resolvers";
-import { Search, ChevronLeft, ChevronRight, Upload, RotateCcw, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Upload, Pencil, Trash2, RefreshCw } from "lucide-react";
 import * as Icons from "lucide-react";
 import { useEditorStore } from "../../stores/editorStore";
 import { useVscodeMessage, useSendMessage } from "../../hooks/useVscodeMessage";
@@ -465,13 +465,15 @@ export function ComponentPalette() {
           <button
             type="button"
             onClick={() => {
+              pendingReloadAllIdsRef.current.add(contextMenu.id);
               sendMessage({ type: "customComponent:reload", payload: { id: contextMenu.id } });
+              setTimeout(() => { pendingReloadAllIdsRef.current.delete(contextMenu.id); }, 15_000);
               setContextMenu(null);
             }}
             className="flex w-full items-center gap-2 px-3 py-1 text-xs text-[var(--vscode-foreground,#ccc)] hover:bg-[var(--vscode-list-hoverBackground,#2a2d2e)]"
           >
-            <RotateCcw size={12} />
-            再読み込み
+            <RefreshCw size={12} />
+            再読み込みして差し替え
           </button>
           <button
             type="button"
