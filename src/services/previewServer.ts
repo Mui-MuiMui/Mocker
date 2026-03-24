@@ -1926,12 +1926,12 @@ export function PopoverTrigger(props: any) {
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
   const comboCtx = useContext(ComboboxCtx);
-  const [pos, setPos] = useState<{top:number;left:number;triggerTop:number} | null>(null);
+  const [pos, setPos] = useState<{top:number;left:number;triggerTop:number;triggerRight:number} | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (!ctx?.open || !ctx.triggerRef.current) return;
     const r = ctx.triggerRef.current.getBoundingClientRect();
-    setPos({ top: r.bottom + 4, left: r.left, triggerTop: r.top });
+    setPos({ top: r.bottom + 4, left: r.left, triggerTop: r.top, triggerRight: r.right });
   }, [ctx?.open]);
   useLayoutEffect(() => {
     if (!pos || !contentRef.current) return;
@@ -1939,7 +1939,7 @@ export function PopoverContent(props: any) {
     const h = el.offsetHeight, w = el.offsetWidth;
     let { top, left } = pos;
     if (top + h > window.innerHeight) top = pos.triggerTop - h - 4;
-    if (left + w > window.innerWidth) left = Math.max(4, window.innerWidth - w - 4);
+    if (left + w > window.innerWidth) left = Math.max(4, pos.triggerRight - w);
     if (top < 0) top = 4;
     el.style.top = top + "px";
     el.style.left = left + "px";
