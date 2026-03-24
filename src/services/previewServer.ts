@@ -1905,8 +1905,7 @@ export function DrawerContent(props: any) {
 }`,
 
   popover: `import { cn } from "@/components/ui/_cn";
-import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createContext, useContext, useState } from "react";
 import { ComboboxCtx } from "@/components/ui/_combobox";
 const Ctx = createContext<any>(null);
 export function Popover(props: any) {
@@ -1914,39 +1913,17 @@ export function Popover(props: any) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const [search, setSearch] = useState("");
-  const triggerRef = useRef<HTMLElement | null>(null);
-  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen, triggerRef }}><div className={cn("block", className)} style={style}>{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
+  return <ComboboxCtx.Provider value={{ open, setOpen, value, setValue, search, setSearch }}><Ctx.Provider value={{ open, setOpen }}><div className={cn("relative inline-block", className)} style={style}>{open && <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setOpen(false)} />}{children}</div></Ctx.Provider></ComboboxCtx.Provider>;
 }
 export function PopoverTrigger(props: any) {
   const ctx = useContext(Ctx);
-  const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => { if (ref.current) { const child = ref.current.firstElementChild as HTMLElement | null; ctx.triggerRef.current = child ?? ref.current; } }, []);
-  return <span ref={ref} onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer", display: "block", ...props.style }}>{props.children}</span>;
+  return <div onClick={() => ctx?.setOpen(!ctx?.open)} style={{ cursor: "pointer" }}>{props.children}</div>;
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
-  const [pos, setPos] = useState<{top:number;left:number;triggerTop:number;triggerWidth:number} | null>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    if (!ctx?.open || !ctx.triggerRef.current) return;
-    const r = ctx.triggerRef.current.getBoundingClientRect();
-    setPos({ top: r.bottom + 4, left: r.left, triggerTop: r.top, triggerWidth: r.width });
-  }, [ctx?.open]);
-  useLayoutEffect(() => {
-    if (!pos || !contentRef.current) return;
-    const el = contentRef.current;
-    const h = el.offsetHeight, w = el.offsetWidth;
-    let { top, left } = pos;
-    if (top + h > window.innerHeight) top = pos.triggerTop - h - 4;
-    if (left + w > window.innerWidth) left = Math.max(4, window.innerWidth - w - 4);
-    if (top < 0) top = 4;
-    el.style.top = top + "px";
-    el.style.left = left + "px";
-  }, [pos]);
-  if (!ctx?.open || !pos) return null;
-  const effectiveWidth = props.style?.width ?? \`\${pos.triggerWidth}px\`;
-  const cls = cn("fixed z-[9999] rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
-  return createPortal(<><div className="fixed inset-0 z-[9998]" onClick={() => ctx.setOpen(false)} /><div ref={contentRef} className={cls} style={{ top: pos.top, left: pos.left, width: effectiveWidth, ...props.style }} onClick={(e: any) => e.stopPropagation()}>{props.children}</div></>, document.body);
+  if (!ctx?.open) return null;
+  const cls = cn("absolute left-0 z-[9999] min-w-full rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
+  return <div className={cls} style={{ top: "calc(100% + 4px)", ...props.style }} onClick={(e: any) => e.stopPropagation()}>{props.children}</div>;
 }`,
 
   "dropdown-menu": `import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
