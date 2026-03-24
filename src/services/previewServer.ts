@@ -1925,24 +1925,23 @@ export function PopoverTrigger(props: any) {
 }
 export function PopoverContent(props: any) {
   const ctx = useContext(Ctx);
-  const comboCtx = useContext(ComboboxCtx);
-  const [pos, setPos] = useState<{top:number;left:number;triggerTop:number;triggerRight:number} | null>(null);
+  const [pos, setPos] = useState<{top:number;left:number;triggerTop:number} | null>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (!ctx?.open || !ctx.triggerRef.current) return;
     const r = ctx.triggerRef.current.getBoundingClientRect();
-    setPos({ top: r.bottom + 4, left: r.left, triggerTop: r.top, triggerRight: r.right });
+    setPos({ top: r.bottom + 4, left: r.left, triggerTop: r.top });
   }, [ctx?.open]);
   useLayoutEffect(() => {
     if (!pos || !contentRef.current) return;
     const el = contentRef.current;
-    const h = el.offsetHeight, w = el.offsetWidth;
-    let { top, left } = pos;
+    const h = el.offsetHeight;
+    let { top } = pos;
     if (top + h > window.innerHeight) top = pos.triggerTop - h - 4;
-    if (left + w > window.innerWidth) left = Math.max(4, pos.triggerRight - w);
     if (top < 0) top = 4;
     el.style.top = top + "px";
-    el.style.left = left + "px";
+    el.style.left = pos.left + "px";
+    el.style.maxWidth = (window.innerWidth - pos.left - 4) + "px";
   }, [pos]);
   if (!ctx?.open || !pos) return null;
   const cls = cn("fixed z-[9999] rounded-md border border-gray-300 bg-popover p-4 text-popover-foreground shadow-md", props.className);
