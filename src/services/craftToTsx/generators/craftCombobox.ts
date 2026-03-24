@@ -33,7 +33,7 @@ registerGenerator("CraftCombobox", {
     const props = node.props;
 
     const items = ((props?.items as string) || "Apple,Banana,Cherry").split(",").map((s) => s.trim());
-    const placeholder = (props?.placeholder as string) || "Select an option...";
+    const placeholder = (props?.placeholder as string) ?? "Select an option...";
     const linkedMocPath = (props?.linkedMocPath as string) || "";
     const contentWidth = (props?.contentWidth as string) || "";
     const contentStyleAttr = contentWidth ? ` style={{ width: "${ctx.escapeAttr(contentWidth)}" }}` : "";
