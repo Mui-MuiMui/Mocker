@@ -67,7 +67,19 @@ export function defaultRender(
 
   // Self-closing for img
   if (resolvedName === "CraftImage" || resolvedName === "CraftPlaceholderImage") {
-    return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${styleAttr} />`;
+    let imgStyleAttr = styleAttr;
+    if (resolvedName === "CraftImage") {
+      const clickThrough = node.props?.clickThrough;
+      const isClickThrough = clickThrough !== false && clickThrough !== "false";
+      if (isClickThrough) {
+        if (imgStyleAttr) {
+          imgStyleAttr = imgStyleAttr.replace(/\s*}}$/, `, pointerEvents: "none" }}`);
+        } else {
+          imgStyleAttr = ` style={{ pointerEvents: "none" }}`;
+        }
+      }
+    }
+    return `${mocComments}\n${pad}<${tag}${propsStr}${classNameAttr}${imgStyleAttr} />`;
   }
 
   // Self-closing for Separator
